@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres_container
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: grubzo
+    ports:
+      - "5432:5432"
+    volumes:
+      - /home/rahul.a/personal/dev/data/postgresql:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:9.9
+    container_name: pgadmin_container
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: postgres@email.com
+      PGADMIN_DEFAULT_PASSWORD: postgres
+    ports:
+      - "5433:80"
+    volumes:
+      - /home/rahul.a/personal/dev/data/pgadmin:/var/lib/pgadmin/config

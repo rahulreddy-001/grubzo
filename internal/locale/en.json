@@ -1,0 +1,4 @@
+{
+    "tenant.code.exists": "Tenant with the same code already exists",
+    "tenant.name.exists": "Tenant with the same name already exists"
+}
