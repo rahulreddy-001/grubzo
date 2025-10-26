@@ -7,6 +7,7 @@ import Header from "./components/Header";
 import Login from "./pages/Authentication/Login";
 import Signup from "./pages/Authentication/Signup";
 import { useAuth } from "./context/AuthProvider";
+import NotFound from "./pages/NotFound";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -66,8 +67,8 @@ function App() {
             </PublicRoute>
           }
         />
-        <Route path="/404" element={<div>404 Not Found</div>} />
-        <Route path="*" element={<div>404 Not Found</div>} />
+        <Route path="/404" element={<NotFound />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );

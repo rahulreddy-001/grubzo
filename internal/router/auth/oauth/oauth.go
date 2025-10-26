@@ -131,7 +131,6 @@ func (a *Auth) Init() *Auth {
 				userSession.Set("id", userEntity.ID)
 				userSession.Set("type", "user")
 				userSession.Set("email", userEntity.Email)
-				a.logger.Info("Redirecting to login success page", zap.String("provider", provider.GetType()), zap.Any("user_id", userEntity.ID))
 				a.RedirectToLoginSuccessPage(c)
 			})
 		}
@@ -155,10 +154,14 @@ func (a *Auth) GetLoginData() []ProviderLoginInfo {
 
 func (a *Auth) Exchange(provider Provider, ctx *gin.Context) (*oauth2.Token, error) {
 	state, code := ctx.Query("state"), ctx.Query("code")
-	cookieState, _ := ctx.Cookie("oauth_state")
+	cookieState, err := ctx.Cookie("oauth_state")
+	if err != nil {
+		return nil, errors.New("missing state cookie: " +  err.Error())
+	}
 	if state != cookieState {
 		return nil, errors.New("invalid state")
 	}
+	ctx.SetCookie("oauth_state", state, 0, "/", "", false, true)
 
 	providerConfig := provider.GetConfig()
 	token, err := providerConfig.Exchange(ctx.Copy(), code)
