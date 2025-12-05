@@ -2,12 +2,12 @@ package storage
 
 import (
 	"grubzo/internal/models/entity"
-	"grubzo/internal/utils/ce"
+	"grubzo/internal/router/ext"
 	"io"
 )
 
 var (
-	ErrFileNotFound = ce.New("file not found")
+	ErrFileNotFound = ext.Error("file not found")
 )
 
 type FileStorage interface {

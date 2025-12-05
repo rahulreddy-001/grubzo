@@ -1,7 +1,11 @@
+import type { Location } from "./common";
+
 export interface User {
   Type: string;
   Name: string;
   Email: string;
+  Permisssions: string[] | null;
+  Location: Location;
   ID: number;
 }
 

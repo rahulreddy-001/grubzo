@@ -1,5 +1,11 @@
 package dto
 
+import (
+	"grubzo/internal/models/entity"
+
+	"github.com/jinzhu/copier"
+)
+
 type CreateTenantLocation struct {
 	TenantID  uint   `json:"TenantId" binding:"required"`
 	Code      string `json:"Code" binding:"required"`
@@ -34,6 +40,11 @@ type TenantLocation struct {
 	ZipCode   string `json:"ZipCode" binding:"required"`
 	IsPrimary bool   `json:"IsPrimary"`
 }
+
+func (dto *TenantLocation) FromEntity(e *entity.TenantLocation) error {
+    return copier.Copy(dto, e)
+}
+
 
 type CreateTenantLocationResponse struct {
 	Message  string         `json:"Message"`

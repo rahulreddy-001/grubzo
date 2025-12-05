@@ -6,7 +6,7 @@ import (
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/repository"
-	"grubzo/internal/utils/ce"
+	"grubzo/internal/router/ext"
 	"grubzo/internal/utils/storage"
 
 	"github.com/gofrs/uuid"
@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	ErrNotFound = ce.New("File not found")
+	ErrNotFound = ext.Error("File not found")
 )
 
 type Manager interface {

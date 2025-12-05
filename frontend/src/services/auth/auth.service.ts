@@ -1,14 +1,19 @@
 import store from "../store";
 import { loginUser, signupUser, fetchUser, logoutUser } from "./auth.slice";
+
 import type {
-  SignupRequest,
-  LoginRequest,
   User,
+  LoginRequest,
   LoginResponse,
+  SignupRequest,
   SignupResponse,
 } from "../../types/auth";
 
 const AuthService = {
+  constructor() {
+    this.fetchUser();
+  },
+
   async isAuthenticated(): Promise<boolean> {
     try {
       const state = store.getState();

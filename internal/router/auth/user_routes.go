@@ -1,56 +1,65 @@
 package auth
 
 import (
-	"errors"
-	"grubzo/internal/router/session"
-	"grubzo/internal/utils/ce"
 	"net/http"
+
+	"grubzo/internal/router/ext"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (h *Handlers) Me(c *gin.Context) {
-	userSession, err := h.SessionStore.GetSession(c)
+	rctx := c.Request.Context()
+	userSession, err := ext.Ctx(c).GetUserSession()
 	if err != nil {
-		if errors.Is(err, session.ErrSessionNotFound) {
-			ce.BadRequest(c, err)
-			return
-		}
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).Unauthorized()
 		return
 	}
-	var userType string
-	var tenantID uint
-	var userID uint
-
-	if typeI, err := userSession.Get("type"); err != nil {
-		ce.RespondWithError(c, err)
-		return
-	} else {
-		userType, _ = typeI.(string)
-	}
-	if typeI, err := userSession.Get("tenant_id"); err != nil {
-		ce.RespondWithError(c, err)
-		return
-	} else {
-		tenantID, _ = typeI.(uint)
-	}
-	if typeI, err := userSession.Get("id"); err != nil {
-		ce.RespondWithError(c, err)
-		return
-	} else {
-		userID, _ = typeI.(uint)
-	}
-
-	response, err := h.SS.AuthService.GetMeInfo(userType, userID, tenantID)
+	response, err := h.SS.AuthService.GetMeInfo(
+		rctx,
+		userSession.Type,
+		userSession.UserID,
+		userSession.TenantID,
+		userSession.Location,
+	)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	if response == nil {
 		h.SessionStore.RevokeSession(c)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something Went Wrong, Please try again!"})
+		ext.Ctx(c).Unauthorized()
 		return
 	}
+
 	c.JSON(http.StatusOK, response)
+}
+
+func (h *Handlers) SetUserLocation(c *gin.Context) {
+	var params struct {
+		LocationID uint `json:"LocationID" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&params); err != nil {
+		ext.Ctx(c).BadRequestBody()
+		return
+	}
+	sess, err := ext.Ctx(c).GetSession()
+	if err != nil {
+		ext.Ctx(c).Unauthorized()
+		return
+	}
+	userSession, err := sess.GetUserSession()
+	if err != nil {
+		ext.Ctx(c).Unauthorized()
+		return
+	}
+	userSession.Location = params.LocationID
+	err = sess.SetUserSession(userSession)
+	if err != nil {
+		ext.Ctx(c).RespondWithError(err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"Message": "User location updated successfully.",
+	})
 }

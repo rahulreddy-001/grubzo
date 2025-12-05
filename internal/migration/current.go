@@ -9,6 +9,7 @@ import (
 func Migrations() []*gormigrate.Migration {
 	return []*gormigrate.Migration{
 		v1(),
+		v2(),
 	}
 }
 
@@ -20,5 +21,6 @@ func AllTables() []interface{} {
 		&entity.User{},
 		&entity.FileMeta{},
 		&entity.Item{},
+		&entity.UserRole{},
 	}
 }

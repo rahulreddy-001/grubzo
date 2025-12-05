@@ -2,8 +2,10 @@ package v1
 
 import (
 	"grubzo/internal/repository"
+	"grubzo/internal/router/middlewares"
 	"grubzo/internal/router/session"
 	"grubzo/internal/services"
+	"grubzo/internal/services/rbac/permission"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -19,15 +21,27 @@ type Handlers struct {
 }
 
 func (h Handlers) Setup(r *gin.RouterGroup) {
+	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore)
+	generateMiddleware := middlewares.AccessControlMiddlewareGenerator(h.SS.RBAC, h.SessionStore)
+	itemsTabAccess := generateMiddleware(permission.Items)
+	employeeTabAccess := generateMiddleware(permission.Employee)
+	locationTabAccess := generateMiddleware(permission.Location)
+	rbacTabAccess := generateMiddleware(permission.RBAC)
 	api := r.Group("/v1")
 	{
-		file := api.Group("files")
+		accessControl := api.Group("rbac", protected)
+		{
+			accessControl.GET("/roles_perms_grid", h.RBACRolesPermsGrid)
+			accessControl.POST("/add_role", rbacTabAccess, h.RBACAddRole)
+			accessControl.PUT("/update_role_perms", rbacTabAccess, h.RBACUpdateRolePerms)
+		}
+		file := api.Group("files", protected)
 		{
 			file.POST("/upload", h.FileUpload)
 			file.GET("/get/:id", h.GetFileByID)
 		}
 
-		tenant := api.Group("/tenant")
+		tenant := api.Group("/tenant", protected)
 		{
 			tenant.POST("/create", h.CreateTenant)
 			tenant.PUT("/update", h.UpdateTenant)
@@ -35,17 +49,17 @@ func (h Handlers) Setup(r *gin.RouterGroup) {
 			tenant.GET("/all", h.GetAllTenants)
 		}
 
-		location := api.Group("/location")
+		location := api.Group("/location", protected)
 		{
-			location.POST("/create", h.CreateTenantLocation)
-			location.PUT("/update", h.UpdateTenantLocation)
-			location.GET("/:LocationID", h.GetTenantLocation)
+			location.POST("/create", locationTabAccess, h.CreateTenantLocation)
+			location.PUT("/update", locationTabAccess, h.UpdateTenantLocation)
+			location.GET("/query", locationTabAccess, h.GetTenantLocation)
 			location.GET("/all", h.GetAllTenantLocations)
 		}
 
-		employee := api.Group("/employee")
+		employee := api.Group("/employee", protected, employeeTabAccess)
 		{
-			employee.POST("/signup", h.CreateTenantUser)
+			employee.POST("/create", h.CreateTenantUser)
 			employee.PUT("/update", h.UpdateTenantUser)
 			employee.GET("/:UserID", h.GetTenantUser)
 			employee.GET("/all", h.GetAllTenantUsers)
@@ -54,11 +68,11 @@ func (h Handlers) Setup(r *gin.RouterGroup) {
 		user := api.Group("/user")
 		{
 			user.POST("/signup", h.CreateUser)
-			user.PUT("/update", h.UpdateUser)
-			user.GET("/:UserID", h.GetUser)
+			user.PUT("/update", protected, h.UpdateUser)
+			user.GET("/:UserID", protected, h.GetUser)
 		}
 
-		item := api.Group("item")
+		item := api.Group("item", protected, itemsTabAccess)
 		{
 			item.POST("/create", h.CreateMenuItem)
 			item.PUT("/update", h.UpdateMenuItem)

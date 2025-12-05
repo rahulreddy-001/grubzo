@@ -9,6 +9,7 @@ import (
 )
 
 func (ts *tenantServiceImpl) CreateTenantUser(tUserArgs *dto.CreateTenantUser) (*dto.CreateTenantUserResponse, error) {
+	tUserArgs.Password = tUserArgs.Email
 	user, err := ts.repository.CreateTenantUser(tUserArgs)
 	if err != nil {
 		return nil, err

@@ -6,8 +6,8 @@ import (
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
 	"grubzo/internal/repository"
+	"grubzo/internal/router/ext"
 	"grubzo/internal/router/session"
-	"grubzo/internal/utils/ce"
 	"grubzo/internal/utils/random"
 	"net/http"
 	"net/url"
@@ -78,6 +78,7 @@ func (a *Auth) WithLogger(logger *zap.Logger) *Auth {
 }
 
 func (a *Auth) Init() *Auth {
+	tenantID := uint(2)
 	for _, p := range a.providers {
 		provider := p
 		a.router.GET(fmt.Sprintf("/login/%s", provider.GetType()), func(ctx *gin.Context) {
@@ -86,54 +87,54 @@ func (a *Auth) Init() *Auth {
 			ctx.Redirect(http.StatusPermanentRedirect, provider.GetConfig().AuthCodeURL(state))
 		})
 
-		if cb := provider.GetCallbackURL(); len(cb) != 0 {
-			cbURL, _ := url.Parse(cb)
-			cleanPath := strings.TrimPrefix(cbURL.Path, a.router.BasePath())
-			a.router.GET(cleanPath, func(c *gin.Context) {
-				token, err := a.Exchange(provider, c)
-				if err != nil {
-					ce.RespondWithError(c, fmt.Errorf("login failed: %w", err))
-					return
-				}
-				user, err := provider.FetchUser(token.AccessToken)
-				if err != nil {
-					ce.RespondWithError(c, fmt.Errorf("login failed: %w", err))
-					return
-				}
-				if err := provider.ValidateToken(token.AccessToken); err != nil {
-					ce.RespondWithError(c, fmt.Errorf("login failed: %w", err))
-					return
-				}
-				userEntity, err := a.repo.FindUser(query.NewUserQuery(2).WithEmail(user.Email))
-				if err != nil {
-					if err.Error() == repository.UserNotFound {
-						userEntity, err = a.repo.CreateUser(&dto.CreateUser{
-							TenantID: 2,
-							UserID:   user.ID,
-							Email:    user.Email,
-							Name:     user.Name,
-						})
-						if err != nil {
-							ce.RespondWithError(c, fmt.Errorf("login failed: %w", err))
-							return
-						}
-					} else {
-						ce.RespondWithError(c, fmt.Errorf("login failed: %w", err))
+		cbURL, _ := url.Parse(provider.GetCallbackURL())
+		cleanCBPath := strings.TrimPrefix(cbURL.Path, a.router.BasePath())
+		a.router.GET(cleanCBPath, func(c *gin.Context) {
+			token, err := a.Exchange(provider, c)
+			if err != nil {
+				ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
+				return
+			}
+			if err := provider.ValidateToken(token.AccessToken); err != nil {
+				ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
+				return
+			}
+			user, err := provider.FetchUser(token.AccessToken)
+			if err != nil {
+				ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
+				return
+			}
+			userEntity, err := a.repo.FindUser(query.NewUserQuery(tenantID).WithEmail(user.Email))
+			if err != nil {
+				if err.Error() == repository.UserNotFound {
+					userEntity, err = a.repo.CreateUser(&dto.CreateUser{
+						TenantID: tenantID,
+						UserID:   user.ID,
+						Email:    user.Email,
+						Name:     user.Name,
+					})
+					if err != nil {
+						ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
 						return
 					}
-				}
-				userSession, err := a.sessionStore.RenewSession(c, userEntity.ID)
-				if err != nil {
-					ce.RespondWithError(c, fmt.Errorf("login failed: %w", err))
+				} else {
+					ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
 					return
 				}
-				userSession.Set("tenant_id", userEntity.TenantID)
-				userSession.Set("id", userEntity.ID)
-				userSession.Set("type", "user")
-				userSession.Set("email", userEntity.Email)
-				a.RedirectToLoginSuccessPage(c)
+			}
+			userSession, err := a.sessionStore.RenewSession(c, userEntity.ID, userEntity.TenantID)
+			if err != nil {
+				ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
+				return
+			}
+			userSession.Set("user", &session.UserSession{
+				TenantID: userEntity.TenantID,
+				UserID:   userEntity.ID,
+				Email:    userEntity.Email,
+				Type:     "user",
 			})
-		}
+			a.RedirectToLoginSuccessPage(c)
+		})
 	}
 	return a
 }
@@ -156,12 +157,12 @@ func (a *Auth) Exchange(provider Provider, ctx *gin.Context) (*oauth2.Token, err
 	state, code := ctx.Query("state"), ctx.Query("code")
 	cookieState, err := ctx.Cookie("oauth_state")
 	if err != nil {
-		return nil, errors.New("missing state cookie: " +  err.Error())
+		return nil, errors.New("missing state cookie: " + err.Error())
 	}
 	if state != cookieState {
 		return nil, errors.New("invalid state")
 	}
-	ctx.SetCookie("oauth_state", state, 0, "/", "", false, true)
+	ctx.SetCookie("oauth_state", state, -1, "/", "", false, true)
 
 	providerConfig := provider.GetConfig()
 	token, err := providerConfig.Exchange(ctx.Copy(), code)

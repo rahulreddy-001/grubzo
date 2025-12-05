@@ -2,39 +2,41 @@ package v1
 
 import (
 	"grubzo/internal/models/dto"
-	"grubzo/internal/utils/ce"
+	"grubzo/internal/router/ext"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (h Handlers) CreateTenantUser(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
 	createArgs := &dto.CreateTenantUser{
-		TenantID: 2,
+		TenantID: tenantID,
 	}
 	if err := c.ShouldBindBodyWithJSON(createArgs); err != nil {
-		ce.BadRequestBody(c)
+		ext.Ctx(c).BadRequestBody()
 		return
 	}
 	response, err := h.SS.TenantService.CreateTenantUser(createArgs)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusCreated, response)
 }
 
 func (h Handlers) UpdateTenantUser(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
 	updateArgs := &dto.UpdateTenantUser{
-		TenantID: 2,
+		TenantID: tenantID,
 	}
 	if err := c.ShouldBindBodyWithJSON(updateArgs); err != nil {
-		ce.BadRequestBody(c)
+		ext.Ctx(c).BadRequestBody()
 		return
 	}
 	response, err := h.SS.TenantService.UpdateTenantUser(updateArgs)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusCreated, response)
@@ -45,21 +47,22 @@ func (h Handlers) GetTenantUser(c *gin.Context) {
 		UserID uint `json:"UserID" binding:"required"`
 	}
 	if err := c.ShouldBindUri(&params); err != nil {
-		ce.BadRequestParams(c)
+		ext.Ctx(c).BadRequestBody()
 		return
 	}
 	response, err := h.SS.TenantService.GetTenantUser(params.UserID, uint(2))
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusOK, response)
 }
 
 func (h Handlers) GetAllTenantUsers(c *gin.Context) {
-	response, err := h.SS.TenantService.GetTenantUsers(uint(2))
+	tenantID := ext.Ctx(c).TenantID()
+	response, err := h.SS.TenantService.GetTenantUsers(tenantID)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusOK, response)

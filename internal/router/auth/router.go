@@ -6,6 +6,7 @@ import (
 	"grubzo/internal/router/auth/oauth"
 	"grubzo/internal/router/auth/oauth/github"
 	"grubzo/internal/router/auth/oauth/google"
+	"grubzo/internal/router/middlewares"
 	"grubzo/internal/router/session"
 	"grubzo/internal/services"
 
@@ -24,9 +25,11 @@ type Handlers struct {
 }
 
 func (h Handlers) Setup(r *gin.RouterGroup) {
+	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore)
 	api := r.Group("/v1")
 	{
-		api.GET("/me", h.Me)
+		api.GET("/me", protected, h.Me)
+		api.PUT("/me/location", protected, h.SetUserLocation)
 		api.POST("/login", h.Login)
 		api.POST("/logout", h.Logout)
 

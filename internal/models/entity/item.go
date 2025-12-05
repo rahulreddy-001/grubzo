@@ -7,19 +7,18 @@ import (
 )
 
 type Item struct {
-	ID                uint           `gorm:"primaryKey;autoIncrement"`
-	TenantID          uint           `gorm:"not null;index"`
-	LocationID        uint           `gorm:"not null:index"`
-	Name              string         `gorm:"type:varchar(128);not null;default:''"`
-	Description       string         `gorm:"type:text;not null;default:''"`
-	Price             float64        `gorm:"not null;default:0"`
-	PriceUnit         string         `gorm:"type:varchar(16);not null;default:''"`
-	Category          string         `gorm:"type:varchar(64);not null;default:''"`
-	AvailableQuantity int            `gorm:"not null;default:0"`
-	Orderable         bool           `gorm:"not null;default:true"`
-	CreatedAt         time.Time      `gorm:"precision:6"`
-	UpdatedAt         time.Time      `gorm:"precision:6"`
-	DeletedAt         gorm.DeletedAt `gorm:"index"`
+	ID          uint           `gorm:"primaryKey;autoIncrement"`
+	TenantID    uint           `gorm:"not null;index"`
+	LocationID  uint           `gorm:"not null:index"`
+	Name        string         `gorm:"type:varchar(128);not null;default:''"`
+	Description string         `gorm:"type:text;not null;default:''"`
+	Price       float64        `gorm:"not null;default:0"`
+	Category    string         `gorm:"type:varchar(64);not null;default:''"`
+	FoodType    string         `gorm:"type:varchar(128);not null"`
+	ItemStatus  string         `gorm:"type:varchar(128);not null"`
+	CreatedAt   time.Time      `gorm:"precision:6"`
+	UpdatedAt   time.Time      `gorm:"precision:6"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 
 	/*
 		Use owner_id and owner_type columns in the files table.

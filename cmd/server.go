@@ -9,21 +9,21 @@ import (
 	"grubzo/internal/utils/storage"
 	"net/http"
 
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 )
 
-func newServer(logger *zap.Logger, db *gorm.DB, repository *repository.Repository, fs storage.FileStorage, config *config.Config) (*Server, error) {
+func newServer(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repository.Repository, fs storage.FileStorage, config *config.Config) (*Server, error) {
 	services, err := services.Setup(logger, db, repository, fs, config)
 	if err != nil {
 		logger.Fatal("failed to initialize services", zap.Error(err))
 	}
-	gin := router.Setup(logger, db, repository, services, config)
+	gin := router.Setup(logger, db, rdb, repository, services, config)
 	server := &Server{
 		L:      logger,
 		Router: gin,
-		// SS:     services,
 	}
 	return server, nil
 }

@@ -52,10 +52,10 @@ type Config struct {
 	} `json:"oauthcreds"`
 
 	JWT256BitSecret string `json:"jwt256bitsecret"`
-
-	DevMode         bool `json:"devMode"`
-	ShutdownTimeout int  `json:"shutdownTimeout"`
-	Pprof           bool `json:"pprof"`
+	SessionStorage  string `json:"sessionStorage"`
+	DevMode         bool   `json:"devMode"`
+	ShutdownTimeout int    `json:"shutdownTimeout"`
+	Pprof           bool   `json:"pprof"`
 }
 
 func LoadConfig() (*Config, error) {

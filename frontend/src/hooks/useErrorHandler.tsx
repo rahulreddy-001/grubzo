@@ -23,7 +23,7 @@ export const Toggle: React.FC<ToggleProps> = ({
   const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
-    if (visible && !hovered) {
+    if (visible) {
       timerRef.current = setTimeout(() => setVisible?.(false), duration);
       return () => clearTimeout(timerRef.current!);
     } else if (hovered && timerRef.current) {
@@ -88,6 +88,7 @@ export const Toggle: React.FC<ToggleProps> = ({
           transform: "translateY(-2px)",
           transition: "transform 0.15s ease",
         },
+        zIndex: "4000",
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}

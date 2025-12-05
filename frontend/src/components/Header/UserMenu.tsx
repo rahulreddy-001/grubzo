@@ -1,22 +1,25 @@
-import { Dropdown, MenuButton, Menu, MenuItem } from "@mui/joy";
-import Stack from "@mui/joy/Stack";
-import Avatar from "@mui/joy/Avatar";
-import Typography from "@mui/joy/Typography";
-import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
 import AuthService from "../../services/auth/auth.service";
 import { useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthProvider";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../services/store";
+import {
+  Avatar,
+  Box,
+  Button,
+  DropdownMenu,
+  Flex,
+  Text,
+} from "@radix-ui/themes";
+import CommonService from "../../services/common/common.service";
+import { MapPin } from "lucide-react";
 
-const plainButtonSX = {
-  bgcolor: "transparent",
-  color: "grey",
-  "&:hover": { bgcolor: "transparent", color: "black" },
-  "&:focus-visible": { outline: "none", boxShadow: "none" },
-  "--Input-focusedThickness": "0px",
-  border: "none",
-};
-
-const UserMenu = ({ name }: { name: any }) => {
+const UserMenu = () => {
+  const user = useSelector((state: RootState) => state.auth.user);
+  const locations = useSelector((state: RootState) => state.common.Locations);
+  if (locations?.length == 0) {
+    CommonService.fetchLocations();
+  }
   let navigate = useNavigate();
   let { refreshUser } = useAuth();
   const handleLogout = async () => {
@@ -30,22 +33,79 @@ const UserMenu = ({ name }: { name: any }) => {
   };
 
   return (
-    <Dropdown>
-      <MenuButton endDecorator={<ArrowDropDown />} sx={plainButtonSX}>
-        <Stack direction="row" alignItems="center" gap="10px">
-          <Avatar>{name[0]}</Avatar>
-          <Typography sx={{ fontSize: "15px" }}>{name}</Typography>
-        </Stack>
-      </MenuButton>
-      <Menu sx={{ py: 0 }}>
-        <MenuItem
-          sx={{ fontSize: "15px", height: "30px" }}
-          onClick={handleLogout}
-        >
-          Log out
-        </MenuItem>
-      </Menu>
-    </Dropdown>
+    <Flex align={"center"}>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+          <Button
+            style={{
+              cursor: "pointer",
+              fontSize: "15px",
+              padding: "25px",
+              background: "transparent",
+              color: "black",
+              borderRadius: "0",
+              outline: "none",
+            }}
+          >
+            <Flex gap="3" align={"center"}>
+              <Box
+                style={{ outline: "none", border: "none", maxWidth: "250px" }}
+              >
+                <Flex
+                  align="center"
+                  style={{ color: "grey", fontSize: "13px", cursor: "pointer" }}
+                >
+                  <Flex direction={"column"} align={"center"}>
+                    <Flex align={"center"} gap={"1"}>
+                      <MapPin size={16} />
+                      <Text size={"1"} weight={"bold"}>
+                        {user?.Location.City} ({user?.Location.Code})
+                      </Text>
+                    </Flex>
+                    <Text>{user?.Location.Address}</Text>
+                  </Flex>
+                </Flex>
+              </Box>
+              <Avatar
+                color="gray"
+                radius="full"
+                size="3"
+                fallback={
+                  user?.Name
+                    ? user.Name.split(" ")
+                        .map((w) => w[0])
+                        .join("")
+                        .toUpperCase()
+                    : ""
+                }
+              />
+              <Text style={{ color: "gray", fontSize: "13px" }}>
+                {user?.Name}
+              </Text>
+              <DropdownMenu.TriggerIcon
+                style={{ color: "gray", fontWeight: "bold" }}
+              />
+            </Flex>
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end" sideOffset={8}>
+          <DropdownMenu.Item onClick={handleLogout}>Log out</DropdownMenu.Item>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Change Location</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              {locations?.map((location) => (
+                <DropdownMenu.Item
+                  key={location.ID}
+                  onClick={() => CommonService.setUserLocation(location.ID)}
+                >
+                  {`${location.Address}, ${location.City} (${location.Code})`}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
+    </Flex>
   );
 };
 

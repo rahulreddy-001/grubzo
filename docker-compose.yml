@@ -1,5 +1,9 @@
 version: "3.9"
 
+networks:
+  common:
+    external: true
+
 services:
   postgres:
     image: postgres:16
@@ -13,6 +17,8 @@ services:
       - "5432:5432"
     volumes:
       - /home/rahul.a/personal/dev/data/postgresql:/var/lib/postgresql/data
+    networks:
+      - common
 
   pgadmin:
     image: dpage/pgadmin4:9.9
@@ -25,3 +31,57 @@ services:
       - "5433:80"
     volumes:
       - /home/rahul.a/personal/dev/data/pgadmin:/var/lib/pgadmin/config
+    networks:
+      - common
+
+  redis:
+    image: redis/redis-stack-server:7.4.0-v7-x86_64
+    container_name: redis_container
+    restart: unless-stopped
+    ports:
+      - "5434:6379"
+    volumes:
+      - /home/rahul.a/personal/dev/data/redis:/data
+    networks:
+      - common
+
+  tempo:
+    image: grafana/tempo:2.4.1
+    container_name: tempo_container
+    restart: unless-stopped
+    ports:
+      - "4318:4318"
+      - "3100:3100"
+    volumes:
+      - /home/rahul.a/personal/dev/data/tempo:/tmp/tempo_traces
+      - ./tempo.yaml:/etc/tempo/tempo.yaml
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    networks:
+      - common
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: grafana_container
+    restart: unless-stopped
+    ports:
+      - "5435:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - tempo
+    volumes:
+      - /home/rahul.a/personal/dev/data/grafana:/var/lib/grafana
+    networks:
+      - common
+  # otelgoagent:
+  #   image: otel/autoinstrumentation-go:v0.23.0
+  #   container_name: otelgoagent_container
+  #   restart: unless-stopped
+  #   pid: host              
+  #   network_mode: host     
+  #   environment:
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+  #     - OTEL_GO_AUTO_TARGET_EXE=/home/rahul.a/personal/dev/go/grubzo/grubzo
+  #     - OTEL_PROPAGATORS=tracecontext,baggage
+  #     - OTEL_SERVICE_NAME=grubzo_main
+  #   privileged: true        

@@ -1,13 +1,16 @@
 package auth
 
 import (
-	"grubzo/internal/utils/ce"
+	"grubzo/internal/models/query"
+	"grubzo/internal/router/ext"
+	"grubzo/internal/router/session"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (h Handlers) Login(c *gin.Context) {
+	tenantID := uint(2)
 	sess, err := h.SessionStore.GetSession(c)
 	if err == nil && sess.LoggedIn() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "already logged in"})
@@ -19,44 +22,56 @@ func (h Handlers) Login(c *gin.Context) {
 		TenantID uint   `json:"TenantID" binding:"required"`
 		Type     string `json:"Type" binding:"required,oneof=user employee"`
 	}
-	req.TenantID = 2
+	req.TenantID = tenantID
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ext.Ctx(c).BadRequestBody()
 		return
 	}
 	if req.Type == "user" {
 		userID, err := h.SS.AuthService.BasicUserLogin(req.Email, req.Password, req.TenantID)
 		if err != nil {
-			ce.RespondWithError(c, err)
+			ext.Ctx(c).RespondWithError(err)
 			return
 		}
-		userSession, err := h.SessionStore.RenewSession(c, userID)
+		userSession, err := h.SessionStore.RenewSession(c, userID, req.TenantID)
 
 		if err != nil {
-			c.JSON(500, gin.H{"error": "failed to create session"})
+			ext.Ctx(c).RespondWithError(err)
 			return
 		}
-		userSession.Set("tenant_id", req.TenantID)
-		userSession.Set("id", userID)
-		userSession.Set("type", "user")
-		userSession.Set("email", req.Email)
+		userSession.Set("user", &session.UserSession{
+			Type:     "user",
+			UserID:   userID,
+			TenantID: req.TenantID,
+			Email:    req.Email,
+		})
 		c.JSON(200, gin.H{"message": "login successful", "session_token": userSession.Token()})
 		return
 	} else {
 		userID, err := h.SS.AuthService.BasicEmployeeLogin(req.Email, req.Password, req.TenantID)
 		if err != nil {
-			c.JSON(500, gin.H{"error": "failed to create session"})
+			ext.Ctx(c).RespondWithError(err)
 			return
 		}
-		userSession, err := h.SessionStore.RenewSession(c, userID)
+		userSession, err := h.SessionStore.RenewSession(c, userID, req.TenantID)
 		if err != nil {
-			c.JSON(500, gin.H{"error": "failed to create session"})
+			ext.Ctx(c).RespondWithError(err)
 			return
 		}
-		userSession.Set("tenant_id", req.TenantID)
-		userSession.Set("id", userID)
-		userSession.Set("type", "employee")
-		userSession.Set("email", req.Email)
+		userEntity, err := h.Repository.FindTenantUser(query.NewTenantUserQuery(req.TenantID).WithID(userID))
+		if err != nil {
+			ext.Ctx(c).RespondWithError(err)
+			return
+		}
+		userSession.Set("user", &session.UserSession{
+			Type:     "employee",
+			UserID:   userEntity.ID,
+			TenantID: userEntity.TenantID,
+			Email:    userEntity.Email,
+			Roles:    userEntity.Roles,
+			Location: userEntity.LocationID,
+		})
 		c.JSON(200, gin.H{"message": "login successful", "session_token": userSession.Token()})
 		return
 	}

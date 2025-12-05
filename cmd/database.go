@@ -8,6 +8,8 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 func getDatabase(c *config.Config) (*gorm.DB, error) {
@@ -25,6 +27,9 @@ func getDatabase(c *config.Config) (*gorm.DB, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+	if err := engine.Use(tracing.NewPlugin()); err != nil{
+		return  nil, err
 	}
 	db, err := engine.DB()
 	if err != nil {

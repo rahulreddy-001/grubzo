@@ -14,7 +14,7 @@ run: run-react
 
 build:
 	@echo "Building..."
-	@go build -o main cmd/api/main.go
+	@go build -o grubzo cmd/api/main.go
 	
 watch:run-react docker-up
 	@if command -v air > /dev/null; then \

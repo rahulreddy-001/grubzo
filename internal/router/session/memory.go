@@ -1,37 +1,38 @@
 package session
 
 import (
+	"encoding/json"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gofrs/uuid"
 
+	"grubzo/internal/utils"
 	"grubzo/internal/utils/random"
 )
 
 type memorySession struct {
 	t         string
-	refID     uuid.UUID
 	userID    uint
+	tenantID  uint
 	createdAt time.Time
 	data      map[string]interface{}
 	sync.Mutex
 }
 
-func newMemorySession(t string, refID uuid.UUID, userID uint, createdAt time.Time, data map[string]interface{}) *memorySession {
+func newMemorySession(t string, userID, tenantID uint, createdAt time.Time, data map[string]interface{}) *memorySession {
 	return &memorySession{
 		t:         t,
-		refID:     refID,
 		userID:    userID,
+		tenantID:  tenantID,
 		createdAt: createdAt,
 		data:      data,
 	}
 }
 
 func (s *memorySession) Token() string        { return s.t }
-func (s *memorySession) RefID() uuid.UUID     { return s.refID }
 func (s *memorySession) UserID() uint         { return s.userID }
+func (s *memorySession) TenantID() uint       { return s.tenantID }
 func (s *memorySession) CreatedAt() time.Time { return s.createdAt }
 func (s *memorySession) LoggedIn() bool       { return s.userID != 0 }
 func (s *memorySession) Expired() bool {
@@ -56,6 +57,22 @@ func (s *memorySession) Delete(k string) error {
 	defer s.Unlock()
 	delete(s.data, k)
 	return nil
+}
+
+func (s *memorySession) SetUserSession(us UserSession) error {
+	usRaw, err := json.Marshal(us)
+	if err != nil {
+		return err
+	}
+	return s.Set(UserSessionKey, usRaw)
+}
+
+func (s *memorySession) GetUserSession() (UserSession, error) {
+	if val, err := s.Get(UserSessionKey); err != nil {
+		return UserSession{}, err
+	} else {
+		return utils.AsType[UserSession](val)
+	}
 }
 
 type memoryStore struct {
@@ -87,7 +104,7 @@ func (ms *memoryStore) GetSession(c *gin.Context) (Session, error) {
 			return s, nil
 		}
 		if s.Refreshable() {
-			return ms.RenewSession(c, s.UserID())
+			return ms.RenewSession(c, s.UserID(), s.TenantID())
 		}
 	}
 
@@ -109,7 +126,7 @@ func (ms *memoryStore) GetSessionByToken(token string) (Session, error) {
 	return s, nil
 }
 
-func (ms *memoryStore) GetSessionsByUserID(userID uint) ([]Session, error) {
+func (ms *memoryStore) GetSessionsByUserID(userID, tenantID uint) ([]Session, error) {
 	if userID == 0 {
 		return []Session{}, nil
 	}
@@ -140,36 +157,7 @@ func (ms *memoryStore) RevokeSession(c *gin.Context) error {
 	return nil
 }
 
-func (ms *memoryStore) RevokeSessionByRefID(refID uuid.UUID) error {
-	if refID == uuid.Nil {
-		return nil
-	}
-	ms.Lock()
-	defer ms.Unlock()
-	for k, s := range ms.sessions {
-		if s.RefID() == refID {
-			delete(ms.sessions, k)
-			return nil
-		}
-	}
-	return nil
-}
-
-func (ms *memoryStore) RevokeSessionsByUserID(userID uint) error {
-	if userID == 0 {
-		return nil
-	}
-	ms.Lock()
-	defer ms.Unlock()
-	for k, s := range ms.sessions {
-		if s.UserID() == userID {
-			delete(ms.sessions, k)
-		}
-	}
-	return nil
-}
-
-func (ms *memoryStore) RenewSession(c *gin.Context, userID uint) (Session, error) {
+func (ms *memoryStore) RenewSession(c *gin.Context, userID, tenantID uint) (Session, error) {
 	oldToken, _ := c.Cookie(CookieName)
 	if len(oldToken) > 0 {
 		ms.Lock()
@@ -177,7 +165,7 @@ func (ms *memoryStore) RenewSession(c *gin.Context, userID uint) (Session, error
 		ms.Unlock()
 	}
 
-	s, err := ms.IssueSession(userID, nil)
+	s, err := ms.IssueSession(userID, tenantID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -194,15 +182,15 @@ func (ms *memoryStore) RenewSession(c *gin.Context, userID uint) (Session, error
 	return s, nil
 }
 
-func (ms *memoryStore) IssueSession(userID uint, data map[string]interface{}) (Session, error) {
+func (ms *memoryStore) IssueSession(userID, tenantID uint, data map[string]interface{}) (Session, error) {
 	if data == nil {
 		data = map[string]interface{}{}
 	}
 
 	s := newMemorySession(
 		random.SecureAlphaNumeric(50),
-		uuid.Must(uuid.NewV7()),
 		userID,
+		tenantID,
 		time.Now(),
 		data,
 	)

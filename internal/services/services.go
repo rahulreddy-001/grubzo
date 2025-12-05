@@ -7,6 +7,7 @@ import (
 	"grubzo/internal/repository"
 	"grubzo/internal/services/auth"
 	"grubzo/internal/services/file"
+	"grubzo/internal/services/rbac"
 	"grubzo/internal/services/store"
 	"grubzo/internal/services/tenant"
 	"grubzo/internal/services/user"
@@ -22,6 +23,7 @@ type Services struct {
 	TenantService tenant.TenantService
 	StoreService  store.StoreService
 	AuthService   auth.AuthService
+	RBAC          *rbac.RBAC
 }
 
 func Setup(
@@ -60,7 +62,13 @@ func Setup(
 		services.StoreService = ss
 	}
 
-	if as, err := auth.InitAuthService(repository, config, services.UserService, logger); err != nil {
+	if ac, err := rbac.New(repository); err != nil {
+		errs = append(errs, fmt.Errorf("RABC: %w", err))
+	} else {
+		services.RBAC = ac
+	}
+
+	if as, err := auth.InitAuthService(repository, config, services.UserService, *services.RBAC, logger); err != nil {
 		errs = append(errs, fmt.Errorf("InitAuthService: %w", err))
 	} else {
 		services.AuthService = as

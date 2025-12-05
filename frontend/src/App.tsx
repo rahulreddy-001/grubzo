@@ -8,6 +8,7 @@ import Login from "./pages/Authentication/Login";
 import Signup from "./pages/Authentication/Signup";
 import { useAuth } from "./context/AuthProvider";
 import NotFound from "./pages/NotFound";
+import EmployeeHome from "./pages/Employee";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -50,6 +51,7 @@ function App() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/_" element={<EmployeeHome />} />
         </Route>
         <Route
           path="/login"

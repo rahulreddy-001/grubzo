@@ -3,23 +3,24 @@ package tenant
 import (
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
+	"grubzo/internal/utils"
 
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 )
 
 func (ts *tenantServiceImpl) CreateTenantLocation(tloc *dto.CreateTenantLocation) (*dto.CreateTenantLocationResponse, error) {
-	eLocation, err := ts.repository.CreateTenantLocation(tloc)
+	locationEntity, err := ts.repository.CreateTenantLocation(tloc)
 	if err != nil {
 		return nil, err
 	}
-	tenantLocInfo := dto.TenantLocation{}
-	if copier.Copy(&tenantLocInfo, eLocation) != nil {
-		ts.logger.Error("[copier.Copy] failed to copy eLocation to tenantLocInfo", zap.Any("eLocation", eLocation), zap.Any("tenantLocDTO", tenantLocInfo))
+	location := dto.TenantLocation{}
+	if utils.Map(&location, locationEntity) != nil {
+		ts.logger.Error("[copier.Copy] failed to copy eLocation to tenantLocInfo", zap.Any("locationEntity", locationEntity), zap.Any("location", location), zap.Error(err))
 	}
 	response := &dto.CreateTenantLocationResponse{
 		Message:  "Location created successfully",
-		Location: tenantLocInfo,
+		Location: location,
 	}
 	return response, nil
 }

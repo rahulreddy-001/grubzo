@@ -21,15 +21,14 @@ type ItemRepository interface {
 func (r Repository) CreateItem(dto *dto.CreateMenuItem) (*entity.Item, error) {
 	sess := r.db.Session(&gorm.Session{}).Model(&entity.Item{})
 	item := &entity.Item{
-		TenantID:          dto.TenantID,
-		LocationID:        dto.LocationID,
-		Name:              dto.Name,
-		Description:       dto.Description,
-		Price:             dto.Price,
-		PriceUnit:         dto.PriceUnit,
-		Category:          dto.Category,
-		AvailableQuantity: dto.AvailableQuantity,
-		Orderable:         dto.Orderable,
+		TenantID:    dto.TenantID,
+		LocationID:  dto.LocationID,
+		Name:        dto.Name,
+		Description: dto.Description,
+		Price:       dto.Price,
+		Category:    dto.Category,
+		FoodType:    dto.FoodType,
+		ItemStatus:  dto.ItemStatus,
 	}
 
 	if err := sess.Create(item).Error; err != nil {
@@ -61,17 +60,14 @@ func (r *Repository) UpdateItem(dto *dto.UpdateMenuItem) (*entity.Item, error) {
 		if dto.Price != nil {
 			item.Price = *dto.Price
 		}
-		if dto.PriceUnit != nil {
-			item.PriceUnit = *dto.PriceUnit
-		}
 		if dto.Category != nil {
 			item.Category = *dto.Category
 		}
-		if dto.AvailableQuantity != nil {
-			item.AvailableQuantity = *dto.AvailableQuantity
+		if dto.FoodType != nil {
+			item.FoodType = *dto.FoodType
 		}
-		if dto.Orderable != nil {
-			item.Orderable = *dto.Orderable
+		if dto.ItemStatus != nil {
+			item.ItemStatus = *dto.ItemStatus
 		}
 
 		if err := tx.Save(&item).Error; err != nil {

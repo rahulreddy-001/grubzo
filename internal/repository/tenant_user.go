@@ -5,9 +5,11 @@ import (
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
-	"grubzo/internal/utils/ce"
+	"grubzo/internal/router/ext"
 	"grubzo/internal/utils/random"
 
+	"github.com/lib/pq"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -26,8 +28,8 @@ func populateHash(usr *entity.TenantUser) {
 	usr.Salt = salt
 }
 
-func validateTenantUser(usr *entity.TenantUser, db *gorm.DB) error {
-	// Check unique email across tenant
+func (r *Repository) validateTenantUser(usr *entity.TenantUser, db *gorm.DB) error {
+	// check unique email across tenant
 	var count int64
 	sess := db.Session(&gorm.Session{}).Model(entity.TenantUser{})
 	sess.Where("email = ? AND tenant_id = ?", usr.Email, usr.TenantID)
@@ -36,8 +38,20 @@ func validateTenantUser(usr *entity.TenantUser, db *gorm.DB) error {
 	}
 	sess.Count(&count)
 	if count > 0 {
-		return ce.New("User with same email already exists")
+		return ext.Error("User with same email already exists")
 	}
+
+	// check roles provided exists
+	sess = db.Session(&gorm.Session{}).Model(entity.UserRole{})
+	err := sess.Where("tenant_id = ? AND name=ANY(?)", usr.TenantID, usr.Roles).Count(&count).Error
+	if err != nil {
+		return err
+	}
+	if count != int64(len(usr.Roles)) {
+		r.logger.Debug("COUNT, USER_ROLES_COUNT", zap.Any("COUNT", count), zap.Any("USER_ROLES_COUNT", len(usr.Roles)))
+		return ext.Error("Invalid user role")
+	}
+
 	return nil
 }
 
@@ -49,11 +63,11 @@ func (r *Repository) CreateTenantUser(dto *dto.CreateTenantUser) (*entity.Tenant
 		Name:       dto.Name,
 		LocationID: dto.LocationID,
 	}
-	if dto.Role != nil {
-		tenantUser.Role = *dto.Role
+	if len(dto.Roles) != 0 {
+		tenantUser.Roles = pq.StringArray(dto.Roles)
 	}
 
-	if err := validateTenantUser(tenantUser, r.db); err != nil {
+	if err := r.validateTenantUser(tenantUser, r.db); err != nil {
 		return nil, err
 	}
 	populateHash(tenantUser)
@@ -80,11 +94,11 @@ func (r *Repository) UpdateTenantUser(dto *dto.UpdateTenantUser) (*entity.Tenant
 	if dto.Name != nil {
 		tenantUser.Name = *dto.Name
 	}
-	if dto.Role != nil {
-		tenantUser.Role = *dto.Role
+	if len(dto.Roles) != 0 {
+		tenantUser.Roles = pq.StringArray(dto.Roles)
 	}
 	if dto.LocationID != nil {
-		tenantUser.LocationID = dto.LocationID
+		tenantUser.LocationID = *dto.LocationID
 	}
 
 	if err := r.db.Save(&tenantUser).Error; err != nil {
@@ -110,13 +124,13 @@ func (r *Repository) FindTenantUser(q *query.TenantUserQuery) (*entity.TenantUse
 	if q.Email != nil {
 		sess = sess.Where("email = ?", *q.Email)
 	}
-	if q.Role != nil {
-		sess = sess.Where("role = ?", *q.Role)
+	if len(q.Roles) != 0 {
+		sess = sess.Where("role IN ?", q.Roles)
 	}
 
 	if err := sess.First(&tenantUser).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ce.New("User with the specified ID was not found")
+			return nil, ext.Error("User with the specified ID was not found")
 		}
 		return nil, err
 	}
@@ -134,13 +148,13 @@ func (r *Repository) FindAllTenantUsers(q *query.TenantUserQuery) ([]*entity.Ten
 	if q.Email != nil {
 		sess = sess.Where("email = ?", *q.Email)
 	}
-	if q.Role != nil {
-		sess = sess.Where("role = ?", *q.Role)
+	if len(q.Roles) != 0 {
+		sess = sess.Where("role IN ?", pq.StringArray(q.Roles))
 	}
 
 	if err := sess.Find(&tenantUsers).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ce.New("User with the specified details was not found")
+			return nil, ext.Error("User with the specified details was not found")
 		}
 		return nil, err
 	}

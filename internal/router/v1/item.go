@@ -3,7 +3,7 @@ package v1
 import (
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
-	"grubzo/internal/utils/ce"
+	"grubzo/internal/router/ext"
 	"net/http"
 	"time"
 
@@ -29,13 +29,12 @@ type Item struct {
 }
 
 func (h Handlers) CreateMenuItem(c *gin.Context) {
-
+	tenantID := ext.Ctx(c).TenantID()
 	args := dto.CreateMenuItem{
-		TenantID: 2,
+		TenantID: tenantID,
 	}
 	if err := c.ShouldBindJSON(&args); err != nil {
-		h.Logger.Debug("args", zap.Any("args", args), zap.Error(err))
-		ce.BadRequestBody(c)
+		ext.Ctx(c).BadRequestBody()
 		return
 	}
 	for _, fileID := range args.FileIDs {
@@ -44,18 +43,19 @@ func (h Handlers) CreateMenuItem(c *gin.Context) {
 	}
 	response, err := h.SS.StoreService.CreateItem(&args)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusOK, response)
 }
 
 func (h Handlers) UpdateMenuItem(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
 	args := dto.UpdateMenuItem{
-		TenantID: 2,
+		TenantID: tenantID,
 	}
 	if err := c.ShouldBindJSON(&args); err != nil {
-		ce.BadRequestBody(c)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	for _, fileID := range args.FileIDs {
@@ -63,34 +63,36 @@ func (h Handlers) UpdateMenuItem(c *gin.Context) {
 	}
 	response, err := h.SS.StoreService.UpdateItem(&args)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusOK, response)
 }
 
 func (h Handlers) GetAllMenuItems(c *gin.Context) {
-	args := query.NewMenuItemQuery(2).WithPreload()
+	tenantID := ext.Ctx(c).TenantID()
+	args := query.NewMenuItemQuery(tenantID).WithPreload()
 	response, err := h.SS.StoreService.GetItems(args)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusOK, response)
 }
 
 func (h Handlers) GetMenuItem(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
 	var params struct {
 		ItemID uint `json:"ItemID" binding:"required"`
 	}
 	if err := c.ShouldBindUri(&params); err != nil {
-		ce.BadRequestBody(c)
+		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	args := query.NewMenuItemQuery(2).WithID(params.ItemID).WithPreload()
+	args := query.NewMenuItemQuery(tenantID).WithID(params.ItemID).WithPreload()
 	response, err := h.SS.StoreService.GetItem(args)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusOK, response)

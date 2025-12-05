@@ -34,7 +34,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   const showNotification = useCallback(
     (Comp: ReactElement<any>, props: Record<string, any> = {}) => {
       setComponent(Comp);
-      setComponentProps(props);
+      setComponentProps({ props });
       setVisible(true);
     },
     []

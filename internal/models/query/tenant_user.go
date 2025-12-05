@@ -1,12 +1,10 @@
 package query
 
-import "grubzo/internal/models/entity"
-
 type TenantUserQuery struct {
 	TenantID    uint
 	ID          *uint
 	Email       *string
-	Role        *entity.TenantUserRole
+	Roles        []string
 	WithPreload bool
 }
 
@@ -26,8 +24,8 @@ func (f *TenantUserQuery) WithEmail(email string) *TenantUserQuery {
 	return f
 }
 
-func (f *TenantUserQuery) WithRole(role entity.TenantUserRole) *TenantUserQuery {
-	f.Role = &role
+func (f *TenantUserQuery) WithRole(roles []string) *TenantUserQuery {
+	f.Roles = roles
 	return f
 }
 func (f *TenantUserQuery) WithPreloads() *TenantUserQuery {

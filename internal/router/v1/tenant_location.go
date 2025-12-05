@@ -2,66 +2,70 @@ package v1
 
 import (
 	"grubzo/internal/models/dto"
-	"grubzo/internal/utils/ce"
+	"grubzo/internal/router/ext"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 func (h Handlers) CreateTenantLocation(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
 	createLocationArgs := &dto.CreateTenantLocation{
-		TenantID: 2,
+		TenantID: tenantID,
 	}
 	if err := c.ShouldBindJSON(createLocationArgs); err != nil {
-		h.Logger.Debug("payload", zap.Any("createLocationArgs", createLocationArgs))
-		h.Logger.Debug("payload", zap.Any("createLocationArgs, err", err))
-		ce.BadRequestBody(c)
+		ext.Ctx(c).BadRequestBody()
 		return
 	}
 	response, err := h.SS.TenantService.CreateTenantLocation(createLocationArgs)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
+		return
 	}
 	c.JSON(http.StatusCreated, response)
 }
 
 func (h Handlers) UpdateTenantLocation(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
 	updateLocationArgs := &dto.UpdateTenantLocation{
-		TenantID: 2,
+		TenantID: tenantID,
 	}
 	if err := c.ShouldBindJSON(updateLocationArgs); err != nil {
-		ce.BadRequestBody(c)
+		ext.Ctx(c).BadRequestBody()
 		return
 	}
 	response, err := h.SS.TenantService.UpdateTenantLocation(updateLocationArgs)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusOK, response)
 }
 
 func (h Handlers) GetTenantLocation(c *gin.Context) {
-	var params struct {
-		LocationId uint `uri:"LocationID" binding:"required"`
-	}
-	if err := c.ShouldBindUri(&params); err != nil {
-		ce.BadRequestParams(c)
+	tenantID := ext.Ctx(c).TenantID()
+	idsParam := c.Query("ids")
+	if idsParam == "" {
+		ext.Ctx(c).BadRequestParams()
 		return
 	}
-	response, err := h.SS.TenantService.GetTenantLocation(params.LocationId, uint(2))
+	locIDs := strings.Split(idsParam, ",")
+	first, _ := strconv.Atoi(locIDs[0])
+	response, err := h.SS.TenantService.GetTenantLocation(uint(first), tenantID)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusOK, response)
 }
 
 func (h Handlers) GetAllTenantLocations(c *gin.Context) {
-	response, err := h.SS.TenantService.GetTenantLocations(uint(2))
+	tenantID := ext.Ctx(c).TenantID()
+	response, err := h.SS.TenantService.GetTenantLocations(tenantID)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusOK, response)

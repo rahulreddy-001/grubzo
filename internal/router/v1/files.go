@@ -3,8 +3,8 @@ package v1
 import (
 	"fmt"
 	"grubzo/internal/models/entity"
+	"grubzo/internal/router/ext"
 	"grubzo/internal/router/utils"
-	"grubzo/internal/utils/ce"
 	"io"
 	"net/http"
 
@@ -13,21 +13,22 @@ import (
 )
 
 func (h Handlers) FileUpload(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
 	form, err := c.MultipartForm()
 	if err != nil {
-		ce.BadRequestBody(c)
+		ext.Ctx(c).BadRequestBody()
 	}
 	files := form.File["files"]
 	filesMeta := []map[string]any{}
 	for idx, f := range files {
-		args, err := utils.BuildFileSaveArgs(f, 2, nil, entity.O_TYPE_ITEM, idx+1)
+		args, err := utils.BuildFileSaveArgs(f, tenantID, nil, entity.O_TYPE_ITEM, idx+1)
 		if err != nil {
-			ce.RespondWithError(c, err)
+			ext.Ctx(c).RespondWithError(err)
 			return
 		}
 		fileMeta, err := h.SS.FileManager.Save(args)
 		if err != nil {
-			ce.RespondWithError(c, err)
+			ext.Ctx(c).RespondWithError(err)
 			return
 		}
 		filesMeta = append(filesMeta, fileMeta.JSON())
@@ -40,26 +41,27 @@ func (h Handlers) FileUpload(c *gin.Context) {
 }
 
 func (h Handlers) GetFileByID(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
 	var params struct {
 		ID string `uri:"id" binding:"required"`
 	}
 	if err := c.ShouldBindUri(&params); err != nil {
-		ce.BadRequestParams(c)
+		ext.Ctx(c).BadRequestParams()
 		return
 	}
 	fileID, err := uuid.FromString(params.ID)
 	if err != nil {
-		ce.BadRequestParams(c)
+		ext.Ctx(c).BadRequestParams()
 		return
 	}
-	fileMeta, err := h.SS.FileManager.Get(fileID, 2)
+	fileMeta, err := h.SS.FileManager.Get(fileID, tenantID)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	f, err := fileMeta.Open()
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	defer f.Close()
@@ -69,7 +71,7 @@ func (h Handlers) GetFileByID(c *gin.Context) {
 	c.Header("Content-Length", fmt.Sprintf("%d", fileMeta.GetFileSize()))
 
 	if _, err := io.Copy(c.Writer, f); err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 }

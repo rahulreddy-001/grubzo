@@ -1,24 +1,22 @@
 package dto
 
-import "grubzo/internal/models/entity"
-
 type CreateTenantUser struct {
-	TenantID   uint                   `json:"TenantID" binding:"required"`
-	Email      string                 `json:"Email" binding:"required"`
-	Password   string                 `json:"Password" binding:"required"`
-	Name       string                 `json:"Name" binding:"required"`
-	Role       *entity.TenantUserRole `json:"Role" binding:"required"`
-	LocationID *uint                  `json:"LocationID" binding:"required"`
+	TenantID   uint     `json:"TenantID" binding:"required"`
+	Email      string   `json:"Email" binding:"required"`
+	Password   string   `json:"Password"`
+	Name       string   `json:"Name" binding:"required"`
+	Roles      []string `json:"Roles" binding:"required"`
+	LocationID uint     `json:"LocationID" binding:"required"`
 }
 
 type UpdateTenantUser struct {
-	TenantID   uint                   `json:"TenantID" binding:"required"`
-	ID         uint                   `json:"ID" binding:"required"`
-	Email      *string                `json:"Email"`
-	Password   *string                `json:"Password"`
-	Name       *string                `json:"Name"`
-	Role       *entity.TenantUserRole `json:"Role"`
-	LocationID *uint                  `json:"LocationID"`
+	TenantID   uint     `json:"TenantID" binding:"required"`
+	ID         uint     `json:"ID" binding:"required"`
+	Email      *string  `json:"Email"`
+	Password   *string  `json:"Password"`
+	Name       *string  `json:"Name"`
+	Roles      []string `json:"Roles"`
+	LocationID *uint    `json:"LocationID"`
 }
 
 type CreateTenantUserResponse CommonTenantUserResponse
@@ -36,7 +34,9 @@ type GetTenantUsersResponse struct {
 }
 
 type TenantUserInfo struct {
-	ID    uint   `json:"ID"`
-	Email string `json:"Email"`
-	Name  string `json:"Name"`
+	ID         uint     `json:"ID"`
+	Email      string   `json:"Email"`
+	Name       string   `json:"Name"`
+	Roles      []string `json:"Roles"`
+	LocationID uint     `json:"LocationID"`
 }

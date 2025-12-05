@@ -2,9 +2,9 @@ package router
 
 import (
 	"grubzo/internal/config"
-	"grubzo/internal/middlewares"
 	"grubzo/internal/repository"
 	"grubzo/internal/router/auth"
+	"grubzo/internal/router/middlewares"
 	"grubzo/internal/router/session"
 	v1 "grubzo/internal/router/v1"
 	"grubzo/internal/services"
@@ -13,8 +13,11 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 type Router struct {
@@ -23,8 +26,8 @@ type Router struct {
 	v1     *v1.Handlers
 }
 
-func Setup(logger *zap.Logger, db *gorm.DB, repository *repository.Repository, ss *services.Services, config *config.Config) *gin.Engine {
-	engine := newRouter(logger.Named("router"), db, repository, ss, config)
+func Setup(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repository.Repository, ss *services.Services, config *config.Config) *gin.Engine {
+	engine := newRouter(logger.Named("router"), db, rdb, repository, ss, config)
 
 	engine.router.GET("/health", func(c *gin.Context) {
 		c.String(200, "OK")
@@ -56,8 +59,11 @@ func getReactReverseProxy() gin.HandlerFunc {
 	}
 }
 
-func newRouter(logger *zap.Logger, db *gorm.DB, repository *repository.Repository, ss *services.Services, config *config.Config) *Router {
+func newRouter(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repository.Repository, ss *services.Services, config *config.Config) *Router {
 	sessionStore := session.NewMemorySessionStore()
+	if config.SessionStorage == "redis" {
+		sessionStore = session.NewRedisSessionStore(rdb)
+	}
 	isDevMode := config.DevMode
 
 	r := gin.New()
@@ -66,6 +72,7 @@ func newRouter(logger *zap.Logger, db *gorm.DB, repository *repository.Repositor
 	}
 	r.Use(middlewares.RecoverPanic(logger.Named("painc_log")))
 	r.Use(middlewares.AccessLogging(logger.Named("access_log"), isDevMode))
+	r.Use(otelgin.Middleware("grubzo_gin"))
 
 	authHandler := &auth.Handlers{
 		Db:           db,

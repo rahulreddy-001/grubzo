@@ -2,55 +2,69 @@ package v1
 
 import (
 	"grubzo/internal/models/dto"
-	"grubzo/internal/utils/ce"
+	"grubzo/internal/router/ext"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (h Handlers) CreateUser(c *gin.Context) {
+	/*
+		actionCreateTenant := action.CreateTenant{}
+		if validationResult := actionCreateTenant.Validate(c); !validationResult.isValid {
+			c.SendResult(validationResult)
+			return
+		}
+		
+		result := h.SS.UserService.CreateUser(actionCreateTenant)
+		c.SendResponse(result)
+
+	*/
+	tenantID := ext.Ctx(c).TenantID()
 	createUserDTO := &dto.CreateUser{
-		TenantID: 2,
+		TenantID: tenantID,
 	}
 	if err := c.ShouldBindBodyWithJSON(createUserDTO); err != nil {
-		ce.BadRequestBody(c)
+		ext.Ctx(c).BadRequestBody()
 		return
 	}
 	response, err := h.SS.UserService.CreateUser(createUserDTO)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusCreated, response)
 }
 
 func (h Handlers) UpdateUser(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
 	updateUserDTO := &dto.UpdateUser{
-		TenantID: 2,
+		TenantID: tenantID,
 	}
 	if err := c.ShouldBindBodyWithJSON(updateUserDTO); err != nil {
-		ce.BadRequestBody(c)
+		ext.Ctx(c).BadRequestBody()
 		return
 	}
 	response, err := h.SS.UserService.UpdateUser(updateUserDTO)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusCreated, response)
 }
 
 func (h Handlers) GetUser(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
 	var params struct {
 		UserID uint `json:"UserID" binding:"required"`
 	}
 	if err := c.ShouldBindUri(&params); err != nil {
-		ce.BadRequestParams(c)
+		ext.Ctx(c).BadRequestParams()
 		return
 	}
-	response, err := h.SS.UserService.GetUser(params.UserID, uint(2))
+	response, err := h.SS.UserService.GetUser(params.UserID, tenantID)
 	if err != nil {
-		ce.RespondWithError(c, err)
+		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusOK, response)

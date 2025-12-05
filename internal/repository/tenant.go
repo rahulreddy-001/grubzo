@@ -5,7 +5,7 @@ import (
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
-	"grubzo/internal/utils/ce"
+	"grubzo/internal/router/ext"
 
 	"gorm.io/gorm"
 )
@@ -30,10 +30,10 @@ func tenantValidator(tenant *entity.Tenant, db *gorm.DB) error {
 	}
 	for _, e := range existing {
 		if e.Code == tenant.Code {
-			return ce.New("tenant code must be unique")
+			return ext.Error("tenant code must be unique")
 		}
 		if e.Name == tenant.Name {
-			return ce.New("tenant name must be unique")
+			return ext.Error("tenant name must be unique")
 		}
 	}
 	return nil
@@ -71,7 +71,7 @@ func (r *Repository) GetTenant(q *query.TenantQuery) (*entity.Tenant, error) {
 
 	if err := sess.First(tenant).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ce.New("Tenant not found")
+			return nil, ext.Error("Tenant not found")
 		}
 		return nil, err
 	}

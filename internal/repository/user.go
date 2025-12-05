@@ -5,7 +5,7 @@ import (
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
-	"grubzo/internal/utils/ce"
+	"grubzo/internal/router/ext"
 	"grubzo/internal/utils/random"
 
 	"gorm.io/gorm"
@@ -36,7 +36,7 @@ func validateUser(usr *entity.User, db *gorm.DB) error {
 	}
 	sess.Count(&count)
 	if count > 0 {
-		return ce.New("User with same email already exists")
+		return ext.Error("User with same email already exists")
 	}
 	return nil
 }
@@ -110,7 +110,7 @@ func (r *Repository) FindUser(filter *query.UserQuery) (*entity.User, error) {
 
 	if err := sess.First(user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ce.New(UserNotFound)
+			return nil, ext.Error(UserNotFound)
 		}
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (r *Repository) FindAllUsers(filter *query.UserQuery) ([]*entity.User, erro
 
 	if err := sess.Find(&users).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ce.New("User with provided details not found")
+			return nil, ext.Error("User with provided details not found")
 		}
 		return nil, err
 	}

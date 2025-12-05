@@ -4,7 +4,7 @@ import (
 	"errors"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
-	"grubzo/internal/utils/ce"
+	"grubzo/internal/router/ext"
 
 	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
@@ -32,7 +32,7 @@ func (r *Repository) GetFile(id uuid.UUID, tenantID uint) (*entity.FileMeta, err
 	sess := r.db.Session(&gorm.Session{}).Model(entity.FileMeta{})
 	if err := sess.Where("tenant_id = ? AND id = ?", tenantID, id).First(&fileMeta).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ce.New("File data not found")
+			return nil, ext.Error("File data not found")
 		}
 	}
 	return fileMeta, nil
