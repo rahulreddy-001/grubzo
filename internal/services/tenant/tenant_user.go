@@ -76,3 +76,22 @@ func (ts *tenantServiceImpl) GetTenantUsers(tenantID uint) (*dto.GetTenantUsersR
 	}
 	return response, nil
 }
+
+func (ts *tenantServiceImpl) FetchTenantUsers(query *query.TenantUserQuery) (*dto.GetTenantUsersResponse, error) {
+	users, err := ts.repository.FindAllTenantUsers(query)
+	if err != nil {
+		return nil, err
+	}
+	usersInfo := make([]dto.TenantUserInfo, len(users))
+	for i, user := range users {
+		if copier.Copy(&usersInfo[i], user) != nil {
+			ts.logger.Error("[copier.Copy] failed to copy user to usersInfo[i]", zap.Any("user", user), zap.Any("userInfo", usersInfo[i]))
+		}
+
+	}
+	response := &dto.GetTenantUsersResponse{
+		Message: "Users fetched successfully",
+		Users:   usersInfo,
+	}
+	return response, nil
+}

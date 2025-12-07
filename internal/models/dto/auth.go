@@ -9,6 +9,7 @@ type MeResponse struct {
 	ID           uint                    `json:"ID"`
 	Name         string                  `json:"Name"`
 	Email        string                  `json:"Email"`
-	Location     TenantLocation      `json:"Location"`
+	Location     TenantLocation          `json:"Location"`
+	Roles        []string                `json:"Roles"`
 	Permisssions []permission.Permission `json:"Permisssions"`
 }

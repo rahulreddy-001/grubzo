@@ -62,8 +62,6 @@ const ModifyEmployee: React.FC<{
     if (!form.Name?.trim()) e.Name = "Employee name is required.";
     if (!form.Email?.trim()) e.Email = "Email is required.";
     if (!form.Roles || form.Roles.length === 0) e.Roles = "Roles are required.";
-    if (!form.LocationID || form.LocationID === 0)
-      e.LocationID = "Location is required.";
 
     return e;
   }, [form]);
@@ -152,26 +150,6 @@ const ModifyEmployee: React.FC<{
               setErrors((e) => ({ ...e, Email: "" }));
             }}
             error={errors.Email}
-            fullWidth
-          />
-        </Box>
-
-        <Box>
-          <CSelect
-            label="Employee Location"
-            value={form.LocationID?.toString() ?? ""}
-            placeholder="Select employee location"
-            onChange={(val) => {
-              handleChange("LocationID", Number(val));
-              setErrors((e) => ({ ...e, LocationID: "" }));
-            }}
-            options={
-              Locations?.map((loc) => ({
-                value: loc.ID.toString(),
-                label: `${loc.Address}, ${loc.City}, ${loc.Country} (${loc.Code})`,
-              })) ?? []
-            }
-            error={errors.LocationID}
             fullWidth
           />
         </Box>

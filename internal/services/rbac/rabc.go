@@ -121,7 +121,7 @@ func (r *RBAC) GetGrantedPermissionsForRoles(tenantID uint, roleNames []string) 
 	perms := []permission.Permission{}
 	for _, roleName := range roleNames {
 
-		if roleName == role.Admin || roleName == "admin" {
+		if roleName == role.Admin {
 			return permission.List
 		}
 

@@ -107,6 +107,7 @@ func (a *authServiceImpl) GetMeInfo(c context.Context, userType string, userID, 
 		me.Email = user.Email
 		me.Name = user.Name
 		me.Permisssions = permissions
+		me.Roles = user.Roles
 		return me, nil
 	}
 	return nil, nil

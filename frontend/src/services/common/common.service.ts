@@ -8,7 +8,7 @@ import type {
   RBACResponse,
   Location,
 } from "../../types/common";
-import store from "../store";
+import store, { type RootState } from "../store";
 
 import {
   fetchRBACInfo,
@@ -29,6 +29,7 @@ import {
   createEmployee,
   updateEmployee,
 } from "./employee.slice";
+import type { Permission } from "../../types/rbac";
 
 const CommonService = {
   async fetchRBACInfo(): Promise<void> {
@@ -43,9 +44,8 @@ const CommonService = {
     return store.dispatch(createRole(body)).unwrap();
   },
 
-  async setUserLocation(LocationID: number) {
-    await setUserLocation(LocationID);
-    location.reload();
+  async setUserLocation(LocationID: number): Promise<LocationResponse> {
+    return await setUserLocation(LocationID);
   },
 
   async fetchLocations(): Promise<void> {
@@ -70,6 +70,16 @@ const CommonService = {
 
   async updateEmployee(body: Employee): Promise<EmployeeResponse> {
     return store.dispatch(updateEmployee(body)).unwrap();
+  },
+
+  hasAccessTo(perm: Permission): boolean {
+    let hasAccess =
+      store.getState().auth.user?.Permisssions?.includes(perm) || false;
+    return hasAccess;
+  },
+
+  isAdmin(): boolean {
+    return store.getState().auth.user?.Roles?.includes("admin") || false;
   },
 
   async uploadWithProgress(

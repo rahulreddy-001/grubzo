@@ -13,10 +13,17 @@ const LOCATION_CREATE = `/api/v1/location/create`;
 const LOCATION_UPDATE = `/api/v1/location/update`;
 const SET_USER_LOCATION = `/auth/v1/me/location`;
 
-export const setUserLocation = async function (LocationID: number) {
-  await axios.put(SET_USER_LOCATION, {
-    LocationID,
-  });
+export const setUserLocation = async function (
+  LocationID: number
+): Promise<LocationResponse> {
+  try {
+    const response = await axios.put<LocationResponse>(SET_USER_LOCATION, {
+      LocationID,
+    });
+    return response.data;
+  } catch (error) {
+    return handleApiError<ErrorResponse>(error);
+  }
 };
 
 export const fetchLocations = createAsyncThunk<

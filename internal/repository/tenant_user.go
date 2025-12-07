@@ -151,6 +151,9 @@ func (r *Repository) FindAllTenantUsers(q *query.TenantUserQuery) ([]*entity.Ten
 	if len(q.Roles) != 0 {
 		sess = sess.Where("role IN ?", pq.StringArray(q.Roles))
 	}
+	if q.LocationID != nil {
+		sess = sess.Where("location_id = ?", q.LocationID)
+	}
 
 	if err := sess.Find(&tenantUsers).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

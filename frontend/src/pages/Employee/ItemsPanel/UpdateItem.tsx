@@ -6,7 +6,6 @@ import CButton from "../../../components/common/CButton";
 import CUpload from "../../../components/common/CUpload";
 import CSelect from "../../../components/common/CSelect";
 import { Box, Flex, Text, TextArea } from "@radix-ui/themes";
-
 import {
   FoodCategoryOptions,
   ItemStatusOptions,
@@ -79,7 +78,6 @@ const ModifyItem: React.FC<{
     if (!form.Name?.trim()) e.Name = "Item name is required.";
     if (!form.Price || form.Price <= 0) e.Price = "Enter a valid price.";
     if (!form.Category?.trim()) e.Category = "Category is required.";
-    if (!form.LocationID) e.LocationID = "Location is required.";
 
     return e;
   }, [form]);
@@ -181,26 +179,6 @@ const ModifyItem: React.FC<{
             options={FoodCategoryOptions}
             onChange={(v) => handleChange("FoodType", v as FoodCategoryType)}
             placeholder="Select food type"
-          />
-        </Box>
-
-        <Box>
-          <CSelect
-            label="Location"
-            value={form.LocationID?.toString() ?? ""}
-            placeholder="Select item location"
-            onChange={(val) => {
-              handleChange("LocationID", Number(val));
-              setErrors((e) => ({ ...e, LocationID: "" }));
-            }}
-            options={
-              Locations?.map((loc) => ({
-                value: loc.ID.toString(),
-                label: `${loc.Address}, ${loc.City}, ${loc.Country} (${loc.Code})`,
-              })) ?? []
-            }
-            error={errors.LocationID}
-            fullWidth
           />
         </Box>
 

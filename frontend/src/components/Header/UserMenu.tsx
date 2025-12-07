@@ -13,14 +13,18 @@ import {
 } from "@radix-ui/themes";
 import CommonService from "../../services/common/common.service";
 import { MapPin } from "lucide-react";
+import { PERMISSIONS } from "../../types/rbac.d";
+import { useErrorHandler } from "../../hooks/useErrorHandler";
 
 const UserMenu = () => {
   const user = useSelector((state: RootState) => state.auth.user);
+  const { showError } = useErrorHandler();
   const locations = useSelector((state: RootState) => state.common.Locations);
   if (locations?.length == 0) {
     CommonService.fetchLocations();
   }
   let navigate = useNavigate();
+
   let { refreshUser } = useAuth();
   const handleLogout = async () => {
     try {
@@ -29,6 +33,15 @@ const UserMenu = () => {
       await navigate("/");
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleLocationChange = async (locaitonID: number) => {
+    try {
+      await CommonService.setUserLocation(locaitonID);
+      location.reload();
+    } catch (err) {
+      showError(err);
     }
   };
 
@@ -91,12 +104,14 @@ const UserMenu = () => {
         <DropdownMenu.Content align="end" sideOffset={8}>
           <DropdownMenu.Item onClick={handleLogout}>Log out</DropdownMenu.Item>
           <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger>Change Location</DropdownMenu.SubTrigger>
+            {CommonService.hasAccessTo(PERMISSIONS.LOCATION) && (
+              <DropdownMenu.SubTrigger>Change Location</DropdownMenu.SubTrigger>
+            )}
             <DropdownMenu.SubContent>
               {locations?.map((location) => (
                 <DropdownMenu.Item
                   key={location.ID}
-                  onClick={() => CommonService.setUserLocation(location.ID)}
+                  onClick={() => handleLocationChange(location.ID)}
                 >
                   {`${location.Address}, ${location.City} (${location.Code})`}
                 </DropdownMenu.Item>

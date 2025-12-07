@@ -4,7 +4,8 @@ type TenantUserQuery struct {
 	TenantID    uint
 	ID          *uint
 	Email       *string
-	Roles        []string
+	Roles       []string
+	LocationID  *uint
 	WithPreload bool
 }
 
@@ -26,6 +27,11 @@ func (f *TenantUserQuery) WithEmail(email string) *TenantUserQuery {
 
 func (f *TenantUserQuery) WithRole(roles []string) *TenantUserQuery {
 	f.Roles = roles
+	return f
+}
+
+func (f *TenantUserQuery) WithLocationID(id uint) *TenantUserQuery {
+	f.LocationID = &id
 	return f
 }
 func (f *TenantUserQuery) WithPreloads() *TenantUserQuery {

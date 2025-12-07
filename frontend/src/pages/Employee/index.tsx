@@ -18,43 +18,44 @@ import RBACPanel from "./RBACPanel";
 import LocationPanel from "./LocationPanel";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../services/store";
+import { PERMISSIONS } from "../../types/rbac.d";
 
 const TAB_CONFIG = [
   {
     label: "Dashboard",
     icon: Home,
     component: DashboardPanel,
-    permissions: ["dashboard"],
+    permissions: [PERMISSIONS.DASHBOARD],
   },
   {
     label: "Orders",
     icon: ClipboardList,
     component: OrdersPanel,
-    permissions: ["orders"],
+    permissions: [PERMISSIONS.ORDERS],
   },
   {
     label: "Items",
     icon: UtensilsCrossed,
     component: ItemsPanel,
-    permissions: ["items"],
+    permissions: [PERMISSIONS.ITEMS],
   },
   {
     label: "Employees",
     icon: Users,
     component: EmployeesPanel,
-    permissions: ["employee"],
+    permissions: [PERMISSIONS.EMPLOYEE],
   },
   {
     label: "Location",
     icon: MapPin,
     component: LocationPanel,
-    permissions: ["location"],
+    permissions: [PERMISSIONS.LOCATION],
   },
   {
     label: "Access Control",
     icon: UserLock,
     component: RBACPanel,
-    permissions: ["rbac"],
+    permissions: [PERMISSIONS.RBAC],
   },
 ];
 

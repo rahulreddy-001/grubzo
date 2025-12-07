@@ -27,6 +27,7 @@ type TenantService interface {
 	UpdateTenantUser(dto *dto.UpdateTenantUser) (*dto.UpdateTenantUserResponse, error)
 	GetTenantUser(UserID uint, tenantID uint) (*dto.GetTenantUserResponse, error)
 	GetTenantUsers(tenantID uint) (*dto.GetTenantUsersResponse, error)
+	FetchTenantUsers(query *query.TenantUserQuery) (*dto.GetTenantUsersResponse, error)
 }
 
 type tenantServiceImpl struct {

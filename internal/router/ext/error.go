@@ -109,3 +109,9 @@ func (c *Context) Unauthorized() {
 		"error": "unauthorized",
 	})
 }
+
+func (c *Context) BadRequestWith(err string) {
+	c.ctx.JSON(http.StatusBadRequest, gin.H{
+		"error": err,
+	})
+}

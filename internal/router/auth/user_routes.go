@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"grubzo/internal/router/ext"
+	"grubzo/internal/services/rbac/permission"
 
 	"github.com/gin-gonic/gin"
 )
@@ -51,6 +52,10 @@ func (h *Handlers) SetUserLocation(c *gin.Context) {
 	userSession, err := sess.GetUserSession()
 	if err != nil {
 		ext.Ctx(c).Unauthorized()
+		return
+	}
+	if !h.hasAccessTo(c, permission.Location) {
+		ext.Ctx(c).BadRequestWith("You do not have permission to change the location")
 		return
 	}
 	userSession.Location = params.LocationID

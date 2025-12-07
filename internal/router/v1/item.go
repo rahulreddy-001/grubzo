@@ -33,6 +33,7 @@ func (h Handlers) CreateMenuItem(c *gin.Context) {
 	args := dto.CreateMenuItem{
 		TenantID: tenantID,
 	}
+	args.LocationID = ext.Ctx(c).LocationID()
 	if err := c.ShouldBindJSON(&args); err != nil {
 		ext.Ctx(c).BadRequestBody()
 		return
@@ -54,6 +55,7 @@ func (h Handlers) UpdateMenuItem(c *gin.Context) {
 	args := dto.UpdateMenuItem{
 		TenantID: tenantID,
 	}
+	args.LocationID = ext.Ctx(c).LocationID()
 	if err := c.ShouldBindJSON(&args); err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -72,6 +74,7 @@ func (h Handlers) UpdateMenuItem(c *gin.Context) {
 func (h Handlers) GetAllMenuItems(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
 	args := query.NewMenuItemQuery(tenantID).WithPreload()
+	args.WithLocationID(ext.Ctx(c).LocationID())
 	response, err := h.SS.StoreService.GetItems(args)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
@@ -90,6 +93,7 @@ func (h Handlers) GetMenuItem(c *gin.Context) {
 		return
 	}
 	args := query.NewMenuItemQuery(tenantID).WithID(params.ItemID).WithPreload()
+	args.WithLocationID(ext.Ctx(c).LocationID())
 	response, err := h.SS.StoreService.GetItem(args)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)

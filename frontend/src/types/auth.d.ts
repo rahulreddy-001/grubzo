@@ -4,6 +4,7 @@ export interface User {
   Type: string;
   Name: string;
   Email: string;
+  Roles: string[] | null;
   Permisssions: string[] | null;
   Location: Location;
   ID: number;
