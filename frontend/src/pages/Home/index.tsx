@@ -1,5 +1,10 @@
+import Items from "./Items";
 function Home() {
-  return <></>;
+  return (
+    <>
+      <Items />
+    </>
+  );
 }
 
 export default Home;

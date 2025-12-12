@@ -1,3 +1,6 @@
+import type { X } from "lucide-react";
+import { z } from "zod";
+
 export type FoodCategoryType = "veg" | "nonveg" | "egg";
 export type ItemStatusValue = "av" | "os" | "ac";
 
@@ -13,29 +16,33 @@ export const ItemStatusOptions = [
   { value: "ac", label: "Archived", color: "gray" },
 ];
 
-export interface Item {
-  ID: number;
-  TenantID: number;
-  LocationID: number;
-  Name: string;
-  Description: string;
-  Price: number;
-  Category: string;
-  FoodType: FoodCategoryType;
-  ItemStatus: ItemStatusValue;
-  CreatedAt: string;
-  UpdatedAt: string;
-  Files: FileInfo[];
-}
+export const ItemSchema = z.object({
+  ID: z.number(),
+  TenantID: z.number(),
+  LocationID: z.number(),
+  Name: z.string(),
+  Description: z.string(),
+  Price: z.number(),
+  Category: z.string(),
+  FoodType: z.enum(["veg", "nonveg", "egg"]),
+  ItemStatus: z.enum(["av", "os", "ac"]),
+  CreatedAt: z.string(),
+  UpdatedAt: z.string(),
+  Files: z.array(z.any()),
+});
+export type Item = z.infer<typeof ItemSchema>;
 
-export interface ModifyItemPayload {
-  ID: number | null;
-  LocationID: number | null;
-  Name: string;
-  Description: string;
-  Price: number;
-  Category: string;
-  FoodType: FoodCategoryType;
-  ItemStatus: ItemStatusValue;
-  FileIDs: string[];
-}
+export const ModifyItemPayloadSchema = z.object({
+  ID: z.number().nullable(),
+  LocationID: z.number().nullable(),
+  Name: z.string().trim().min(1, "Item name is required."),
+  Description: z.string().optional().default(""),
+  Price: z
+    .number({ invalid_type_error: "Enter a valid price." })
+    .positive("Enter a valid price."),
+  Category: z.string().trim().min(1, "Category is required."),
+  FoodType: z.enum(["veg", "nonveg", "egg"]),
+  ItemStatus: z.enum(["av", "os", "ac"]),
+  FileIDs: z.array(z.string()),
+});
+export type ModifyItemPayload = z.infer<typeof ModifyItemPayloadSchema>;

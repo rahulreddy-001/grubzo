@@ -29,11 +29,10 @@ type Item struct {
 }
 
 func (h Handlers) CreateMenuItem(c *gin.Context) {
-	tenantID := ext.Ctx(c).TenantID()
 	args := dto.CreateMenuItem{
-		TenantID: tenantID,
+		TenantID: ext.Ctx(c).TenantID(),
+		LocationID: ext.Ctx(c).LocationID(),
 	}
-	args.LocationID = ext.Ctx(c).LocationID()
 	if err := c.ShouldBindJSON(&args); err != nil {
 		ext.Ctx(c).BadRequestBody()
 		return
@@ -47,7 +46,7 @@ func (h Handlers) CreateMenuItem(c *gin.Context) {
 		ext.Ctx(c).RespondWithError(err)
 		return
 	}
-	c.JSON(http.StatusOK, response)
+	ext.Ctx(c).RespondWithOK(response)
 }
 
 func (h Handlers) UpdateMenuItem(c *gin.Context) {

@@ -1,4 +1,4 @@
-import { Text } from "@radix-ui/themes";
+import { Box, Text } from "@radix-ui/themes";
 import Select, {
   type StylesConfig,
   type GroupBase,
@@ -66,12 +66,16 @@ interface Props {
   options: string[];
   placeholder: string;
   onChange: (values: string[]) => void;
+  label?: string;
+  error?: string;
 }
 export default function CMultiSelect({
   selected,
   options,
   placeholder,
   onChange,
+  label,
+  error,
 }: Props) {
   const optionList = options.map((o) => ({
     value: o,
@@ -80,45 +84,57 @@ export default function CMultiSelect({
   const selectedOptions = optionList.filter((o) => selected.includes(o.value));
 
   return (
-    <Select<OptionType, true, GroupBase<OptionType>>
-      isMulti
-      options={optionList}
-      value={selectedOptions}
-      onChange={(vals) => onChange(vals.map((v) => v.value))}
-      placeholder={<Text>{placeholder}</Text>}
-      closeMenuOnSelect={false}
-      isClearable={false}
-      styles={styles}
-      menuPortalTarget={document.body}
-      menuPosition="absolute"
-      components={{
-        Option: (props) => (
-          <components.Option {...props}>
-            <Text
-              size="1"
+    <Box>
+      {!!label && (
+        <Text size="1" weight="medium">
+          {label}
+        </Text>
+      )}
+      <Select<OptionType, true, GroupBase<OptionType>>
+        isMulti
+        options={optionList}
+        value={selectedOptions}
+        onChange={(vals) => onChange(vals.map((v) => v.value))}
+        placeholder={<Text>{placeholder}</Text>}
+        closeMenuOnSelect={false}
+        isClearable={false}
+        styles={styles}
+        menuPortalTarget={document.body}
+        menuPosition="absolute"
+        components={{
+          Option: (props) => (
+            <components.Option {...props}>
+              <Text
+                size="1"
+                style={{
+                  fontFamily:
+                    "var(--font-system, system-ui, -apple-system, 'Segoe UI', Roboto)",
+                }}
+              >
+                {props.label}
+              </Text>
+            </components.Option>
+          ),
+          MultiValueRemove: (props) => (
+            <div
+              {...props.innerProps}
               style={{
-                fontFamily:
-                  "var(--font-system, system-ui, -apple-system, 'Segoe UI', Roboto)",
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+                paddingLeft: "2px",
               }}
             >
-              {props.label}
-            </Text>
-          </components.Option>
-        ),
-        MultiValueRemove: (props) => (
-          <div
-            {...props.innerProps}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              cursor: "pointer",
-              paddingLeft: "2px",
-            }}
-          >
-            <X size={12} strokeWidth={2} />
-          </div>
-        ),
-      }}
-    />
+              <X size={12} strokeWidth={2} />
+            </div>
+          ),
+        }}
+      />
+      {error && (
+        <Text size="1" color="red" mt="1">
+          {error}
+        </Text>
+      )}
+    </Box>
   );
 }

@@ -10,14 +10,12 @@ import (
 )
 
 func (h *Handlers) Me(c *gin.Context) {
-	rctx := c.Request.Context()
 	userSession, err := ext.Ctx(c).GetUserSession()
 	if err != nil {
 		ext.Ctx(c).Unauthorized()
 		return
 	}
 	response, err := h.SS.AuthService.GetMeInfo(
-		rctx,
 		userSession.Type,
 		userSession.UserID,
 		userSession.TenantID,
@@ -27,13 +25,7 @@ func (h *Handlers) Me(c *gin.Context) {
 		ext.Ctx(c).RespondWithError(err)
 		return
 	}
-	if response == nil {
-		h.SessionStore.RevokeSession(c)
-		ext.Ctx(c).Unauthorized()
-		return
-	}
-
-	c.JSON(http.StatusOK, response)
+	ext.Ctx(c).RespondWithOK(response)
 }
 
 func (h *Handlers) SetUserLocation(c *gin.Context) {
@@ -54,7 +46,7 @@ func (h *Handlers) SetUserLocation(c *gin.Context) {
 		ext.Ctx(c).Unauthorized()
 		return
 	}
-	if !h.hasAccessTo(c, permission.Location) {
+	if !h.hasAccessTo(c, permission.Location) && !h.isUser(c) {
 		ext.Ctx(c).BadRequestWith("You do not have permission to change the location")
 		return
 	}
@@ -65,6 +57,6 @@ func (h *Handlers) SetUserLocation(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"Message": "User location updated successfully.",
+		"Message": "Location updated successfully.",
 	})
 }

@@ -5,7 +5,6 @@ interface CInputProps {
   value?: string | number;
   onChange: (value: string) => void;
   placeholder?: string;
-  type?: string;
   startIcon?: React.ReactNode;
   endIcon?: React.ReactNode;
   fullWidth?: boolean;
@@ -18,7 +17,6 @@ const CInput: React.FC<CInputProps> = ({
   value = "",
   onChange,
   placeholder,
-  type = "text",
   startIcon,
   endIcon,
   fullWidth = false,

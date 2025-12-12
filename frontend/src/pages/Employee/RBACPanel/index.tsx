@@ -7,22 +7,24 @@ import CButton from "../../../components/common/CButton";
 import CMultiSelect from "../../../components/common/CMultiSelect";
 import { useErrorHandler } from "../../../hooks/useErrorHandler";
 import { Box, Flex, Text } from "@radix-ui/themes";
-import CreateRole from "./CreateRole";
+import CreateRoleForm from "./CreateRoleForm";
 import CommonService from "../../../services/common/common.service";
 
 const RBACPanel: React.FC = () => {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { showSuccess, showError } = useErrorHandler();
+
   const { Grid, Permissions, isLoading } = useSelector(
     (s: RootState) => s.rbac
   );
-  const [grid, setGrid] = useState<
-    { ID: number; Role: string; Permissions: string[] }[]
-  >([]);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const { showSuccess, showError } = useErrorHandler();
 
   React.useEffect(() => {
     CommonService.fetchRBACInfo();
   }, []);
+
+  const [grid, setGrid] = useState<
+    { ID: number; Role: string; Permissions: string[] }[]
+  >([]);
 
   React.useEffect(() => {
     if (Grid) {
@@ -46,8 +48,9 @@ const RBACPanel: React.FC = () => {
   const handleSave = async () => {
     try {
       const invalid = grid.find((r) => r.Permissions.length === 0);
-      if (invalid)
+      if (invalid) {
         return showError(`Role ${invalid.Role} must have permissions.`);
+      }
 
       const original = Grid || {};
       const diff: any[] = [];
@@ -61,12 +64,13 @@ const RBACPanel: React.FC = () => {
       ]);
 
       roles.forEach((role) => {
-        const origArr = Array.isArray(original[role]) ? original[role] : [];
-        const origSet = new Set(origArr);
+        const origSet = new Set(
+          Array.isArray(original[role]) ? original[role] : []
+        );
         const currSet = map[role] || new Set();
 
         const add = [...currSet].filter((p) => !origSet.has(p));
-        const rem = [...origArr].filter((p) => !currSet.has(p));
+        const rem = [...origSet].filter((p) => !currSet.has(p));
 
         if (add.length) diff.push({ Name: role, Permissions: add, Action: 1 });
         if (rem.length) diff.push({ Name: role, Permissions: rem, Action: 0 });
@@ -130,7 +134,7 @@ const RBACPanel: React.FC = () => {
         ]}
       />
 
-      {drawerOpen && <CreateRole close={() => setDrawerOpen(false)} />}
+      {drawerOpen && <CreateRoleForm close={() => setDrawerOpen(false)} />}
     </Box>
   );
 };

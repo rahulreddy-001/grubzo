@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"grubzo/internal/config"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
@@ -17,7 +16,7 @@ import (
 type AuthService interface {
 	BasicUserLogin(email, password string, tenantID uint) (uint, error)
 	BasicEmployeeLogin(email, password string, tenantID uint) (uint, error)
-	GetMeInfo(c context.Context, userType string, userID, tenantID uint, LocationID uint) (*dto.MeResponse, error)
+	GetMeInfo(userType string, userID, tenantID uint, LocationID uint) (*dto.MeResponse, error)
 }
 
 type authServiceImpl struct {
@@ -70,7 +69,7 @@ func (a *authServiceImpl) BasicEmployeeLogin(email, password string, tenantID ui
 	return u.ID, nil
 }
 
-func (a *authServiceImpl) GetMeInfo(c context.Context, userType string, userID, tenantID uint, locationID uint) (*dto.MeResponse, error) {
+func (a *authServiceImpl) GetMeInfo(userType string, userID, tenantID uint, locationID uint) (*dto.MeResponse, error) {
 	me := &dto.MeResponse{
 		Type: userType,
 		ID:   userID,

@@ -1,181 +1,119 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect } from "react";
 import CModel from "../../../components/common/CModel";
 import CInput from "../../../components/common/CInput";
 import CButton from "../../../components/common/CButton";
-import CSelect from "../../../components/common/CSelect";
 import CMultiSelect from "../../../components/common/CMultiSelect";
-import { Box, Flex, Text } from "@radix-ui/themes";
+import { Box, Flex } from "@radix-ui/themes";
 
+import { useFormik } from "formik";
+import { zodToFormik } from "../../../utils/zodToFormik";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../services/store";
-
-import type { Employee } from "../../../types/common";
-import CommonService from "../../../services/common/common.service";
 import { useErrorHandler } from "../../../hooks/useErrorHandler";
 
+import { EmployeeSchema, type Employee } from "../../../types/common.d";
+import CommonService from "../../../services/common/common.service";
+
 const ModifyEmployee: React.FC<{
-  item?: Employee;
+  emp?: Employee;
   cancel: () => void;
-}> = ({ item, cancel }) => {
+}> = ({ emp, cancel }) => {
+  const isUpdate = !!emp;
   const { showError, showSuccess } = useErrorHandler();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { Locations } = useSelector((s: RootState) => s.common);
   const { Roles } = useSelector((s: RootState) => s.rbac);
 
-  const [form, setForm] = useState<Partial<Employee>>({
-    Name: "",
-    Email: "",
-    Roles: [],
-    LocationID: 0,
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
   useEffect(() => {
-    if (item) {
-      setForm({
-        Name: item.Name || "",
-        Email: item.Email || "",
-        Roles: item.Roles || [],
-        LocationID: item.LocationID || 0,
-      });
-    }
-
-    if (Locations?.length == 0) {
-      CommonService.fetchLocations();
-    }
     if (Roles.length == 0) {
       CommonService.fetchRBACInfo();
     }
   }, []);
 
-  const handleChange = useCallback(
-    <K extends keyof Employee>(key: K, value: Employee[K]) => {
-      setForm((prev) => ({ ...prev, [key]: value }));
+  const form = useFormik<Employee>({
+    initialValues: {
+      ID: emp?.ID ?? -1,
+      LocationID: emp?.LocationID ?? -1,
+      Name: emp?.Name ?? "",
+      Email: emp?.Email ?? "",
+      Roles: emp?.Roles || [],
     },
-    []
-  );
-
-  const validate = useCallback(() => {
-    const e: Record<string, string> = {};
-
-    if (!form.Name?.trim()) e.Name = "Employee name is required.";
-    if (!form.Email?.trim()) e.Email = "Email is required.";
-    if (!form.Roles || form.Roles.length === 0) e.Roles = "Roles are required.";
-
-    return e;
-  }, [form]);
-
-  const isEditing = !!item;
-
-  const handleSubmit = async () => {
-    const v = validate();
-    setErrors(v);
-
-    if (Object.keys(v).length > 0) return;
-
-    try {
-      const payload: Employee = {
-        ID: isEditing ? item.ID : 0,
-        Name: form.Name!,
-        Email: form.Email!,
-        Roles: form.Roles!,
-        LocationID: form.LocationID!,
-      };
-
-      let res;
-
-      setIsProcessing(true);
-      if (isEditing) {
-        res = await CommonService.updateEmployee(payload);
-        showSuccess(res.Message || "Employee updated successfully!");
-      } else {
-        res = await CommonService.createEmployee(payload);
-        showSuccess(res.Message || "Employee created successfully!");
+    validate: zodToFormik(EmployeeSchema),
+    onSubmit: async (employee: Employee) => {
+      try {
+        let response;
+        if (isUpdate) {
+          response = await CommonService.updateEmployee(employee);
+        } else {
+          response = await CommonService.createEmployee(employee);
+        }
+        showSuccess(response.Message);
+        cancel();
+        CommonService.fetchEmployees();
+      } catch (err) {
+        showError(err);
       }
-      setIsProcessing(false);
-      cancel();
-      await CommonService.fetchEmployees();
-    } catch (err) {
-      showError(err);
-    }
-  };
+    },
+  });
 
   return (
     <CModel
       open
       size="md"
       onClose={cancel}
-      title={isEditing ? "Update Employee" : "Create Employee"}
+      title={isUpdate ? "Update Employee" : "Create Employee"}
       actions={
         <Flex gap="3">
           <CButton
             label="Cancel"
             variant="soft"
             onClick={cancel}
-            disabled={isProcessing}
+            disabled={form.isSubmitting}
           />
           <CButton
-            label={isEditing ? "Update" : "Add"}
+            label={isUpdate ? "Update" : "Add"}
             variant="solid"
-            onClick={handleSubmit}
-            disabled={!form.Name}
-            processing={isProcessing}
+            onClick={form.submitForm}
+            disabled={form.isSubmitting || !form.isValid || !!form.values.Name}
+            processing={form.isSubmitting}
           />
         </Flex>
       }
     >
-      <Flex direction="column" gap="4">
-        <Box>
-          <CInput
-            label="Employee Name"
-            value={form.Name}
-            placeholder="Enter employee name"
-            onChange={(val) => {
-              handleChange("Name", val);
-              setErrors((e) => ({ ...e, Name: "" }));
-            }}
-            error={errors.Name}
-            fullWidth
-          />
-        </Box>
+      <form onSubmit={form.handleSubmit}>
+        <Flex direction="column" gap="4">
+          <Box>
+            <CInput
+              label="Employee Name"
+              placeholder="Enter employee name"
+              value={form.values.Name}
+              onChange={(val) => form.setFieldValue("Name", val)}
+              error={form.errors.Name}
+              fullWidth
+            />
+          </Box>
 
-        <Box>
-          <CInput
-            label="Employee Email"
-            value={form.Email}
-            placeholder="Enter employee email"
-            onChange={(val) => {
-              handleChange("Email", val);
-              setErrors((e) => ({ ...e, Email: "" }));
-            }}
-            error={errors.Email}
-            fullWidth
-          />
-        </Box>
+          <Box>
+            <CInput
+              label="Employee Email"
+              placeholder="Enter employee email"
+              value={form.values.Email}
+              onChange={(val) => form.setFieldValue("Email", val)}
+              error={form.errors.Email}
+              fullWidth
+            />
+          </Box>
 
-        <Box>
-          <Text size="1" weight="medium">
-            Employee Roles
-          </Text>
-
-          <CMultiSelect
-            selected={form.Roles ?? []}
-            options={Roles}
-            placeholder="Select Roles"
-            onChange={(vals) => {
-              handleChange("Roles", vals);
-              setErrors((e) => ({ ...e, Roles: "" }));
-            }}
-          />
-
-          {errors.Roles && (
-            <Text size="1" color="red" mt="1">
-              {errors.Roles}
-            </Text>
-          )}
-        </Box>
-      </Flex>
+          <Box>
+            <CMultiSelect
+              label="Employee Roles"
+              placeholder="Select Roles"
+              selected={form.values.Roles ?? []}
+              options={Roles}
+              onChange={(vals) => form.setFieldValue("Roles", vals)}
+              error={form.errors.Roles as string}
+            />
+          </Box>
+        </Flex>
+      </form>
     </CModel>
   );
 };

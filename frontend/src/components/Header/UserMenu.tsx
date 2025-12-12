@@ -104,7 +104,7 @@ const UserMenu = () => {
         <DropdownMenu.Content align="end" sideOffset={8}>
           <DropdownMenu.Item onClick={handleLogout}>Log out</DropdownMenu.Item>
           <DropdownMenu.Sub>
-            {CommonService.hasAccessTo(PERMISSIONS.LOCATION) && (
+            {CommonService.locationChangeAccess() && (
               <DropdownMenu.SubTrigger>Change Location</DropdownMenu.SubTrigger>
             )}
             <DropdownMenu.SubContent>

@@ -10,22 +10,27 @@ import { Box, Flex, Text, IconButton } from "@radix-ui/themes";
 
 const LocationPanel: React.FC = () => {
   const { Locations, isLoading } = useSelector((s: RootState) => s.common);
-
-  const [formOpen, setFormOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
-
   useEffect(() => {
     CommonService.fetchLocations();
   }, []);
 
-  const handleCreate = () => {
-    setSelectedLocation(null);
-    setFormOpen(true);
+  const [modelState, setModelState] = useState<{
+    isOpen: boolean;
+    selectedLocation: any | null;
+  }>({ isOpen: false, selectedLocation: null });
+
+  const handleOpen = (row: any) => {
+    setModelState({
+      isOpen: true,
+      selectedLocation: row,
+    });
   };
 
-  const handleEdit = (row: any) => {
-    setSelectedLocation(row);
-    setFormOpen(true);
+  const handleClose = () => {
+    setModelState({
+      isOpen: false,
+      selectedLocation: null,
+    });
   };
 
   return (
@@ -40,7 +45,7 @@ const LocationPanel: React.FC = () => {
           <CButton
             label="Create Location"
             startIcon={<Plus size={16} />}
-            onClick={handleCreate}
+            onClick={handleOpen}
           />
         }
         columns={[
@@ -73,7 +78,7 @@ const LocationPanel: React.FC = () => {
                   variant="ghost"
                   radius="full"
                   style={{ cursor: "pointer", padding: "5px", margin: "1px" }}
-                  onClick={() => handleEdit(row)}
+                  onClick={() => handleOpen(row)}
                 >
                   <Edit size={16} />
                 </IconButton>
@@ -83,10 +88,10 @@ const LocationPanel: React.FC = () => {
         ]}
       />
 
-      {formOpen && (
+      {modelState.isOpen && (
         <LocationForm
-          close={() => setFormOpen(false)}
-          location={selectedLocation}
+          close={() => handleClose()}
+          location={modelState.selectedLocation}
         />
       )}
     </Box>

@@ -29,7 +29,7 @@ import {
   createEmployee,
   updateEmployee,
 } from "./employee.slice";
-import type { Permission } from "../../types/rbac";
+import { PERMISSIONS, type Permission } from "../../types/rbac.d";
 
 const CommonService = {
   async fetchRBACInfo(): Promise<void> {
@@ -70,6 +70,15 @@ const CommonService = {
 
   async updateEmployee(body: Employee): Promise<EmployeeResponse> {
     return store.dispatch(updateEmployee(body)).unwrap();
+  },
+
+  locationChangeAccess() {
+    let hasLocationAccess =
+      store
+        .getState()
+        .auth.user?.Permisssions?.includes(PERMISSIONS.LOCATION) || false;
+    let isUser = store.getState().auth.user?.Type == "user";
+    return hasLocationAccess || isUser;
   },
 
   hasAccessTo(perm: Permission): boolean {

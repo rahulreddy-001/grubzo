@@ -115,3 +115,7 @@ func (c *Context) BadRequestWith(err string) {
 		"error": err,
 	})
 }
+
+func (c *Context) RespondWithOK(obj any) {
+	c.ctx.JSON(http.StatusOK, obj)
+}

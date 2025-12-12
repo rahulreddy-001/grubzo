@@ -21,9 +21,6 @@ const ItemsPanel: React.FC = () => {
 
   useEffect(() => {
     CommonService.fetchEmployees();
-    setTimeout(() => {
-      console.log(employees);
-    }, 2000);
   }, []);
 
   const handleAdd = () => {
@@ -115,7 +112,7 @@ const ItemsPanel: React.FC = () => {
       />
 
       {drawerOpen && (
-        <EmployeeForm item={editItem} cancel={() => setDrawerOpen(false)} />
+        <EmployeeForm emp={editItem} cancel={() => setDrawerOpen(false)} />
       )}
     </Box>
   );

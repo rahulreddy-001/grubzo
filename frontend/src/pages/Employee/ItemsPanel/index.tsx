@@ -6,10 +6,14 @@ import ItemsService from "../../../services/item/item.service";
 
 import CTable from "../../../components/common/CTable";
 import CButton from "../../../components/common/CButton";
-import ModifyItem from "./UpdateItem";
+import ItemForm from "./ItemForm";
 import { Box, Flex, Text, Avatar, Badge, IconButton } from "@radix-ui/themes";
 import { Plus, Edit, Hamburger } from "lucide-react";
-import { FoodCategoryOptions, ItemStatusOptions } from "../../../types/item.d";
+import {
+  FoodCategoryOptions,
+  ItemStatusOptions,
+  type ModifyItemPayload,
+} from "../../../types/item.d";
 
 const ItemsPanel: React.FC = () => {
   const { items, isLoading } = useSelector((s: RootState) => s.item);
@@ -32,11 +36,11 @@ const ItemsPanel: React.FC = () => {
     setDrawerOpen(true);
   };
 
-  const handleSave = async (data: any) => {
+  const handleSave = async (data: ModifyItemPayload) => {
     if (editItem) {
-      await ItemsService.update({ ID: editItem.ID, ...data });
+      await ItemsService.update(data);
     } else {
-      await ItemsService.create({ ...data });
+      await ItemsService.create(data);
     }
     setDrawerOpen(false);
     await ItemsService.getAll();
@@ -154,7 +158,7 @@ const ItemsPanel: React.FC = () => {
       />
 
       {drawerOpen && (
-        <ModifyItem
+        <ItemForm
           item={editItem}
           onSave={handleSave}
           onCancel={() => setDrawerOpen(false)}

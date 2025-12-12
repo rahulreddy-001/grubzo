@@ -22,7 +22,6 @@ func (r *RBAC) UpdateUserRole(payload *dto.UpdateRoles) error {
 				return err
 			}
 		}
-		r.Reload()
 	}
-	return nil
+	return r.Reload()
 }
