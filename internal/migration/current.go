@@ -22,5 +22,8 @@ func AllTables() []interface{} {
 		&entity.FileMeta{},
 		&entity.Item{},
 		&entity.UserRole{},
+		&entity.WalletRecharge{},
+		&entity.WalletTransaction{},
+		&entity.Order{},
 	}
 }

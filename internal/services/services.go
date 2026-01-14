@@ -7,6 +7,8 @@ import (
 	"grubzo/internal/repository"
 	"grubzo/internal/services/auth"
 	"grubzo/internal/services/file"
+	"grubzo/internal/services/order"
+	"grubzo/internal/services/payment"
 	"grubzo/internal/services/rbac"
 	"grubzo/internal/services/store"
 	"grubzo/internal/services/tenant"
@@ -18,12 +20,16 @@ import (
 )
 
 type Services struct {
-	FileManager   file.Manager
-	UserService   user.UserService
-	TenantService tenant.TenantService
-	StoreService  store.StoreService
-	AuthService   auth.AuthService
-	RBAC          *rbac.RBAC
+	FileManager     file.Manager
+	UserService     user.UserService
+	TenantService   tenant.TenantService
+	StoreService    store.StoreService
+	AuthService     auth.AuthService
+	CartService     order.CartService
+	RBAC            *rbac.RBAC
+	RazorpayService payment.RazorpayService
+	WalletService   order.WalletService
+	OrderService    order.OrderService
 }
 
 func Setup(
@@ -72,6 +78,30 @@ func Setup(
 		errs = append(errs, fmt.Errorf("InitAuthService: %w", err))
 	} else {
 		services.AuthService = as
+	}
+
+	if cs, err := order.InitCartService(repository, services.StoreService, config, logger); err != nil {
+		errs = append(errs, fmt.Errorf("InitCartService: %w", err))
+	} else {
+		services.CartService = cs
+	}
+
+	if ps, err := payment.InitRazorpayService(repository, config, logger); err != nil {
+		errs = append(errs, fmt.Errorf("InitPaymentService: %w", err))
+	} else {
+		services.RazorpayService = ps
+	}
+
+	if ws, err := order.InitWalletService(repository, services.RazorpayService, config, logger); err != nil {
+		errs = append(errs, fmt.Errorf("InitWalletService: %w", err))
+	} else {
+		services.WalletService = ws
+	}
+
+	if os, err := order.InitOrderService(repository, services.WalletService, services.CartService, services.StoreService, config, logger); err != nil {
+		errs = append(errs, fmt.Errorf("InitOrderService: %w", err))
+	} else {
+		services.OrderService = os
 	}
 
 	if len(errs) > 0 {

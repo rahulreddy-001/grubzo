@@ -59,6 +59,19 @@ services:
     networks:
       - common
 
+  loki:
+    image: grafana/loki:latest
+    container_name: loki_container
+    restart: unless-stopped
+    ports:
+      - "3200:3100"
+    volumes:
+      - /home/rahul.a/personal/dev/data/loki:/loki
+      - ./loki.yaml:/etc/loki/local-config.yaml
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    networks:
+      - common
+
   grafana:
     image: grafana/grafana:11.2.0
     container_name: grafana_container
@@ -73,15 +86,3 @@ services:
       - /home/rahul.a/personal/dev/data/grafana:/var/lib/grafana
     networks:
       - common
-  # otelgoagent:
-  #   image: otel/autoinstrumentation-go:v0.23.0
-  #   container_name: otelgoagent_container
-  #   restart: unless-stopped
-  #   pid: host              
-  #   network_mode: host     
-  #   environment:
-  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-  #     - OTEL_GO_AUTO_TARGET_EXE=/home/rahul.a/personal/dev/go/grubzo/grubzo
-  #     - OTEL_PROPAGATORS=tracecontext,baggage
-  #     - OTEL_SERVICE_NAME=grubzo_main
-  #   privileged: true        

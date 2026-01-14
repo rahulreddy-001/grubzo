@@ -57,10 +57,9 @@ const LocationForm: React.FC<LocationFormProps> = ({ close, location }) => {
       size="md"
       actions={
         <Flex gap="3">
-          <CButton label="Cancel" variant="soft" onClick={close} />
+          <CButton label="Cancel" onClick={close} />
           <CButton
             label={isUpdate ? "Update" : "Create"}
-            variant="solid"
             onClick={form.submitForm}
           />
         </Flex>

@@ -3,6 +3,7 @@ package query
 type MenuItemQuery struct {
 	TenantID   uint
 	ID         *uint
+	IDs        []uint
 	LocationID *uint
 	Orderable  *bool
 	Preload    bool
@@ -17,6 +18,12 @@ func (f *MenuItemQuery) WithID(ID uint) *MenuItemQuery {
 	f.ID = &ID
 	return f
 }
+
+func (f *MenuItemQuery) WithIDs(IDs []uint) *MenuItemQuery {
+	f.IDs = IDs
+	return f
+}
+
 func (f *MenuItemQuery) WithLocationID(ID uint) *MenuItemQuery {
 	f.LocationID = &ID
 	return f

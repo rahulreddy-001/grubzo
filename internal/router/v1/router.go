@@ -72,13 +72,35 @@ func (h Handlers) Setup(r *gin.RouterGroup) {
 			user.GET("/:UserID", protected, h.GetUser)
 		}
 
-		item := api.Group("item", protected, itemsTabAccess)
+		item := api.Group("item", protected)
 		{
-			item.POST("/create", h.CreateMenuItem)
-			item.PUT("/update", h.UpdateMenuItem)
+			item.POST("/create", itemsTabAccess, h.CreateMenuItem)
+			item.PUT("/update", itemsTabAccess, h.UpdateMenuItem)
+			item.GET("/all", itemsTabAccess, h.GetAllMenuItems)
+			item.GET("/user", h.GetItemsForUser)
 			item.GET("/:ItemID", h.GetMenuItem)
-			item.GET("/all", h.GetAllMenuItems)
 		}
 
+		cart := api.Group("cart", protected)
+		{
+			cart.GET("/", h.GetCart)
+			cart.PUT("/item_quantity", h.SetItemQuantity)
+			cart.DELETE("/", h.ClearCart)
+		}
+
+		wallet := api.Group("wallet", protected)
+		{
+			wallet.GET("/", h.GetWalletBalance)
+			wallet.POST("/recharge_order", h.CreateWalletRechargeOrder)
+			wallet.POST("/verify_recharge", h.VerifyWalletRechargePayment)
+		}
+
+		order := api.Group("order", protected)
+		{
+			order.POST("/create", h.CreateOrder)
+			order.GET("/user_orders", h.GetUserOrders)
+			order.GET("/list", h.GetOrdersToProcess)
+			order.PUT("/update_order_status", h.UpdateOrderStatus)
+		}
 	}
 }

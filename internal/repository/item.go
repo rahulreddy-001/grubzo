@@ -107,7 +107,7 @@ func (r Repository) GetItem(filter *query.MenuItemQuery) (*entity.Item, error) {
 		sess.Where("location_id = ?", filter.LocationID)
 	}
 	if filter.Orderable != nil {
-		sess.Where("orderable = ?", filter.Orderable)
+		sess.Where("item_status = ?", "av")
 	}
 	if filter.Preload {
 		for _, preload := range item.GetPreloads() {
@@ -130,7 +130,7 @@ func (r Repository) GetItems(filter *query.MenuItemQuery) ([]*entity.Item, error
 		sess.Where("location_id = ?", filter.LocationID)
 	}
 	if filter.Orderable != nil {
-		sess.Where("orderable = ?", filter.Orderable)
+		sess.Where("item_status = ?", "av")
 	}
 	if filter.Preload {
 		for _, preload := range (entity.Item{}).GetPreloads() {

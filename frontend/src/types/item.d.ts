@@ -46,3 +46,8 @@ export const ModifyItemPayloadSchema = z.object({
   FileIDs: z.array(z.string()),
 });
 export type ModifyItemPayload = z.infer<typeof ModifyItemPayloadSchema>;
+
+export interface FetchUserItemsResponse {
+  Message: string;
+  Items: Item[];
+}

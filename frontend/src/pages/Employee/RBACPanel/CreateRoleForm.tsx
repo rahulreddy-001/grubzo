@@ -7,7 +7,7 @@ import CInput from "../../../components/common/CInput";
 import CButton from "../../../components/common/CButton";
 import CMultiSelect from "../../../components/common/CMultiSelect";
 
-import { Flex, Box, Text } from "@radix-ui/themes";
+import { Flex, Box } from "@radix-ui/themes";
 
 import { useErrorHandler } from "../../../hooks/useErrorHandler";
 import CommonService from "../../../services/common/common.service";
@@ -49,10 +49,9 @@ const CreateRoleForm: React.FC<{ close: () => void }> = ({ close }) => {
       size="md"
       actions={
         <Flex gap="3">
-          <CButton label="Cancel" variant="soft" onClick={close} />
+          <CButton label="Cancel" onClick={close} />
           <CButton
             label="Create"
-            variant="solid"
             onClick={form.submitForm}
             disabled={!form.isValid || form.isSubmitting}
           />
@@ -71,20 +70,14 @@ const CreateRoleForm: React.FC<{ close: () => void }> = ({ close }) => {
           />
 
           <Box>
-            <Text size="1" weight="medium">
-              Permissions
-            </Text>
             <CMultiSelect
+              label="Permissions"
               placeholder="Select Permissisons"
               options={Permissions ?? []}
               selected={form.values.Permissions}
               onChange={(vals) => form.setFieldValue("Permissions", vals)}
+              error={form.errors.Permissions as string}
             />
-            {form.errors.Permissions && (
-              <Text size="1" color="red" mt="1">
-                {form.errors.Permissions}
-              </Text>
-            )}
           </Box>
         </Flex>
       </Box>

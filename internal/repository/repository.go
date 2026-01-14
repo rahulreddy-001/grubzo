@@ -14,9 +14,9 @@ type RepositoryInterface interface {
 	TenantLocationRepository
 	UserRepository
 	ItemRepository
-	// OrderRepository
-	// OrderItemRepository
-	// PaymentRepository
+	CartRepository
+	WalletRepository
+	OrderRepository
 	FileRepository
 	RoleRepository
 }

@@ -4,6 +4,8 @@ import itemReducer from "./item/item.slice";
 import rbacReducer from "./common/rbac.slice";
 import commonReducer from "./common/common.slice";
 import employeeReducer from "./common/employee.slice";
+import cartReducer from "./cart/cart.slice";
+import orderReducer from "./order/order.slice";
 
 const store = configureStore({
   reducer: {
@@ -12,6 +14,8 @@ const store = configureStore({
     rbac: rbacReducer,
     common: commonReducer,
     emp: employeeReducer,
+    cart: cartReducer,
+    order: orderReducer,
   },
 });
 

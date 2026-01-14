@@ -82,6 +82,19 @@ func (h Handlers) GetAllMenuItems(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func (h Handlers) GetItemsForUser(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
+	locationID := ext.Ctx(c).LocationID()
+	queryArgs := query.NewMenuItemQuery(tenantID).WithLocationID(locationID).WithPreload()
+	response, err := h.SS.StoreService.GetItems(queryArgs)
+	if err != nil {
+		ext.Ctx(c).RespondWithError(err)
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+
 func (h Handlers) GetMenuItem(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
 	var params struct {

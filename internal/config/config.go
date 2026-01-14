@@ -51,6 +51,13 @@ type Config struct {
 		CallBackURL  string `json:"callBackURL"`
 	} `json:"oauthcreds"`
 
+	PaymentGatewayKeys struct {
+		Razorpay struct {
+			KeyId     string `json:"keyId"`
+			KeySecret string `json:"keySecret"`
+		} `json:"razorpay"`
+	} `json:"paymentGatewayKeys"`
+	LokiHost        string `json:"lokihost"`
 	JWT256BitSecret string `json:"jwt256bitsecret"`
 	SessionStorage  string `json:"sessionStorage"`
 	DevMode         bool   `json:"devMode"`

@@ -108,6 +108,7 @@ func (c *Context) Unauthorized() {
 	c.ctx.JSON(http.StatusUnauthorized, gin.H{
 		"error": "unauthorized",
 	})
+	c.ctx.Abort()
 }
 
 func (c *Context) BadRequestWith(err string) {

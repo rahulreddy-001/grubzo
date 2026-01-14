@@ -1,12 +1,114 @@
 package repository
 
-import "grubzo/internal/models/entity"
+import (
+	"grubzo/internal/models/dto"
+	"grubzo/internal/models/entity"
+	"grubzo/internal/models/query"
+)
 
 type OrderRepository interface {
-	Create(order *entity.Order) error
-	FindByID(id uint) (*entity.Order, error)
-	ListByTenant(tenantID uint) ([]entity.Order, error)
-	ListByUser(userID uint) ([]entity.Order, error)
-	UpdateStatus(orderID uint, status string) error
-	Delete(id uint) error
+	CreateOrder(input *dto.CreateOrderDTO) (uint, error)
+	GetOrder(orderID, tenantID uint) (*entity.Order, error)
+
+	UpdateOrderPaymentStatus(updateDTO *dto.UpdateOrderPaymentStatusDTO) error
+	GetOrders(q *query.OrderQuery) ([]entity.Order, error) 
+}
+
+func (repo *Repository) CreateOrder(input *dto.CreateOrderDTO) (uint, error) {
+
+	bill := entity.BillJSON{
+		Subtotal:     input.Bill.Subtotal,
+		TaxP:         input.Bill.TaxP,
+		Tax:          input.Bill.Tax,
+		PlatformFeeP: input.Bill.PlatformFeeP,
+		PlatformFee:  input.Bill.PlatformFee,
+		DiscountP:    input.Bill.DiscountP,
+		Discount:     input.Bill.Discount,
+		TotalPayable: input.Bill.TotalPayable,
+	}
+
+	items := []entity.OrderItemJSON{}
+	for _, it := range input.Items {
+		items = append(items, entity.OrderItemJSON{
+			ItemID: it.ItemID,
+			Name:   it.Name,
+			Price:  it.Price,
+			Qty:    it.Qty,
+			Total:  it.Total,
+		})
+	}
+
+	order := &entity.Order{
+		TenantID:      input.TenantID,
+		UserRefID:        input.UserID,
+		LocationID:    input.LocationID,
+		Status:        "pending",
+		PaymentStatus: "pending",
+		PaymentMode:   input.PaymentMode,
+		BillInfo:      bill,
+		Items:         entity.ItemsJSON{Items: items},
+	}
+
+	if err := repo.db.Create(order).Error; err != nil {
+		return 0, err
+	}
+
+	return order.ID, nil
+}
+
+func (repo *Repository) GetOrder(orderID, tenantID uint) (*entity.Order, error) {
+	var order entity.Order
+	if err := repo.db.Where("id = ? AND tenant_id = ?", orderID, tenantID).First(&order).Error; err != nil {
+		return nil, err
+	}
+	return &order, nil
+}
+
+
+func (repo *Repository) UpdateOrderPaymentStatus(updateDTO *dto.UpdateOrderPaymentStatusDTO) error {
+	orderRecord, err := repo.GetOrder(updateDTO.OrderID, updateDTO.TenantID)
+	if err != nil {
+		return err	
+	}
+	if updateDTO.OrderStatus != nil {
+		orderRecord.Status = *updateDTO.OrderStatus
+	}
+	if updateDTO.PaymentStatus != nil {
+		orderRecord.PaymentStatus = *updateDTO.PaymentStatus
+	}
+	if updateDTO.WalletOrderTxnID != nil {
+		orderRecord.WalletOrderTransactionID = updateDTO.WalletOrderTxnID
+	}
+	if updateDTO.WalletRefundTxnID != nil {
+		orderRecord.WalletRefundTransactionID = updateDTO.WalletRefundTxnID
+	}
+	return repo.db.Save(orderRecord).Error
+}
+
+
+func (repo *Repository) GetOrders(q *query.OrderQuery) ([]entity.Order, error) {
+
+	db := repo.db.Where("tenant_id = ?", q.TenantID)
+
+	if q.UserID != nil {
+		db = db.Where("user_ref_id = ?", *q.UserID)
+	}
+	if q.LocationID != nil {
+		db = db.Where("location_id = ?", *q.LocationID)
+	}
+	if q.Status != nil {
+		db = db.Where("status = ?", *q.Status)
+	}
+	if q.PreLoads {
+		for _, preload := range (entity.Order{}).GetPreloads() {
+			db.Preload(preload)
+		}
+	}
+
+	var orders []entity.Order
+	if err := db.Order("created_at desc").Find(&orders).Error; err != nil {
+		return nil, err
+	}
+
+	return orders, nil
 }

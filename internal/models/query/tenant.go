@@ -12,17 +12,17 @@ func NewTenantQuery() *TenantQuery {
 	}
 }
 
-func (q TenantQuery) WithID(id uint) *TenantQuery {
+func (q *TenantQuery) WithID(id uint) *TenantQuery {
 	q.ID = &id
-	return &q
+	return q
 }
 
-func (q TenantQuery) WithCode(code string) *TenantQuery {
+func (q *TenantQuery) WithCode(code string) *TenantQuery {
 	q.Code = &code
-	return &q
+	return q
 }
 
-func (q TenantQuery) WithPreloads() *TenantQuery {
+func (q *TenantQuery) WithPreloads() *TenantQuery {
 	q.PreLoads = true
-	return &q
+	return q
 }

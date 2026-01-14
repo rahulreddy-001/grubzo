@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"fmt"
+	"grubzo/internal/utils"
+	"time"
 
 	"github.com/blendle/zapdriver"
 	"go.uber.org/zap"
@@ -12,14 +13,31 @@ func getLogger() (logger *zap.Logger) {
 	if c.DevMode {
 		return getCLILogger()
 	}
-	cfg := zap.Config{
-		Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
-		Encoding:         "json",
-		EncoderConfig:    zapdriver.NewProductionEncoderConfig(),
-		OutputPaths:      []string{"stdout"},
-		ErrorOutputPaths: []string{"stderr"},
-	}
-	logger, _ = cfg.Build(zapdriver.WrapCore(zapdriver.ServiceName(fmt.Sprintf("grubzo.%s.%s", Version, Revision))))
+	// cfg := zap.Config{
+	// 	Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
+	// 	Encoding:         "json",
+	// 	EncoderConfig:    zapdriver.NewProductionEncoderConfig(),
+	// 	OutputPaths:      []string{"stdout"},
+	// 	ErrorOutputPaths: []string{"stderr"},
+	// }
+	// logger, _ = cfg.Build(zapdriver.WrapCore(zapdriver.ServiceName(fmt.Sprintf("grubzo.%s.%s", Version, Revision))))
+
+	lokiWriter := utils.NewLokiWriter(
+		c.LokiHost,
+		map[string]string{
+			"job":     "grubzo_main",
+			"service": "grubzo",
+			"env":     "prod",
+		},
+		2*time.Second,
+	)
+	core := zapcore.NewCore(
+		zapcore.NewJSONEncoder(zapdriver.NewProductionEncoderConfig()),
+		zapcore.AddSync(lokiWriter),
+		zap.InfoLevel,
+	)
+	// lokiWriter.Close()
+	logger = zap.New(core)
 	return
 }
 

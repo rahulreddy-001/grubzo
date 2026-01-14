@@ -10,7 +10,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import GoogleIcon from "@mui/icons-material/Google";
 import GitHubIcon from "@mui/icons-material/GitHub";
 
-import { UserTypes } from "../../types/constants.ts";
+import { UserTypes } from "../../types/constants.d";
 import authService from "../../services/auth/auth.service.ts";
 import { useErrorHandler } from "../../hooks/useErrorHandler.tsx";
 
@@ -47,7 +47,12 @@ const Login: React.FC = () => {
         Password: password,
       })
       .then(() => {
-        window.location.pathname = "/";
+        console.log(userType);
+        if (userType == "employee") {
+          window.location.href = "/employee";
+        } else {
+          window.location.href = "/";
+        }
       })
       .catch((err) => {
         if (err?.Error) showError(err);

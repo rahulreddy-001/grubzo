@@ -1,5 +1,4 @@
 import grubzoIcon from "../../assets/grubzo_logo_r.png";
-import Search from "./Search";
 import LoginSignUp from "./LoginSignup";
 import UserMenu from "./UserMenu";
 import { useSelector } from "react-redux";
@@ -18,7 +17,6 @@ const Header: React.FC = () => {
         style={{ padding: "0 100px" }}
       >
         <img src={grubzoIcon} height="60px" alt="Logo" />
-        {user?.Type != "employee" ? <Search /> : null}
         {user ? <UserMenu /> : <LoginSignUp />}
       </Flex>
       <ListDivider />

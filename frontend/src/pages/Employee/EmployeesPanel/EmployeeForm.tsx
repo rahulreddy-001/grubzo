@@ -14,7 +14,7 @@ import { useErrorHandler } from "../../../hooks/useErrorHandler";
 import { EmployeeSchema, type Employee } from "../../../types/common.d";
 import CommonService from "../../../services/common/common.service";
 
-const ModifyEmployee: React.FC<{
+const EmployeeForm: React.FC<{
   emp?: Employee;
   cancel: () => void;
 }> = ({ emp, cancel }) => {
@@ -118,4 +118,4 @@ const ModifyEmployee: React.FC<{
   );
 };
 
-export default ModifyEmployee;
+export default EmployeeForm;

@@ -27,14 +27,12 @@ const RBACPanel: React.FC = () => {
   >([]);
 
   React.useEffect(() => {
-    if (Grid) {
-      const rows = Object.entries(Grid).map(([role, perms], idx) => ({
-        ID: idx + 1,
-        Role: role,
-        Permissions: Array.isArray(perms) ? perms : [],
-      }));
-      setGrid(rows);
-    }
+    const rows = Object.entries(Grid ?? []).map(([role, perms], idx) => ({
+      ID: idx + 1,
+      Role: role,
+      Permissions: perms,
+    }));
+    setGrid(rows);
   }, [Grid]);
 
   const updatePermissions = (roleID: number, newPermissions: string[]) => {

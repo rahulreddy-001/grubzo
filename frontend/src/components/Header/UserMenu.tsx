@@ -1,6 +1,4 @@
 import AuthService from "../../services/auth/auth.service";
-import { useNavigate } from "react-router";
-import { useAuth } from "../../context/AuthProvider";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../services/store";
 import {
@@ -13,7 +11,6 @@ import {
 } from "@radix-ui/themes";
 import CommonService from "../../services/common/common.service";
 import { MapPin } from "lucide-react";
-import { PERMISSIONS } from "../../types/rbac.d";
 import { useErrorHandler } from "../../hooks/useErrorHandler";
 
 const UserMenu = () => {
@@ -23,14 +20,11 @@ const UserMenu = () => {
   if (locations?.length == 0) {
     CommonService.fetchLocations();
   }
-  let navigate = useNavigate();
 
-  let { refreshUser } = useAuth();
   const handleLogout = async () => {
     try {
       await AuthService.logout();
-      await refreshUser();
-      await navigate("/");
+      window.location.href = "/";
     } catch (err) {
       console.error(err);
     }

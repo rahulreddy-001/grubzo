@@ -11,6 +11,7 @@ interface CInputProps {
   disabled?: boolean;
   label?: string;
   error?: string;
+  name?: string;
 }
 
 const CInput: React.FC<CInputProps> = ({
@@ -23,6 +24,7 @@ const CInput: React.FC<CInputProps> = ({
   disabled = false,
   label,
   error,
+  name,
 }) => {
   return (
     <Flex direction="column" gap="1" width={fullWidth ? "100%" : "auto"}>
@@ -33,6 +35,7 @@ const CInput: React.FC<CInputProps> = ({
       )}
 
       <TextField.Root
+        name={name}
         size="2"
         radius="medium"
         disabled={disabled}

@@ -1,7 +1,5 @@
 import "./App.css";
-import Home from "./pages/Home";
 import { Routes, Route, Outlet, Navigate, useLocation } from "react-router";
-import type { JSX } from "@emotion/react/jsx-runtime";
 
 import Header from "./components/Header";
 import Login from "./pages/Authentication/Login";
@@ -9,29 +7,40 @@ import Signup from "./pages/Authentication/Signup";
 import { useAuth } from "./context/AuthProvider";
 import NotFound from "./pages/NotFound";
 import EmployeeHome from "./pages/Employee";
+import UserHome from "./pages/Customer";
 
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+function ProtectedRoute() {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return <></>;
+  if (loading) return null;
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    const isEmployeeRoute = location.pathname.includes("employee");
+    return (
+      <Navigate
+        to={isEmployeeRoute ? "/login?t=emp" : "/login"}
+        replace
+        state={{ from: location }}
+      />
+    );
   }
+  return <Outlet />;
+}
 
-  return children;
-};
-
-function PublicRoute({ children }: { children: JSX.Element }) {
+function PublicRoute() {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
-  if (loading) return <></>;
+
+  if (loading) return null;
+
   if (isAuthenticated) {
-    const redirectTo = (location.state as any)?.from?.pathname || "/";
+    const redirectTo =
+      (location.state as { from?: Location })?.from?.pathname || "/";
     return <Navigate to={redirectTo} replace />;
   }
-  return children;
+
+  return <Outlet />;
 }
 
 function MainLayout() {
@@ -45,34 +54,25 @@ function MainLayout() {
 
 function App() {
   const { loading } = useAuth();
-  if (loading) return <></>;
+  if (loading) return null;
+
   return (
-    <div>
-      <Routes>
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/_" element={<EmployeeHome />} />
+    <Routes>
+      <Route element={<MainLayout />}>
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<UserHome />} />
+          <Route path="/employee" element={<EmployeeHome />} />
         </Route>
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/signup"
-          element={
-            <PublicRoute>
-              <Signup />
-            </PublicRoute>
-          }
-        />
-        <Route path="/404" element={<NotFound />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </div>
+      </Route>
+
+      <Route element={<PublicRoute />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Route>
+
+      <Route path="/404" element={<NotFound />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
