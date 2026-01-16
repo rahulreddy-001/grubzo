@@ -10,6 +10,7 @@ func Migrations() []*gormigrate.Migration {
 	return []*gormigrate.Migration{
 		v1(),
 		v2(),
+		v3(),
 	}
 }
 
@@ -22,6 +23,7 @@ func AllTables() []interface{} {
 		&entity.FileMeta{},
 		&entity.Item{},
 		&entity.UserRole{},
+		&entity.WalletBalance{},
 		&entity.WalletRecharge{},
 		&entity.WalletTransaction{},
 		&entity.Order{},

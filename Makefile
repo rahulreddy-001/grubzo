@@ -12,6 +12,9 @@ run-react:
 run: run-react
 	@go run cmd/api/main.go serve 
 
+migrate: 
+	@go run cmd/api/main.go migrate
+
 build:
 	@echo "Building..."
 	@go build -o grubzo cmd/api/main.go

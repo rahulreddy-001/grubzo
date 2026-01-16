@@ -1,10 +1,12 @@
 package repository
 
 import (
+	"errors"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type WalletRepository interface {
@@ -16,46 +18,78 @@ type WalletRepository interface {
 }
 
 func (r *Repository) GetWalletBalance(tenantID uint, userID uint) (int64, error) {
-	var wallet entity.WalletTransaction
-	err := r.db.Where("tenant_id = ? AND user_id = ?", tenantID, userID).Order("id DESC").First(&wallet).Error
+	var wallet entity.WalletBalance
+	err := r.db.Where("tenant_id = ? AND user_id = ?", tenantID, userID).First(&wallet).Error
 	if err != nil {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return 0, nil
 		}
 		return 0, err
 	}
-	return wallet.BalanceAfter, nil
+	return wallet.Balance, nil
 }
 
 func (r *Repository) RecordWalletTransaction(data *dto.WalletTransactionDTO) (*uint, error) {
-	currentBalance, err := r.GetWalletBalance(data.TenantID, data.UserID)
+	var txnID uint
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		var currentBalance int64 = 0
+		var wallet entity.WalletBalance
+		err := tx.
+			Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).
+			Where("tenant_id = ? AND user_id = ?", data.TenantID, data.UserID).
+			First(&wallet).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				wallet = entity.WalletBalance{
+					TenantID: data.TenantID,
+					UserID:   data.UserID,
+					Balance:  0,
+				}
+				if err := tx.Create(&wallet).Error; err != nil {
+					return err
+				}
+				if err := tx.Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).
+					Where("tenant_id = ? AND user_id = ?", data.TenantID, data.UserID).Error; err != nil {
+					return err
+				}
+			}
+		}
+		currentBalance = wallet.Balance
+
+		switch data.Type {
+		case "credit":
+			data.BalanceAfter = currentBalance + data.Amount
+		case "debit":
+			data.BalanceAfter = currentBalance - data.Amount
+		default:
+			data.BalanceAfter = currentBalance
+		}
+		wallet.Balance = data.BalanceAfter
+
+		record := entity.WalletTransaction{
+			TenantID:      data.TenantID,
+			UserID:        data.UserID,
+			Amount:        data.Amount,
+			BalanceAfter:  data.BalanceAfter,
+			Type:          data.Type,
+			ReferenceType: data.ReferenceType,
+			OrderID:       data.OrderID,
+			IdempotentID:  data.IdempotentID,
+		}
+
+		if err := tx.Create(&record).Error; err != nil {
+			return err
+		}
+		if err := tx.Updates(&wallet).Error; err != nil {
+			return err
+		}
+		txnID = record.ID
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	switch data.Type {
-	case "credit":
-		data.BalanceAfter = currentBalance + data.Amount
-	case "debit":
-		data.BalanceAfter = currentBalance - data.Amount
-	default:
-		data.BalanceAfter = currentBalance
-	}
-
-	record := entity.WalletTransaction{
-		TenantID:      data.TenantID,
-		UserID:        data.UserID,
-		Amount:        data.Amount,
-		BalanceAfter:  data.BalanceAfter,
-		Type:          data.Type,
-		ReferenceType: data.ReferenceType,
-		OrderID:       data.OrderID,
-		IdempotentID:  data.IdempotentID,
-	}
-	if err := r.db.Create(&record).Error; err != nil {
-		return nil, err
-	}
-	return &record.ID, nil
+	return &txnID, nil
 }
 
 func (r *Repository) RecordWalletRechargeTransaction(data *dto.WalletRechargeRequestDTO) error {

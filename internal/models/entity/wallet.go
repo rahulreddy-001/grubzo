@@ -2,6 +2,15 @@ package entity
 
 import "time"
 
+type WalletBalance struct {
+	ID        uint      `gorm:"primaryKey;autoIncrement"`
+	TenantID  uint      `gorm:"not null;index:idx_tx_wallet"`
+	UserID    uint      `gorm:"not null;index:idx_tx_wallet"`
+	Balance   int64     `gorm:"not null"`
+
+	UpdatedAt time.Time `gorm:"precision:6"`
+}
+
 type WalletTransaction struct {
 	ID uint `gorm:"primaryKey;autoIncrement"`
 
