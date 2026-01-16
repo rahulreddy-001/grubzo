@@ -49,7 +49,8 @@ func (r *Repository) RecordWalletTransaction(data *dto.WalletTransactionDTO) (*u
 					return err
 				}
 				if err := tx.Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).
-					Where("tenant_id = ? AND user_id = ?", data.TenantID, data.UserID).Error; err != nil {
+					Where("tenant_id = ? AND user_id = ?", data.TenantID, data.UserID).
+					First(&wallet).Error; err != nil {
 					return err
 				}
 			}
