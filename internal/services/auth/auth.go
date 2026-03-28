@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"grubzo/internal/config"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
@@ -14,17 +15,17 @@ import (
 )
 
 type AuthService interface {
-	BasicUserLogin(email, password string, tenantID uint) (uint, error)
-	BasicEmployeeLogin(email, password string, tenantID uint) (uint, error)
-	GetMeInfo(userType string, userID, tenantID uint, LocationID uint) (*dto.MeResponse, error)
+	BasicUserLogin(ctx context.Context, email, password string, tenantID uint) (uint, error)
+	BasicEmployeeLogin(ctx context.Context, email, password string, tenantID uint) (uint, error)
+	GetMeInfo(ctx context.Context, userType string, userID, tenantID uint, LocationID uint) (*dto.MeResponse, error)
 }
 
 type authServiceImpl struct {
-	repo          *repository.Repository
-	config        *config.Config
-	userService   user.UserService
-	rbacService   rbac.RBAC
-	logger        *zap.Logger
+	repo        *repository.Repository
+	config      *config.Config
+	userService user.UserService
+	rbacService rbac.RBAC
+	logger      *zap.Logger
 }
 
 func InitAuthService(
@@ -35,16 +36,16 @@ func InitAuthService(
 	logger *zap.Logger,
 ) (AuthService, error) {
 	return &authServiceImpl{
-		repo:          repo,
-		config:        config,
-		userService:   userService,
-		rbacService:   rbacService,
-		logger:        logger.Named("auth_service"),
+		repo:        repo,
+		config:      config,
+		userService: userService,
+		rbacService: rbacService,
+		logger:      logger.Named("auth_service"),
 	}, nil
 }
 
-func (a *authServiceImpl) BasicUserLogin(email, password string, tenantID uint) (uint, error) {
-	u, err := a.repo.FindUser(query.NewUserQuery(tenantID).WithEmail(email))
+func (a *authServiceImpl) BasicUserLogin(ctx context.Context, email, password string, tenantID uint) (uint, error) {
+	u, err := a.repo.FindUser(ctx, query.NewUserQuery(tenantID).WithEmail(email))
 	if err != nil {
 		a.logger.Warn("user not found", zap.String("email", email), zap.Uint("tenantID", tenantID))
 		return 0, ext.Error("invalid username or password")
@@ -56,8 +57,8 @@ func (a *authServiceImpl) BasicUserLogin(email, password string, tenantID uint) 
 	return u.ID, nil
 }
 
-func (a *authServiceImpl) BasicEmployeeLogin(email, password string, tenantID uint) (uint, error) {
-	u, err := a.repo.FindTenantUser(query.NewTenantUserQuery(tenantID).WithEmail(email))
+func (a *authServiceImpl) BasicEmployeeLogin(ctx context.Context, email, password string, tenantID uint) (uint, error) {
+	u, err := a.repo.FindTenantUser(ctx, query.NewTenantUserQuery(tenantID).WithEmail(email))
 	if err != nil {
 		a.logger.Warn("user not found", zap.String("email", email), zap.Uint("tenantID", tenantID))
 		return 0, ext.Error("invalid username or password")
@@ -69,7 +70,7 @@ func (a *authServiceImpl) BasicEmployeeLogin(email, password string, tenantID ui
 	return u.ID, nil
 }
 
-func (a *authServiceImpl) GetMeInfo(userType string, userID, tenantID uint, locationID uint) (*dto.MeResponse, error) {
+func (a *authServiceImpl) GetMeInfo(ctx context.Context, userType string, userID, tenantID uint, locationID uint) (*dto.MeResponse, error) {
 	me := &dto.MeResponse{
 		Type: userType,
 		ID:   userID,
@@ -77,11 +78,11 @@ func (a *authServiceImpl) GetMeInfo(userType string, userID, tenantID uint, loca
 	q := query.NewTenantLocationQuery(tenantID)
 	if locationID == 0 {
 		q.WithPrimary(true)
-	}else{
+	} else {
 		q.WithID(locationID)
 	}
-	location, err := a.repo.FindTenantLocation(q)
-	if err != nil{
+	location, err := a.repo.FindTenantLocation(ctx, q)
+	if err != nil {
 		a.logger.Error("error fetching tenant locations", zap.Error(err))
 	}
 	locationInfo := dto.TenantLocation{}
@@ -89,7 +90,7 @@ func (a *authServiceImpl) GetMeInfo(userType string, userID, tenantID uint, loca
 	me.Location = locationInfo
 
 	if userType == "user" {
-		user, err := a.repo.FindUser(query.NewUserQuery(tenantID).WithID(userID))
+		user, err := a.repo.FindUser(ctx, query.NewUserQuery(tenantID).WithID(userID))
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +99,7 @@ func (a *authServiceImpl) GetMeInfo(userType string, userID, tenantID uint, loca
 		return me, nil
 	}
 	if userType == "employee" {
-		user, err := a.repo.FindTenantUser(query.NewTenantUserQuery(tenantID).WithID(userID))
+		user, err := a.repo.FindTenantUser(ctx, query.NewTenantUserQuery(tenantID).WithID(userID))
 		if err != nil {
 			return nil, err
 		}

@@ -9,14 +9,15 @@ import (
 )
 
 type CartRepository interface {
-	GetCart(key string) *dto.Cart
-	SetItemQuantity(key string, action *dto.UpdateItemQuantity) (*dto.Cart, error)
-	ClearCart(key string) *dto.Cart
+	SetCart(ctx context.Context, cart *dto.Cart) bool
+	GetCart(ctx context.Context, key string) *dto.Cart
+	SetItemQuantity(ctx context.Context, key string, action *dto.UpdateItemQuantity) (*dto.Cart, error)
+	ClearCart(ctx context.Context, key string) *dto.Cart
 }
 
-func (repo *Repository) SetCart(cart *dto.Cart) bool {
+func (repo *Repository) SetCart(ctx context.Context, cart *dto.Cart) bool {
 	data, _ := json.Marshal(cart)
-	_, err := repo.rdb.Do(context.Background(), "JSON.SET", cart.Key, ".", string(data)).Result()
+	_, err := repo.rdb.Do(ctx, "JSON.SET", cart.Key, ".", string(data)).Result()
 	if err != nil {
 		repo.logger.Error("failed to set cart in redis", zap.Error(err))
 		return false
@@ -24,8 +25,8 @@ func (repo *Repository) SetCart(cart *dto.Cart) bool {
 	return true
 }
 
-func (repo *Repository) GetCart(key string) *dto.Cart {
-	res, err := repo.rdb.Do(context.Background(), "JSON.GET", key).Result()
+func (repo *Repository) GetCart(ctx context.Context, key string) *dto.Cart {
+	res, err := repo.rdb.Do(ctx, "JSON.GET", key).Result()
 	if err != nil || res == nil {
 		return &dto.Cart{
 			Key:   key,
@@ -39,8 +40,8 @@ func (repo *Repository) GetCart(key string) *dto.Cart {
 	return &cart
 }
 
-func (repo *Repository) SetItemQuantity(key string, action *dto.UpdateItemQuantity) (*dto.Cart, error) {
-	cart := repo.GetCart(key)
+func (repo *Repository) SetItemQuantity(ctx context.Context, key string, action *dto.UpdateItemQuantity) (*dto.Cart, error) {
+	cart := repo.GetCart(ctx, key)
 
 	updatedItems := []dto.Item{}
 	found := false
@@ -69,15 +70,15 @@ func (repo *Repository) SetItemQuantity(key string, action *dto.UpdateItemQuanti
 		Items: updatedItems,
 	}
 	data, _ := json.Marshal(updatedCart)
-	_, err := repo.rdb.Do(context.Background(), "JSON.SET", key, ".", string(data)).Result()
+	_, err := repo.rdb.Do(ctx, "JSON.SET", key, ".", string(data)).Result()
 	if err != nil {
 		return nil, err
 	}
 	return &updatedCart, nil
 }
 
-func (repo *Repository) ClearCart(key string) *dto.Cart {
-	repo.rdb.Del(context.Background(), key)
+func (repo *Repository) ClearCart(ctx context.Context, key string) *dto.Cart {
+	repo.rdb.Del(ctx, key)
 	return &dto.Cart{
 		Key:   key,
 		Items: []dto.Item{},

@@ -23,7 +23,7 @@ func (h Handlers) CreateOrder(c *gin.Context) {
 		ext.Ctx(c).RespondWithError(err)
 		return
 	}
-	orderID, err := h.SS.OrderService.PlaceOrder(tenantID, userID, locationID, reqBody.PaymentMode)
+	orderID, err := h.SS.OrderService.PlaceOrder(c.Request.Context(), tenantID, userID, locationID, reqBody.PaymentMode)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -40,7 +40,7 @@ func (h Handlers) GetUserOrders(c *gin.Context) {
 	locationID := ext.Ctx(c).LocationID()
 
 	q := query.NewOrderQuery(tenantID).WithUser(userID).WithLocation(locationID)
-	orders, err := h.SS.OrderService.GetOrders(q)
+	orders, err := h.SS.OrderService.GetOrders(c.Request.Context(), q)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -57,7 +57,7 @@ func (h Handlers) GetOrdersToProcess(c *gin.Context) {
 	locationID := ext.Ctx(c).LocationID()
 
 	q := query.NewOrderQuery(tenantID).WithLocation(locationID).WithPreloads()
-	orders, err := h.SS.OrderService.GetOrders(q)
+	orders, err := h.SS.OrderService.GetOrders(c.Request.Context(), q)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -87,7 +87,7 @@ func (h Handlers) UpdateOrderStatus(c *gin.Context) {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	if err := h.SS.OrderService.UpdateOrderStatus(req); err != nil {
+	if err := h.SS.OrderService.UpdateOrderStatus(c.Request.Context(), req); err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
 	}

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
@@ -11,11 +12,11 @@ import (
 )
 
 type TenantRepository interface {
-	CreateTenant(dto *dto.CreateTenant) (*entity.Tenant, error)
-	UpdateTenant(dto *dto.UpdateTenant) (*entity.Tenant, error)
-	GetTenant(query *query.TenantQuery) (*entity.Tenant, error)
-	GetTenants(query *query.TenantQuery) ([]*entity.Tenant, error)
-	SaveTenant(tenant *entity.Tenant) error
+	CreateTenant(ctx context.Context, dto *dto.CreateTenant) (*entity.Tenant, error)
+	UpdateTenant(ctx context.Context, dto *dto.UpdateTenant) (*entity.Tenant, error)
+	GetTenant(ctx context.Context, query *query.TenantQuery) (*entity.Tenant, error)
+	GetTenants(ctx context.Context, query *query.TenantQuery) ([]*entity.Tenant, error)
+	SaveTenant(ctx context.Context, tenant *entity.Tenant) error
 }
 
 func tenantValidator(tenant *entity.Tenant, db *gorm.DB) error {
@@ -39,23 +40,24 @@ func tenantValidator(tenant *entity.Tenant, db *gorm.DB) error {
 	return nil
 }
 
-func (r *Repository) CreateTenant(dto *dto.CreateTenant) (*entity.Tenant, error) {
+func (r *Repository) CreateTenant(ctx context.Context, dto *dto.CreateTenant) (*entity.Tenant, error) {
 	tenant := &entity.Tenant{
 		Name: dto.Name,
 		Code: dto.Code,
 	}
-	if err := tenantValidator(tenant, r.db); err != nil {
+	db := r.dbWithContext(ctx)
+	if err := tenantValidator(tenant, db); err != nil {
 		return nil, err
 	}
-	if err := r.db.Create(tenant).Error; err != nil {
+	if err := db.Create(tenant).Error; err != nil {
 		return nil, err
 	}
 	return tenant, nil
 }
 
-func (r *Repository) GetTenant(q *query.TenantQuery) (*entity.Tenant, error) {
+func (r *Repository) GetTenant(ctx context.Context, q *query.TenantQuery) (*entity.Tenant, error) {
 	tenant := &entity.Tenant{}
-	sess := r.db.Session(&gorm.Session{}).Model(&entity.Tenant{})
+	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Tenant{})
 
 	if q.PreLoads {
 		for _, preload := range tenant.GetPreloads() {
@@ -78,9 +80,9 @@ func (r *Repository) GetTenant(q *query.TenantQuery) (*entity.Tenant, error) {
 	return tenant, nil
 }
 
-func (r *Repository) GetTenants(q *query.TenantQuery) ([]*entity.Tenant, error) {
+func (r *Repository) GetTenants(ctx context.Context, q *query.TenantQuery) ([]*entity.Tenant, error) {
 	var tenants []*entity.Tenant
-	sess := r.db.Session(&gorm.Session{}).Model(&entity.Tenant{})
+	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Tenant{})
 
 	if q.PreLoads {
 		for _, preload := range (entity.Tenant{}).GetPreloads() {
@@ -100,7 +102,7 @@ func (r *Repository) GetTenants(q *query.TenantQuery) ([]*entity.Tenant, error) 
 	return tenants, nil
 }
 
-func (r *Repository) UpdateTenant(dto *dto.UpdateTenant) (*entity.Tenant, error) {
+func (r *Repository) UpdateTenant(ctx context.Context, dto *dto.UpdateTenant) (*entity.Tenant, error) {
 	updates := map[string]any{}
 	if dto.Name != nil {
 		updates["name"] = *dto.Name
@@ -110,21 +112,22 @@ func (r *Repository) UpdateTenant(dto *dto.UpdateTenant) (*entity.Tenant, error)
 	}
 
 	if len(updates) == 0 {
-		return r.GetTenant(query.NewTenantQuery().WithID(dto.ID).WithPreloads())
+		return r.GetTenant(ctx, query.NewTenantQuery().WithID(dto.ID).WithPreloads())
 	}
 
-	if err := r.db.Session(&gorm.Session{}).Model(&entity.Tenant{}).
+	if err := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Tenant{}).
 		Where("id = ?", dto.ID).
 		Updates(updates).Error; err != nil {
 		return nil, err
 	}
 
-	return r.GetTenant(query.NewTenantQuery().WithID(dto.ID).WithPreloads())
+	return r.GetTenant(ctx, query.NewTenantQuery().WithID(dto.ID).WithPreloads())
 }
 
-func (r *Repository) SaveTenant(tenant *entity.Tenant) error {
-	if err := tenantValidator(tenant, r.db); err != nil {
+func (r *Repository) SaveTenant(ctx context.Context, tenant *entity.Tenant) error {
+	db := r.dbWithContext(ctx)
+	if err := tenantValidator(tenant, db); err != nil {
 		return err
 	}
-	return r.db.Save(tenant).Error
+	return db.Save(tenant).Error
 }

@@ -1,6 +1,7 @@
 package order
 
 import (
+	"context"
 	"fmt"
 	"grubzo/internal/config"
 	"grubzo/internal/models/dto"
@@ -14,11 +15,11 @@ import (
 )
 
 type WalletService interface {
-	CreateRechargeOrder(amount int64, userID uint, tenantID uint) (map[string]interface{}, error)
-	VerifyRechargePayment(orderID, paymentID, signature string) error
-	GetWalletBalanceWithTXNS(tenantID, userID uint) (*dto.WalletDTO, error)
-	DebitForOrder(orderID, tenantID, userID uint, amount int64) (*uint, error)
-	RefundForOrder(orderID, tenantID, userID uint, amount int64) (*uint, error)
+	CreateRechargeOrder(ctx context.Context, amount int64, userID uint, tenantID uint) (map[string]interface{}, error)
+	VerifyRechargePayment(ctx context.Context, orderID, paymentID, signature string) error
+	GetWalletBalanceWithTXNS(ctx context.Context, tenantID, userID uint) (*dto.WalletDTO, error)
+	DebitForOrder(ctx context.Context, orderID, tenantID, userID uint, amount int64) (*uint, error)
+	RefundForOrder(ctx context.Context, orderID, tenantID, userID uint, amount int64) (*uint, error)
 }
 
 func InitWalletService(repository *repository.Repository, rpayService payment.RazorpayService, config *config.Config, logger *zap.Logger) (*walletServiceImpl, error) {
@@ -38,6 +39,7 @@ type walletServiceImpl struct {
 }
 
 func (ws *walletServiceImpl) DebitForOrder(
+	ctx context.Context,
 	orderID, tenantID, userID uint,
 	amount int64,
 ) (*uint, error) {
@@ -51,10 +53,11 @@ func (ws *walletServiceImpl) DebitForOrder(
 		OrderID:       strconv.Itoa(int(orderID)),
 		IdempotentID:  uniqueOrderID,
 	}
-	return ws.repository.RecordWalletTransaction(rechargeRequestDTO)
+	return ws.repository.RecordWalletTransaction(ctx, rechargeRequestDTO)
 }
 
 func (ws *walletServiceImpl) RefundForOrder(
+	ctx context.Context,
 	orderID, tenantID, userID uint,
 	amount int64,
 ) (*uint, error) {
@@ -68,13 +71,13 @@ func (ws *walletServiceImpl) RefundForOrder(
 		OrderID:       strconv.Itoa(int(orderID)),
 		IdempotentID:  uniqueOrderID,
 	}
-	return ws.repository.RecordWalletTransaction(rechargeRequestDTO)
+	return ws.repository.RecordWalletTransaction(ctx, rechargeRequestDTO)
 }
 
-func (ws *walletServiceImpl) CreateRechargeOrder(amount int64, userID uint, tenantID uint) (map[string]interface{}, error) {
+func (ws *walletServiceImpl) CreateRechargeOrder(ctx context.Context, amount int64, userID uint, tenantID uint) (map[string]interface{}, error) {
 	amountInPaise := amount * 100
 	uniqueOrderID := fmt.Sprintf("rapy_order_tid_%d_uid_%d_%s", tenantID, userID, random.SecureAlphaNumeric(6))
-	response, err := ws.rpayService.CreateOrder(amountInPaise, uniqueOrderID)
+	response, err := ws.rpayService.CreateOrder(ctx, amountInPaise, uniqueOrderID)
 	if err != nil {
 		ws.logger.Error("failed to create razorpay order", zap.Error(err), zap.Int64("amount", amount), zap.Uint("userID", userID), zap.String("uniqueOrderID", uniqueOrderID))
 		return nil, ext.Error("Failed to create recharge order")
@@ -88,7 +91,7 @@ func (ws *walletServiceImpl) CreateRechargeOrder(amount int64, userID uint, tena
 		OrderIDReceipt: uniqueOrderID,
 		OrderID:        response["id"].(string),
 	}
-	if err := ws.repository.RecordWalletRechargeTransaction(rechargeRequestDTO); err != nil {
+	if err := ws.repository.RecordWalletRechargeTransaction(ctx, rechargeRequestDTO); err != nil {
 		// find a way to cancel razorpay order?
 		ws.logger.Error("failed to record wallet recharge transaction", zap.Error(err), zap.Int64("amount", amount), zap.Uint("userID", userID), zap.String("uniqueOrderID", uniqueOrderID))
 		return nil, ext.Error("Failed to create recharge order")
@@ -98,13 +101,13 @@ func (ws *walletServiceImpl) CreateRechargeOrder(amount int64, userID uint, tena
 	return response, nil
 }
 
-func (ws *walletServiceImpl) VerifyRechargePayment(orderID, paymentID, signature string) error {
-	err := ws.rpayService.VerifyPayment(orderID, paymentID, signature)
+func (ws *walletServiceImpl) VerifyRechargePayment(ctx context.Context, orderID, paymentID, signature string) error {
+	err := ws.rpayService.VerifyPayment(ctx, orderID, paymentID, signature)
 	if err != nil {
 		ws.logger.Warn("failed to verify payment signature, invalid payment signature", zap.String("orderID", orderID), zap.String("paymentID", paymentID))
 		return ext.Error("Failed to verify payment")
 	}
-	err = ws.repository.UpdateWalletRechargeTransactionStatus(orderID, paymentID, "success")
+	err = ws.repository.UpdateWalletRechargeTransactionStatus(ctx, orderID, paymentID, "success")
 	if err != nil {
 		// find a way to refund the payment?
 		ws.logger.Error("failed to update wallet recharge transaction status to success", zap.Error(err), zap.String("orderID", orderID))
@@ -113,18 +116,18 @@ func (ws *walletServiceImpl) VerifyRechargePayment(orderID, paymentID, signature
 	return nil
 }
 
-func (ws *walletServiceImpl) GetWalletBalanceWithTXNS(tenantID, userID uint) (*dto.WalletDTO, error) {
-	walletDTO, err := ws.repository.GetWalletBalance(tenantID, userID)
+func (ws *walletServiceImpl) GetWalletBalanceWithTXNS(ctx context.Context, tenantID, userID uint) (*dto.WalletDTO, error) {
+	walletDTO, err := ws.repository.GetWalletBalance(ctx, tenantID, userID)
 	if err != nil {
 		ws.logger.Error("failed to get wallet balance", zap.Error(err), zap.Uint("tenantID", tenantID), zap.Uint("userID", userID))
 		return nil, ext.Error("Failed to get wallet balance")
 	}
-	transactionsDTO, err := ws.repository.GetWalletTransactions(tenantID, userID, 50, 0)
+	transactionsDTO, err := ws.repository.GetWalletTransactions(ctx, tenantID, userID, 50, 0)
 	if err != nil {
 		ws.logger.Error("failed to get wallet transactions", zap.Error(err), zap.Uint("tenantID", tenantID), zap.Uint("userID", userID))
 		return nil, ext.Error("Failed to get wallet transactions")
 	}
-	pendingRechargesDTO, err := ws.repository.GetPendingWalletRecharges(tenantID, userID)
+	pendingRechargesDTO, err := ws.repository.GetPendingWalletRecharges(ctx, tenantID, userID)
 	if err != nil {
 		ws.logger.Error("failed to get pending wallet recharges", zap.Error(err), zap.Uint("tenantID", tenantID), zap.Uint("userID", userID))
 		return nil, ext.Error("Failed to get pending wallet recharges")

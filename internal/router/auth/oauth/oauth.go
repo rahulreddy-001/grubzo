@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"grubzo/internal/models/dto"
@@ -31,8 +32,8 @@ type Provider interface {
 	GetName() string
 	GetIcon() string
 	GetCallbackURL() string
-	FetchUser(string) (*OAuthUser, error)
-	ValidateToken(string) error
+	FetchUser(context.Context, string) (*OAuthUser, error)
+	ValidateToken(context.Context, string) error
 }
 
 type OAuthUser struct {
@@ -95,19 +96,19 @@ func (a *Auth) Init() *Auth {
 				ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
 				return
 			}
-			if err := provider.ValidateToken(token.AccessToken); err != nil {
+			if err := provider.ValidateToken(c.Request.Context(), token.AccessToken); err != nil {
 				ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
 				return
 			}
-			user, err := provider.FetchUser(token.AccessToken)
+			user, err := provider.FetchUser(c.Request.Context(), token.AccessToken)
 			if err != nil {
 				ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
 				return
 			}
-			userEntity, err := a.repo.FindUser(query.NewUserQuery(tenantID).WithEmail(user.Email))
+			userEntity, err := a.repo.FindUser(c.Request.Context(), query.NewUserQuery(tenantID).WithEmail(user.Email))
 			if err != nil {
 				if err.Error() == repository.UserNotFound {
-					userEntity, err = a.repo.CreateUser(&dto.CreateUser{
+					userEntity, err = a.repo.CreateUser(c.Request.Context(), &dto.CreateUser{
 						TenantID: tenantID,
 						UserID:   user.ID,
 						Email:    user.Email,
@@ -167,7 +168,7 @@ func (a *Auth) Exchange(provider Provider, ctx *gin.Context) (*oauth2.Token, err
 	ctx.SetCookie("oauth_state", state, -1, "/", "", false, true)
 
 	providerConfig := provider.GetConfig()
-	token, err := providerConfig.Exchange(ctx.Copy(), code)
+	token, err := providerConfig.Exchange(ctx.Request.Context(), code)
 	if err != nil {
 		return nil, errors.New("exchange Failed")
 	}

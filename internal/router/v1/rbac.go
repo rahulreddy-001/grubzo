@@ -10,7 +10,7 @@ import (
 
 func (h *Handlers) RBACRolesPermsGrid(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
-	grid, err := h.SS.RBAC.GetAllRolePermissions(tenantID)
+	grid, err := h.SS.RBAC.GetAllRolePermissions(c.Request.Context(), tenantID)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -34,7 +34,7 @@ func (h *Handlers) RBACAddRole(c *gin.Context) {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	err := h.SS.RBAC.AddUserRole(addRole)
+	err := h.SS.RBAC.AddUserRole(c.Request.Context(), addRole)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -53,7 +53,7 @@ func (h *Handlers) RBACUpdateRolePerms(c *gin.Context) {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	err := h.SS.RBAC.UpdateUserRole(updateRoles)
+	err := h.SS.RBAC.UpdateUserRole(c.Request.Context(), updateRoles)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return

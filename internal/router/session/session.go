@@ -26,7 +26,6 @@ type UserSession struct {
 	Location uint     `json:"location"`
 }
 
-
 var (
 	ErrNoSessionStore     = errors.New("no session store found")
 	ErrSessionNotFound    = errors.New("session not found")

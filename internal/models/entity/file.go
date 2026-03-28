@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"io"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -42,19 +41,4 @@ type FileMeta struct {
 
 func (f FileMeta) TableName() string {
 	return "files"
-}
-
-type File interface {
-	GetTenantID() uint
-	GetID() uuid.UUID
-	GetFileName() string
-	GetMIMEType() string
-	GetFileSize() uint
-	GetFileType() FileType
-	GetOwnerType() OwnerType
-	GetOwnerID() uint
-	GetCreatedAt() time.Time
-	Open() (io.ReadSeekCloser, error)
-	GetAlternativeURL() string
-	JSON() map[string]any
 }

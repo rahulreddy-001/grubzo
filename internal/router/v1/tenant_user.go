@@ -12,14 +12,14 @@ import (
 func (h Handlers) CreateTenantUser(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
 	createArgs := &dto.CreateTenantUser{
-		TenantID:   tenantID,
+		TenantID: tenantID,
 	}
 	createArgs.LocationID = ext.Ctx(c).LocationID()
 	if err := c.ShouldBindBodyWithJSON(createArgs); err != nil {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	response, err := h.SS.TenantService.CreateTenantUser(createArgs)
+	response, err := h.SS.TenantService.CreateTenantUser(c.Request.Context(), createArgs)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -31,14 +31,14 @@ func (h Handlers) UpdateTenantUser(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
 	locationID := ext.Ctx(c).LocationID()
 	updateArgs := &dto.UpdateTenantUser{
-		TenantID:   tenantID,
+		TenantID: tenantID,
 	}
-	updateArgs.LocationID =  &locationID
+	updateArgs.LocationID = &locationID
 	if err := c.ShouldBindBodyWithJSON(updateArgs); err != nil {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	response, err := h.SS.TenantService.UpdateTenantUser(updateArgs)
+	response, err := h.SS.TenantService.UpdateTenantUser(c.Request.Context(), updateArgs)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -55,7 +55,7 @@ func (h Handlers) GetTenantUser(c *gin.Context) {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	response, err := h.SS.TenantService.GetTenantUser(params.UserID, tenantID)
+	response, err := h.SS.TenantService.GetTenantUser(c.Request.Context(), params.UserID, tenantID)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -65,7 +65,7 @@ func (h Handlers) GetTenantUser(c *gin.Context) {
 
 func (h Handlers) GetAllTenantUsers(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
-	response, err := h.SS.TenantService.FetchTenantUsers(query.NewTenantUserQuery(tenantID).WithLocationID(
+	response, err := h.SS.TenantService.FetchTenantUsers(c.Request.Context(), query.NewTenantUserQuery(tenantID).WithLocationID(
 		ext.Ctx(c).LocationID(),
 	))
 	if err != nil {

@@ -19,7 +19,7 @@ func (h Handlers) CreateTenantLocation(c *gin.Context) {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	response, err := h.SS.TenantService.CreateTenantLocation(createLocationArgs)
+	response, err := h.SS.TenantService.CreateTenantLocation(c.Request.Context(), createLocationArgs)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -36,7 +36,7 @@ func (h Handlers) UpdateTenantLocation(c *gin.Context) {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	response, err := h.SS.TenantService.UpdateTenantLocation(updateLocationArgs)
+	response, err := h.SS.TenantService.UpdateTenantLocation(c.Request.Context(), updateLocationArgs)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -53,7 +53,7 @@ func (h Handlers) GetTenantLocation(c *gin.Context) {
 	}
 	locIDs := strings.Split(idsParam, ",")
 	first, _ := strconv.Atoi(locIDs[0])
-	response, err := h.SS.TenantService.GetTenantLocation(uint(first), tenantID)
+	response, err := h.SS.TenantService.GetTenantLocation(c.Request.Context(), uint(first), tenantID)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -63,7 +63,7 @@ func (h Handlers) GetTenantLocation(c *gin.Context) {
 
 func (h Handlers) GetAllTenantLocations(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
-	response, err := h.SS.TenantService.GetTenantLocations(tenantID)
+	response, err := h.SS.TenantService.GetTenantLocations(c.Request.Context(), tenantID)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return

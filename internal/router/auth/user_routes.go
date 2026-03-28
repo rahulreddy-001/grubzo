@@ -16,6 +16,7 @@ func (h *Handlers) Me(c *gin.Context) {
 		return
 	}
 	response, err := h.SS.AuthService.GetMeInfo(
+		c.Request.Context(),
 		userSession.Type,
 		userSession.UserID,
 		userSession.TenantID,

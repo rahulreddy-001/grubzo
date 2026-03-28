@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/router/ext"
 	"io"
@@ -11,8 +12,8 @@ var (
 )
 
 type FileStorage interface {
-	SaveByKey(src io.Reader, key, name, contentType string, fileType entity.FileType) error
-	OpenFileByKey(key string, fileType entity.FileType) (io.ReadSeekCloser, error)
-	DeleteByKey(key string, fileType entity.FileType) error
+	SaveByKey(ctx context.Context, src io.Reader, key, name, contentType string, fileType entity.FileType) error
+	OpenFileByKey(ctx context.Context, key string, fileType entity.FileType) (io.ReadSeekCloser, error)
+	DeleteByKey(ctx context.Context, key string, fileType entity.FileType) error
 	GenerateAccessURL(key string, fileType entity.FileType) (string, error)
 }

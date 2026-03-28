@@ -15,7 +15,7 @@ func (h Handlers) CreateUser(c *gin.Context) {
 			c.SendResult(validationResult)
 			return
 		}
-		
+
 		result := h.SS.UserService.CreateUser(actionCreateTenant)
 		c.SendResponse(result)
 
@@ -28,7 +28,7 @@ func (h Handlers) CreateUser(c *gin.Context) {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	response, err := h.SS.UserService.CreateUser(createUserDTO)
+	response, err := h.SS.UserService.CreateUser(c.Request.Context(), createUserDTO)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -45,7 +45,7 @@ func (h Handlers) UpdateUser(c *gin.Context) {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	response, err := h.SS.UserService.UpdateUser(updateUserDTO)
+	response, err := h.SS.UserService.UpdateUser(c.Request.Context(), updateUserDTO)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -62,7 +62,7 @@ func (h Handlers) GetUser(c *gin.Context) {
 		ext.Ctx(c).BadRequestParams()
 		return
 	}
-	response, err := h.SS.UserService.GetUser(params.UserID, tenantID)
+	response, err := h.SS.UserService.GetUser(c.Request.Context(), params.UserID, tenantID)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return

@@ -50,8 +50,7 @@ func (p *Provider) GetIcon() string           { return p.Icon }
 func (p *Provider) GetConfig() *oauth2.Config { return &p.Config }
 func (p *Provider) GetCallbackURL() string    { return p.CB }
 
-func (p *Provider) FetchUser(token string) (*oauth.OAuthUser, error) {
-	ctx := context.Background()
+func (p *Provider) FetchUser(ctx context.Context, token string) (*oauth.OAuthUser, error) {
 	oauthToken := &oauth2.Token{AccessToken: token}
 	client := p.Config.Client(ctx, oauthToken)
 
@@ -121,8 +120,8 @@ func (p *Provider) getEmail(ctx context.Context, token string) (string, error) {
 	return "", errors.New("no verified primary email found for GitHub user")
 }
 
-func (p *Provider) ValidateToken(token string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (p *Provider) ValidateToken(ctx context.Context, token string) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	oauthToken := &oauth2.Token{AccessToken: token}

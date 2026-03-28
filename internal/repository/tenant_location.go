@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
@@ -11,42 +12,41 @@ import (
 )
 
 type TenantLocationRepository interface {
-	CreateTenantLocation(dto *dto.CreateTenantLocation) (*entity.TenantLocation, error)
-	UpdateTenantLocation(dto *dto.UpdateTenantLocation) (*entity.TenantLocation, error)
-	FindTenantLocation(query *query.TenantLocationQuery) (*entity.TenantLocation, error)
-	FindTenantLocations(query *query.TenantLocationQuery) ([]*entity.TenantLocation, error)
+	CreateTenantLocation(ctx context.Context, dto *dto.CreateTenantLocation) (*entity.TenantLocation, error)
+	UpdateTenantLocation(ctx context.Context, dto *dto.UpdateTenantLocation) (*entity.TenantLocation, error)
+	FindTenantLocation(ctx context.Context, query *query.TenantLocationQuery) (*entity.TenantLocation, error)
+	FindTenantLocations(ctx context.Context, query *query.TenantLocationQuery) ([]*entity.TenantLocation, error)
 }
 
 func tenantLocationValidator(loc *entity.TenantLocation, db *gorm.DB) error {
-    // Validate unique Code for tenant
-    var existingByCode entity.TenantLocation
-    if err := db.
-        Where("tenant_id = ? AND code = ?", loc.TenantID, loc.Code).
-        Not("id = ?", loc.ID).
-        First(&existingByCode).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-        return err
-    }
-    if existingByCode.ID != 0 {
-        return ext.Error("A location with this code already exists.")
-    }
-    if loc.IsPrimary {
-        var existingPrimary entity.TenantLocation
-        if err := db.
-            Where("tenant_id = ? AND is_primary = ?", loc.TenantID, true).
-            Not("id = ?", loc.ID).
-            First(&existingPrimary).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-            return err
-        }
-        if existingPrimary.ID != 0 {
-            return ext.Error("There cannot be more than one primary location.")
-        }
-    }
+	// Validate unique Code for tenant
+	var existingByCode entity.TenantLocation
+	if err := db.
+		Where("tenant_id = ? AND code = ?", loc.TenantID, loc.Code).
+		Not("id = ?", loc.ID).
+		First(&existingByCode).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	if existingByCode.ID != 0 {
+		return ext.Error("A location with this code already exists.")
+	}
+	if loc.IsPrimary {
+		var existingPrimary entity.TenantLocation
+		if err := db.
+			Where("tenant_id = ? AND is_primary = ?", loc.TenantID, true).
+			Not("id = ?", loc.ID).
+			First(&existingPrimary).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		if existingPrimary.ID != 0 {
+			return ext.Error("There cannot be more than one primary location.")
+		}
+	}
 
-    return nil
+	return nil
 }
 
-
-func (r *Repository) CreateTenantLocation(dto *dto.CreateTenantLocation) (*entity.TenantLocation, error) {
+func (r *Repository) CreateTenantLocation(ctx context.Context, dto *dto.CreateTenantLocation) (*entity.TenantLocation, error) {
 	location := &entity.TenantLocation{
 		TenantID:  dto.TenantID,
 		Code:      dto.Code,
@@ -58,19 +58,20 @@ func (r *Repository) CreateTenantLocation(dto *dto.CreateTenantLocation) (*entit
 		IsPrimary: dto.IsPrimary,
 	}
 
-	if err := tenantLocationValidator(location, r.db); err != nil {
+	db := r.dbWithContext(ctx)
+	if err := tenantLocationValidator(location, db); err != nil {
 		return nil, err
 	}
-	if err := r.db.Create(location).Error; err != nil {
+	if err := db.Create(location).Error; err != nil {
 		return nil, err
 	}
 
 	return location, nil
 }
 
-func (r *Repository) FindTenantLocation(q *query.TenantLocationQuery) (*entity.TenantLocation, error) {
+func (r *Repository) FindTenantLocation(ctx context.Context, q *query.TenantLocationQuery) (*entity.TenantLocation, error) {
 	location := &entity.TenantLocation{}
-	sess := r.db.Session(&gorm.Session{}).Model(&entity.TenantLocation{})
+	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.TenantLocation{})
 
 	sess = sess.Where("tenant_id = ?", q.TenantID)
 	if q.ID != nil {
@@ -88,8 +89,8 @@ func (r *Repository) FindTenantLocation(q *query.TenantLocationQuery) (*entity.T
 	return location, nil
 }
 
-func (r *Repository) UpdateTenantLocation(dto *dto.UpdateTenantLocation) (*entity.TenantLocation, error) {
-	location, err := r.FindTenantLocation(query.NewTenantLocationQuery(dto.TenantID).WithID(dto.ID))
+func (r *Repository) UpdateTenantLocation(ctx context.Context, dto *dto.UpdateTenantLocation) (*entity.TenantLocation, error) {
+	location, err := r.FindTenantLocation(ctx, query.NewTenantLocationQuery(dto.TenantID).WithID(dto.ID))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ext.Error("Location not found")
@@ -118,18 +119,19 @@ func (r *Repository) UpdateTenantLocation(dto *dto.UpdateTenantLocation) (*entit
 		location.IsPrimary = *dto.IsPrimary
 	}
 
-	if err := tenantLocationValidator(location, r.db); err != nil {
+	db := r.dbWithContext(ctx)
+	if err := tenantLocationValidator(location, db); err != nil {
 		return nil, err
 	}
-	if err := r.db.Save(&location).Error; err != nil {
+	if err := db.Save(&location).Error; err != nil {
 		return nil, err
 	}
 	return location, nil
 }
 
-func (r *Repository) FindTenantLocations(q *query.TenantLocationQuery) ([]*entity.TenantLocation, error) {
+func (r *Repository) FindTenantLocations(ctx context.Context, q *query.TenantLocationQuery) ([]*entity.TenantLocation, error) {
 	var locations []*entity.TenantLocation
-	sess := r.db.Session(&gorm.Session{}).Model(&entity.TenantLocation{})
+	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.TenantLocation{})
 
 	sess = sess.Where("tenant_id = ?", q.TenantID)
 	if q.ID != nil {

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"grubzo/internal/config"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
@@ -11,10 +12,10 @@ import (
 )
 
 type UserService interface {
-	CreateUser(dto *dto.CreateUser) (*dto.CreateUserResponse, error)
-	UpdateUser(dto *dto.UpdateUser) (*dto.UpdateUserResponse, error)
-	GetUser(UserID uint, tenantID uint) (*dto.GetUserResponse, error)
-	GetUsers(tenantID uint) (*dto.GetUsersResponse, error)
+	CreateUser(ctx context.Context, dto *dto.CreateUser) (*dto.CreateUserResponse, error)
+	UpdateUser(ctx context.Context, dto *dto.UpdateUser) (*dto.UpdateUserResponse, error)
+	GetUser(ctx context.Context, UserID uint, tenantID uint) (*dto.GetUserResponse, error)
+	GetUsers(ctx context.Context, tenantID uint) (*dto.GetUsersResponse, error)
 }
 
 type userServiceImpl struct {
@@ -31,8 +32,8 @@ func InitUserService(repository *repository.Repository, config *config.Config, l
 	}, nil
 }
 
-func (us *userServiceImpl) CreateUser(args *dto.CreateUser) (*dto.CreateUserResponse, error) {
-	user, err := us.repository.CreateUser(args)
+func (us *userServiceImpl) CreateUser(ctx context.Context, args *dto.CreateUser) (*dto.CreateUserResponse, error) {
+	user, err := us.repository.CreateUser(ctx, args)
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +48,8 @@ func (us *userServiceImpl) CreateUser(args *dto.CreateUser) (*dto.CreateUserResp
 	return response, nil
 }
 
-func (us *userServiceImpl) UpdateUser(args *dto.UpdateUser) (*dto.UpdateUserResponse, error) {
-	user, err := us.repository.UpdateUser(args)
+func (us *userServiceImpl) UpdateUser(ctx context.Context, args *dto.UpdateUser) (*dto.UpdateUserResponse, error) {
+	user, err := us.repository.UpdateUser(ctx, args)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +64,8 @@ func (us *userServiceImpl) UpdateUser(args *dto.UpdateUser) (*dto.UpdateUserResp
 	return response, nil
 }
 
-func (us *userServiceImpl) GetUser(UserID uint, tenantID uint) (*dto.GetUserResponse, error) {
-	user, err := us.repository.FindUser(query.NewUserQuery(tenantID).WithID(UserID))
+func (us *userServiceImpl) GetUser(ctx context.Context, UserID uint, tenantID uint) (*dto.GetUserResponse, error) {
+	user, err := us.repository.FindUser(ctx, query.NewUserQuery(tenantID).WithID(UserID))
 	if err != nil {
 		return nil, err
 	}
@@ -79,8 +80,8 @@ func (us *userServiceImpl) GetUser(UserID uint, tenantID uint) (*dto.GetUserResp
 	return response, nil
 }
 
-func (us *userServiceImpl) GetUsers(tenantID uint) (*dto.GetUsersResponse, error) {
-	users, err := us.repository.FindAllUsers(query.NewUserQuery(tenantID))
+func (us *userServiceImpl) GetUsers(ctx context.Context, tenantID uint) (*dto.GetUsersResponse, error) {
+	users, err := us.repository.FindAllUsers(ctx, query.NewUserQuery(tenantID))
 	if err != nil {
 		return nil, err
 	}

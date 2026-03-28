@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
@@ -12,14 +13,14 @@ import (
 )
 
 type ItemRepository interface {
-	CreateItem(dto *dto.CreateMenuItem) (*entity.Item, error)
-	UpdateItem(dto *dto.UpdateMenuItem) (*entity.Item, error)
-	GetItem(filter *query.MenuItemQuery) (*entity.Item, error)
-	GetItems(filter *query.MenuItemQuery) ([]*entity.Item, error)
+	CreateItem(ctx context.Context, dto *dto.CreateMenuItem) (*entity.Item, error)
+	UpdateItem(ctx context.Context, dto *dto.UpdateMenuItem) (*entity.Item, error)
+	GetItem(ctx context.Context, filter *query.MenuItemQuery) (*entity.Item, error)
+	GetItems(ctx context.Context, filter *query.MenuItemQuery) ([]*entity.Item, error)
 }
 
-func (r Repository) CreateItem(dto *dto.CreateMenuItem) (*entity.Item, error) {
-	sess := r.db.Session(&gorm.Session{}).Model(&entity.Item{})
+func (r Repository) CreateItem(ctx context.Context, dto *dto.CreateMenuItem) (*entity.Item, error) {
+	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Item{})
 	item := &entity.Item{
 		TenantID:    dto.TenantID,
 		LocationID:  dto.LocationID,
@@ -35,18 +36,18 @@ func (r Repository) CreateItem(dto *dto.CreateMenuItem) (*entity.Item, error) {
 		return nil, err
 	}
 
-	if err := r.PopulateOwnerID(nil, item.ID, dto.Files, dto.TenantID); err != nil {
+	if err := r.PopulateOwnerID(ctx, nil, item.ID, dto.Files, dto.TenantID); err != nil {
 		if e := sess.Delete(item).Error; e != nil {
 			return nil, errors.Join(e, err)
 		}
 		return nil, err
 	}
-	return r.GetItem(query.NewMenuItemQuery(item.TenantID).WithID(item.ID).WithPreload())
+	return r.GetItem(ctx, query.NewMenuItemQuery(item.TenantID).WithID(item.ID).WithPreload())
 }
 
-func (r *Repository) UpdateItem(dto *dto.UpdateMenuItem) (*entity.Item, error) {
-	err := r.db.Transaction(func(tx *gorm.DB) error {
-		item, err := r.GetItem(query.NewMenuItemQuery(dto.TenantID).WithID(dto.ID))
+func (r *Repository) UpdateItem(ctx context.Context, dto *dto.UpdateMenuItem) (*entity.Item, error) {
+	err := r.dbWithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		item, err := r.GetItem(ctx, query.NewMenuItemQuery(dto.TenantID).WithID(dto.ID))
 		if err != nil {
 			return err
 		}
@@ -81,11 +82,11 @@ func (r *Repository) UpdateItem(dto *dto.UpdateMenuItem) (*entity.Item, error) {
 					filesToDelete = append(filesToDelete, file.ID)
 				}
 			}
-			if err := r.DeleteFiles(tx, filesToDelete); err != nil {
+			if err := r.DeleteFiles(ctx, tx, filesToDelete); err != nil {
 				return err
 			}
 
-			if err := r.PopulateOwnerID(tx, item.ID, dto.Files, dto.TenantID); err != nil {
+			if err := r.PopulateOwnerID(ctx, tx, item.ID, dto.Files, dto.TenantID); err != nil {
 				return err
 			}
 		}
@@ -94,12 +95,12 @@ func (r *Repository) UpdateItem(dto *dto.UpdateMenuItem) (*entity.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	return r.GetItem(query.NewMenuItemQuery(dto.TenantID).WithID(dto.ID).WithPreload())
+	return r.GetItem(ctx, query.NewMenuItemQuery(dto.TenantID).WithID(dto.ID).WithPreload())
 }
 
-func (r Repository) GetItem(filter *query.MenuItemQuery) (*entity.Item, error) {
+func (r Repository) GetItem(ctx context.Context, filter *query.MenuItemQuery) (*entity.Item, error) {
 	item := &entity.Item{}
-	sess := r.db.Session(&gorm.Session{}).Model(&entity.Item{}).Where("tenant_id = ?", filter.TenantID)
+	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Item{}).Where("tenant_id = ?", filter.TenantID)
 	if filter.ID != nil {
 		sess.Where("id = ?", filter.ID)
 	}
@@ -120,9 +121,9 @@ func (r Repository) GetItem(filter *query.MenuItemQuery) (*entity.Item, error) {
 	return item, nil
 }
 
-func (r Repository) GetItems(filter *query.MenuItemQuery) ([]*entity.Item, error) {
+func (r Repository) GetItems(ctx context.Context, filter *query.MenuItemQuery) ([]*entity.Item, error) {
 	items := []*entity.Item{}
-	sess := r.db.Session(&gorm.Session{}).Model(&entity.Item{}).Where("tenant_id = ?", filter.TenantID)
+	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Item{}).Where("tenant_id = ?", filter.TenantID)
 	if filter.ID != nil {
 		sess.Where("id = ?", filter.ID)
 	}

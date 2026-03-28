@@ -48,8 +48,7 @@ func (p *Provider) GetIcon() string           { return p.Icon }
 func (p *Provider) GetConfig() *oauth2.Config { return &p.Config }
 func (p *Provider) GetCallbackURL() string    { return p.CB }
 
-func (p *Provider) FetchUser(token string) (*oauth.OAuthUser, error) {
-	ctx := context.Background()
+func (p *Provider) FetchUser(ctx context.Context, token string) (*oauth.OAuthUser, error) {
 	oauthToken := &oauth2.Token{AccessToken: token}
 	client := p.Config.Client(ctx, oauthToken)
 
@@ -85,9 +84,14 @@ func (p *Provider) FetchUser(token string) (*oauth.OAuthUser, error) {
 	}, nil
 }
 
-func (p *Provider) ValidateToken(token string) error {
+func (p *Provider) ValidateToken(ctx context.Context, token string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, TokenInfoURL+token, nil)
+	if err != nil {
+		return fmt.Errorf("failed to build token validation request: %w", err)
+	}
+
 	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(TokenInfoURL + token)
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to validate token: %w", err)
 	}

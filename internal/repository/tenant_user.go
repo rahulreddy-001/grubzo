@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
@@ -14,10 +15,10 @@ import (
 )
 
 type TenantUserRepository interface {
-	CreateTenantUser(dto *dto.CreateTenantUser) (*entity.TenantUser, error)
-	UpdateTenantUser(dto *dto.UpdateTenantUser) (*entity.TenantUser, error)
-	FindTenantUser(query *query.TenantUserQuery) (*entity.TenantUser, error)
-	FindAllTenantUsers(query *query.TenantUserQuery) ([]*entity.TenantUser, error)
+	CreateTenantUser(ctx context.Context, dto *dto.CreateTenantUser) (*entity.TenantUser, error)
+	UpdateTenantUser(ctx context.Context, dto *dto.UpdateTenantUser) (*entity.TenantUser, error)
+	FindTenantUser(ctx context.Context, query *query.TenantUserQuery) (*entity.TenantUser, error)
+	FindAllTenantUsers(ctx context.Context, query *query.TenantUserQuery) ([]*entity.TenantUser, error)
 	CheckTenantUserPassword(user *entity.TenantUser, password string) bool
 }
 
@@ -55,7 +56,7 @@ func (r *Repository) validateTenantUser(usr *entity.TenantUser, db *gorm.DB) err
 	return nil
 }
 
-func (r *Repository) CreateTenantUser(dto *dto.CreateTenantUser) (*entity.TenantUser, error) {
+func (r *Repository) CreateTenantUser(ctx context.Context, dto *dto.CreateTenantUser) (*entity.TenantUser, error) {
 	tenantUser := &entity.TenantUser{
 		TenantID:   dto.TenantID,
 		Email:      dto.Email,
@@ -67,19 +68,20 @@ func (r *Repository) CreateTenantUser(dto *dto.CreateTenantUser) (*entity.Tenant
 		tenantUser.Roles = pq.StringArray(dto.Roles)
 	}
 
-	if err := r.validateTenantUser(tenantUser, r.db); err != nil {
+	db := r.dbWithContext(ctx)
+	if err := r.validateTenantUser(tenantUser, db); err != nil {
 		return nil, err
 	}
 	populateHash(tenantUser)
-	if err := r.db.Create(tenantUser).Error; err != nil {
+	if err := db.Create(tenantUser).Error; err != nil {
 		return nil, err
 	}
 
 	return tenantUser, nil
 }
 
-func (r *Repository) UpdateTenantUser(dto *dto.UpdateTenantUser) (*entity.TenantUser, error) {
-	tenantUser, err := r.FindTenantUser(query.NewTenantUserQuery(dto.TenantID).WithID(dto.ID))
+func (r *Repository) UpdateTenantUser(ctx context.Context, dto *dto.UpdateTenantUser) (*entity.TenantUser, error) {
+	tenantUser, err := r.FindTenantUser(ctx, query.NewTenantUserQuery(dto.TenantID).WithID(dto.ID))
 	if err != nil {
 		return nil, err
 	}
@@ -101,16 +103,16 @@ func (r *Repository) UpdateTenantUser(dto *dto.UpdateTenantUser) (*entity.Tenant
 		tenantUser.LocationID = *dto.LocationID
 	}
 
-	if err := r.db.Save(&tenantUser).Error; err != nil {
+	if err := r.dbWithContext(ctx).Save(&tenantUser).Error; err != nil {
 		return nil, err
 	}
 
 	return tenantUser, nil
 }
 
-func (r *Repository) FindTenantUser(q *query.TenantUserQuery) (*entity.TenantUser, error) {
+func (r *Repository) FindTenantUser(ctx context.Context, q *query.TenantUserQuery) (*entity.TenantUser, error) {
 	tenantUser := &entity.TenantUser{}
-	sess := r.db.Session(&gorm.Session{}).Model(&entity.TenantUser{})
+	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.TenantUser{})
 
 	sess = sess.Where("tenant_id = ?", q.TenantID)
 	if q.WithPreload {
@@ -137,9 +139,9 @@ func (r *Repository) FindTenantUser(q *query.TenantUserQuery) (*entity.TenantUse
 	return tenantUser, nil
 }
 
-func (r *Repository) FindAllTenantUsers(q *query.TenantUserQuery) ([]*entity.TenantUser, error) {
+func (r *Repository) FindAllTenantUsers(ctx context.Context, q *query.TenantUserQuery) ([]*entity.TenantUser, error) {
 	var tenantUsers []*entity.TenantUser
-	sess := r.db.Session(&gorm.Session{}).Model(&entity.TenantUser{})
+	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.TenantUser{})
 
 	sess = sess.Where("tenant_id = ?", q.TenantID)
 	if q.ID != nil {

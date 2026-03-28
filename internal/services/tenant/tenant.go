@@ -1,6 +1,7 @@
 package tenant
 
 import (
+	"context"
 	"grubzo/internal/config"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
@@ -11,23 +12,23 @@ import (
 
 type TenantService interface {
 	// Tenant
-	CreateTenant(dto *dto.CreateTenant) (*dto.CreateTenantResponse, error)
-	UpdateTenant(dto *dto.UpdateTenant) (*dto.UpdateTenantResponse, error)
-	GetTenant(tenantID uint) (*dto.GetTenantResponse, error)
-	GetAllTenants() (*dto.GetAllTenantsResponse, error)
+	CreateTenant(ctx context.Context, dto *dto.CreateTenant) (*dto.CreateTenantResponse, error)
+	UpdateTenant(ctx context.Context, dto *dto.UpdateTenant) (*dto.UpdateTenantResponse, error)
+	GetTenant(ctx context.Context, tenantID uint) (*dto.GetTenantResponse, error)
+	GetAllTenants(ctx context.Context) (*dto.GetAllTenantsResponse, error)
 
 	// TenantLocation
-	CreateTenantLocation(dto *dto.CreateTenantLocation) (*dto.CreateTenantLocationResponse, error)
-	UpdateTenantLocation(dto *dto.UpdateTenantLocation) (*dto.UpdateTenantLocationResponse, error)
-	GetTenantLocation(tenantLocId uint, tenantID uint) (*dto.TenantLocationResponse, error)
-	GetTenantLocations(tenantID uint) (*dto.TenantLocationsResponse, error)
+	CreateTenantLocation(ctx context.Context, dto *dto.CreateTenantLocation) (*dto.CreateTenantLocationResponse, error)
+	UpdateTenantLocation(ctx context.Context, dto *dto.UpdateTenantLocation) (*dto.UpdateTenantLocationResponse, error)
+	GetTenantLocation(ctx context.Context, tenantLocId uint, tenantID uint) (*dto.TenantLocationResponse, error)
+	GetTenantLocations(ctx context.Context, tenantID uint) (*dto.TenantLocationsResponse, error)
 
 	//TenantUser
-	CreateTenantUser(dto *dto.CreateTenantUser) (*dto.CreateTenantUserResponse, error)
-	UpdateTenantUser(dto *dto.UpdateTenantUser) (*dto.UpdateTenantUserResponse, error)
-	GetTenantUser(UserID uint, tenantID uint) (*dto.GetTenantUserResponse, error)
-	GetTenantUsers(tenantID uint) (*dto.GetTenantUsersResponse, error)
-	FetchTenantUsers(query *query.TenantUserQuery) (*dto.GetTenantUsersResponse, error)
+	CreateTenantUser(ctx context.Context, dto *dto.CreateTenantUser) (*dto.CreateTenantUserResponse, error)
+	UpdateTenantUser(ctx context.Context, dto *dto.UpdateTenantUser) (*dto.UpdateTenantUserResponse, error)
+	GetTenantUser(ctx context.Context, UserID uint, tenantID uint) (*dto.GetTenantUserResponse, error)
+	GetTenantUsers(ctx context.Context, tenantID uint) (*dto.GetTenantUsersResponse, error)
+	FetchTenantUsers(ctx context.Context, query *query.TenantUserQuery) (*dto.GetTenantUsersResponse, error)
 }
 
 type tenantServiceImpl struct {
@@ -44,8 +45,8 @@ func InitTenantService(repository *repository.Repository, config *config.Config,
 	}, nil
 }
 
-func (ts *tenantServiceImpl) CreateTenant(args *dto.CreateTenant) (*dto.CreateTenantResponse, error) {
-	tenant, err := ts.repository.CreateTenant(args)
+func (ts *tenantServiceImpl) CreateTenant(ctx context.Context, args *dto.CreateTenant) (*dto.CreateTenantResponse, error) {
+	tenant, err := ts.repository.CreateTenant(ctx, args)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +61,8 @@ func (ts *tenantServiceImpl) CreateTenant(args *dto.CreateTenant) (*dto.CreateTe
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) UpdateTenant(args *dto.UpdateTenant) (*dto.UpdateTenantResponse, error) {
-	tenant, err := ts.repository.UpdateTenant(args)
+func (ts *tenantServiceImpl) UpdateTenant(ctx context.Context, args *dto.UpdateTenant) (*dto.UpdateTenantResponse, error) {
+	tenant, err := ts.repository.UpdateTenant(ctx, args)
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +77,8 @@ func (ts *tenantServiceImpl) UpdateTenant(args *dto.UpdateTenant) (*dto.UpdateTe
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) GetTenant(tenantID uint) (*dto.GetTenantResponse, error) {
-	tenant, err := ts.repository.GetTenant(query.NewTenantQuery().WithPreloads().WithID(tenantID))
+func (ts *tenantServiceImpl) GetTenant(ctx context.Context, tenantID uint) (*dto.GetTenantResponse, error) {
+	tenant, err := ts.repository.GetTenant(ctx, query.NewTenantQuery().WithPreloads().WithID(tenantID))
 	if err != nil {
 		return nil, err
 	}
@@ -92,8 +93,8 @@ func (ts *tenantServiceImpl) GetTenant(tenantID uint) (*dto.GetTenantResponse, e
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) GetAllTenants() (*dto.GetAllTenantsResponse, error) {
-	tenants, err := ts.repository.GetTenants(query.NewTenantQuery())
+func (ts *tenantServiceImpl) GetAllTenants(ctx context.Context) (*dto.GetAllTenantsResponse, error) {
+	tenants, err := ts.repository.GetTenants(ctx, query.NewTenantQuery())
 	if err != nil {
 		return nil, err
 	}

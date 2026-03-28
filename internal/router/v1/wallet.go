@@ -11,7 +11,7 @@ func (h Handlers) GetWalletBalance(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
 	userID := ext.Ctx(c).UserID()
 
-	walletDTO, err := h.SS.WalletService.GetWalletBalanceWithTXNS(tenantID, userID)
+	walletDTO, err := h.SS.WalletService.GetWalletBalanceWithTXNS(c.Request.Context(), tenantID, userID)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -35,7 +35,7 @@ func (h Handlers) CreateWalletRechargeOrder(c *gin.Context) {
 		return
 	}
 
-	orderInfoMap, err := h.SS.WalletService.CreateRechargeOrder(req.Amount, userID, tenantID)
+	orderInfoMap, err := h.SS.WalletService.CreateRechargeOrder(c.Request.Context(), req.Amount, userID, tenantID)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -55,7 +55,7 @@ func (h Handlers) VerifyWalletRechargePayment(c *gin.Context) {
 		return
 	}
 
-	err := h.SS.WalletService.VerifyRechargePayment(req.OrderID, req.PaymentReference, req.Signature)
+	err := h.SS.WalletService.VerifyRechargePayment(c.Request.Context(), req.OrderID, req.PaymentReference, req.Signature)
 	if err != nil {
 		eCtx.RespondWithError(err)
 		return

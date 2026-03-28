@@ -34,12 +34,16 @@ type redisSession struct {
 	createdAt time.Time
 	data      map[string]any
 	db        *redis.Client
+	ctx       context.Context
 	sync.Mutex
 }
 
-func createRedisSession(token string, userID uint, tenantID uint, data map[string]any, db *redis.Client) *redisSession {
+func createRedisSession(ctx context.Context, token string, userID uint, tenantID uint, data map[string]any, db *redis.Client) *redisSession {
 	if data == nil {
 		data = map[string]any{}
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	return &redisSession{
 		t:         token,
@@ -48,6 +52,7 @@ func createRedisSession(token string, userID uint, tenantID uint, data map[strin
 		createdAt: time.Now(),
 		data:      data,
 		db:        db,
+		ctx:       ctx,
 	}
 }
 
@@ -63,12 +68,12 @@ func (rs *redisSession) sync() error {
 		Data:     rawData,
 		Created:  rs.createdAt,
 	}
-	err = rs.db.JSONSet(context.Background(), record.Token, ".", record).Err()
+	err = rs.db.JSONSet(rs.ctx, record.Token, ".", record).Err()
 	if err != nil {
 		return err
 	}
 	ttl := time.Duration(sessionMaxAge+sessionKeepAge)*time.Second - time.Since(rs.CreatedAt())
-	return rs.db.Expire(context.Background(), record.Token, ttl).Err()
+	return rs.db.Expire(rs.ctx, record.Token, ttl).Err()
 }
 
 func (rs *redisSession) Token() string        { return rs.t }
@@ -128,13 +133,16 @@ func NewRedisSessionStore(db *redis.Client) Store {
 }
 
 func (rs *redisStore) IssueSession(userID uint, tenantID uint, data map[string]any) (Session, error) {
+	return rs.issueSession(context.Background(), userID, tenantID, data)
+}
+
+func (rs *redisStore) issueSession(ctx context.Context, userID uint, tenantID uint, data map[string]any) (Session, error) {
 	token := fmt.Sprintf("%s:%s", "session", random.SecureAlphaNumeric(50))
-	session := createRedisSession(token, userID, tenantID, data, rs.db)
+	session := createRedisSession(ctx, token, userID, tenantID, data, rs.db)
 	if err := session.sync(); err != nil {
 		return nil, err
 	}
 	return session, nil
-
 }
 
 func (rs *redisStore) GetSession(c *gin.Context) (Session, error) {
@@ -142,7 +150,7 @@ func (rs *redisStore) GetSession(c *gin.Context) (Session, error) {
 	if err != nil {
 		return nil, ErrNoUserSession
 	}
-	session, err := rs.GetSessionByToken(token)
+	session, err := rs.getSessionByToken(c.Request.Context(), token)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +171,7 @@ func (rs *redisStore) RevokeSession(c *gin.Context) error {
 	if err != nil {
 		return ErrNoUserSession
 	}
-	if err := rs.db.JSONDel(context.Background(), token, ".").Err(); err != nil {
+	if err := rs.db.JSONDel(c.Request.Context(), token, ".").Err(); err != nil {
 		return err
 	}
 	c.SetCookie(CookieName, "", -1, "/", "", false, true)
@@ -188,6 +196,7 @@ func (rs *redisStore) GetSessionsByUserID(userID, tenantID uint) ([]Session, err
 			return nil, err
 		}
 		session := createRedisSession(
+			context.Background(),
 			rec.Token,
 			rec.UserID,
 			rec.TenantID,
@@ -203,7 +212,7 @@ func (rs *redisStore) GetSessionsByUserID(userID, tenantID uint) ([]Session, err
 
 func (rs *redisStore) RenewSession(c *gin.Context, userID, tenantID uint) (Session, error) {
 	rs.RevokeSession(c)
-	newSession, err := rs.IssueSession(userID, tenantID, nil)
+	newSession, err := rs.issueSession(c.Request.Context(), userID, tenantID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +230,11 @@ func (rs *redisStore) RenewSession(c *gin.Context, userID, tenantID uint) (Sessi
 }
 
 func (rs *redisStore) GetSessionByToken(token string) (Session, error) {
-	res, err := rs.db.JSONGet(context.Background(), token, ".").Result()
+	return rs.getSessionByToken(context.Background(), token)
+}
+
+func (rs *redisStore) getSessionByToken(ctx context.Context, token string) (Session, error) {
+	res, err := rs.db.JSONGet(ctx, token, ".").Result()
 	if err != nil {
 		return nil, err
 	}
@@ -235,6 +248,7 @@ func (rs *redisStore) GetSessionByToken(token string) (Session, error) {
 		return nil, err
 	}
 	return createRedisSession(
+		ctx,
 		record.Token,
 		record.UserID,
 		record.TenantID,

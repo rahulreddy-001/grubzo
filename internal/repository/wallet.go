@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
@@ -10,16 +11,17 @@ import (
 )
 
 type WalletRepository interface {
-	GetWalletBalance(tenantID uint, userID uint) (int64, error)
-	RecordWalletRechargeTransaction(data *dto.WalletRechargeRequestDTO) error
-	UpdateWalletRechargeTransactionStatus(orderID string, paymentID, status string) error
-	GetPendingWalletRecharges(tenantID uint, userID uint) ([]dto.PendingWalletRechargeDTO, error)
-	GetWalletTransactions(tenantID uint, userID uint, limit int, offset int) ([]dto.WalletTransactionDTO, error)
+	GetWalletBalance(ctx context.Context, tenantID uint, userID uint) (int64, error)
+	RecordWalletTransaction(ctx context.Context, data *dto.WalletTransactionDTO) (*uint, error)
+	RecordWalletRechargeTransaction(ctx context.Context, data *dto.WalletRechargeRequestDTO) error
+	UpdateWalletRechargeTransactionStatus(ctx context.Context, orderID string, paymentID, status string) error
+	GetPendingWalletRecharges(ctx context.Context, tenantID uint, userID uint) ([]dto.PendingWalletRechargeDTO, error)
+	GetWalletTransactions(ctx context.Context, tenantID uint, userID uint, limit int, offset int) ([]dto.WalletTransactionDTO, error)
 }
 
-func (r *Repository) GetWalletBalance(tenantID uint, userID uint) (int64, error) {
+func (r *Repository) GetWalletBalance(ctx context.Context, tenantID uint, userID uint) (int64, error) {
 	var wallet entity.WalletBalance
-	err := r.db.Where("tenant_id = ? AND user_id = ?", tenantID, userID).First(&wallet).Error
+	err := r.dbWithContext(ctx).Where("tenant_id = ? AND user_id = ?", tenantID, userID).First(&wallet).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return 0, nil
@@ -29,9 +31,9 @@ func (r *Repository) GetWalletBalance(tenantID uint, userID uint) (int64, error)
 	return wallet.Balance, nil
 }
 
-func (r *Repository) RecordWalletTransaction(data *dto.WalletTransactionDTO) (*uint, error) {
+func (r *Repository) RecordWalletTransaction(ctx context.Context, data *dto.WalletTransactionDTO) (*uint, error) {
 	var txnID uint
-	err := r.db.Transaction(func(tx *gorm.DB) error {
+	err := r.dbWithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var currentBalance int64 = 0
 		var wallet entity.WalletBalance
 		err := tx.
@@ -93,7 +95,7 @@ func (r *Repository) RecordWalletTransaction(data *dto.WalletTransactionDTO) (*u
 	return &txnID, nil
 }
 
-func (r *Repository) RecordWalletRechargeTransaction(data *dto.WalletRechargeRequestDTO) error {
+func (r *Repository) RecordWalletRechargeTransaction(ctx context.Context, data *dto.WalletRechargeRequestDTO) error {
 	record := entity.WalletRecharge{
 		TenantID:       data.TenantID,
 		UserID:         data.UserID,
@@ -103,13 +105,13 @@ func (r *Repository) RecordWalletRechargeTransaction(data *dto.WalletRechargeReq
 		OrderID:        data.OrderID,
 		OrderIDReceipt: data.OrderIDReceipt,
 	}
-	return r.db.Create(&record).Error
+	return r.dbWithContext(ctx).Create(&record).Error
 }
 
-func (r *Repository) UpdateWalletRechargeTransactionStatus(orderID string, paymentID string, status string) error {
+func (r *Repository) UpdateWalletRechargeTransactionStatus(ctx context.Context, orderID string, paymentID string, status string) error {
 	var walletTxID *uint = nil
 	paymentRecord := &entity.WalletRecharge{}
-	err := r.db.Where("order_id = ?", orderID).First(paymentRecord).Error
+	err := r.dbWithContext(ctx).Where("order_id = ?", orderID).First(paymentRecord).Error
 	if err != nil {
 		return err
 	}
@@ -125,7 +127,7 @@ func (r *Repository) UpdateWalletRechargeTransactionStatus(orderID string, payme
 			IdempotentID:  paymentRecord.OrderIDReceipt,
 			Message:       "Wallet recharge successful",
 		}
-		walletTxID, err = r.RecordWalletTransaction(record)
+		walletTxID, err = r.RecordWalletTransaction(ctx, record)
 		if err != nil {
 			return err
 		}
@@ -133,12 +135,12 @@ func (r *Repository) UpdateWalletRechargeTransactionStatus(orderID string, payme
 	paymentRecord.Status = status
 	paymentRecord.PaymentID = paymentID
 	paymentRecord.WalletTransactionID = walletTxID
-	return r.db.Save(paymentRecord).Error
+	return r.dbWithContext(ctx).Save(paymentRecord).Error
 }
 
-func (r *Repository) GetPendingWalletRecharges(tenantID uint, userID uint) ([]dto.PendingWalletRechargeDTO, error) {
+func (r *Repository) GetPendingWalletRecharges(ctx context.Context, tenantID uint, userID uint) ([]dto.PendingWalletRechargeDTO, error) {
 	var records []entity.WalletRecharge
-	err := r.db.Where("tenant_id = ? AND user_id = ? AND status = ?", tenantID, userID, "pending").Find(&records).Error
+	err := r.dbWithContext(ctx).Where("tenant_id = ? AND user_id = ? AND status = ?", tenantID, userID, "pending").Find(&records).Error
 	if err != nil {
 		return nil, err
 	}
@@ -155,9 +157,9 @@ func (r *Repository) GetPendingWalletRecharges(tenantID uint, userID uint) ([]dt
 	return pendingRecharges, nil
 }
 
-func (r *Repository) GetWalletTransactions(tenantID uint, userID uint, limit int, offset int) ([]dto.WalletTransactionDTO, error) {
+func (r *Repository) GetWalletTransactions(ctx context.Context, tenantID uint, userID uint, limit int, offset int) ([]dto.WalletTransactionDTO, error) {
 	var records []entity.WalletTransaction
-	err := r.db.Where("tenant_id = ? AND user_id = ?", tenantID, userID).Order("id DESC").Limit(limit).Offset(offset).Find(&records).Error
+	err := r.dbWithContext(ctx).Where("tenant_id = ? AND user_id = ?", tenantID, userID).Order("id DESC").Limit(limit).Offset(offset).Find(&records).Error
 	if err != nil {
 		return nil, err
 	}

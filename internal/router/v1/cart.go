@@ -15,7 +15,7 @@ func (h Handlers) GetCart(c *gin.Context) {
 		eCtx.UserID(),
 		eCtx.LocationID(),
 	)
-	cart := h.SS.CartService.GetCart(redisKey)
+	cart := h.SS.CartService.GetCart(c.Request.Context(), redisKey)
 	eCtx.RespondWithOK(cart)
 }
 
@@ -33,7 +33,7 @@ func (h Handlers) SetItemQuantity(c *gin.Context) {
 		eCtx.UserID(),
 		eCtx.LocationID(),
 	)
-	cart, err := h.SS.CartService.SetItemQuantity(redisKey, reqBody)
+	cart, err := h.SS.CartService.SetItemQuantity(c.Request.Context(), redisKey, reqBody)
 	if err != nil {
 		eCtx.RespondWithError(err)
 		return
@@ -49,6 +49,6 @@ func (h Handlers) ClearCart(c *gin.Context) {
 		eCtx.UserID(),
 		eCtx.LocationID(),
 	)
-	cart := h.SS.CartService.ClearCart(redisKey)
+	cart := h.SS.CartService.ClearCart(c.Request.Context(), redisKey)
 	eCtx.RespondWithOK(cart)
 }

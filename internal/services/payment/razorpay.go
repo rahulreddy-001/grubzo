@@ -1,6 +1,7 @@
 package payment
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,8 +14,8 @@ import (
 )
 
 type RazorpayService interface {
-	CreateOrder(amount int64, orderID string) (map[string]interface{}, error)
-	VerifyPayment(orderID, paymentID, signature string) error
+	CreateOrder(ctx context.Context, amount int64, orderID string) (map[string]interface{}, error)
+	VerifyPayment(ctx context.Context, orderID, paymentID, signature string) error
 }
 
 func InitRazorpayService(repository *repository.Repository, config *config.Config, logger *zap.Logger) (*razorpayServiceImpl, error) {
@@ -38,7 +39,7 @@ func (rs *razorpayServiceImpl) client() *razorpay.Client {
 	)
 }
 
-func (rs *razorpayServiceImpl) CreateOrder(amount int64, orderID string) (map[string]interface{}, error) {
+func (rs *razorpayServiceImpl) CreateOrder(_ context.Context, amount int64, orderID string) (map[string]interface{}, error) {
 	data := map[string]any{
 		"amount":   amount,
 		"currency": "INR",
@@ -47,7 +48,7 @@ func (rs *razorpayServiceImpl) CreateOrder(amount int64, orderID string) (map[st
 	return rs.client().Order.Create(data, nil)
 }
 
-func (rs *razorpayServiceImpl) VerifyPayment(orderID, paymentID, signature string) error {
+func (rs *razorpayServiceImpl) VerifyPayment(_ context.Context, orderID, paymentID, signature string) error {
 	mac := hmac.New(sha256.New, []byte(rs.config.PaymentGatewayKeys.Razorpay.KeySecret))
 	mac.Write([]byte(orderID + "|" + paymentID))
 	expectedSignature := hex.EncodeToString(mac.Sum(nil))

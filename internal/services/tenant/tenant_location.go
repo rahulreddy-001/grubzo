@@ -1,6 +1,7 @@
 package tenant
 
 import (
+	"context"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
 	"grubzo/internal/utils"
@@ -9,8 +10,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func (ts *tenantServiceImpl) CreateTenantLocation(tloc *dto.CreateTenantLocation) (*dto.CreateTenantLocationResponse, error) {
-	locationEntity, err := ts.repository.CreateTenantLocation(tloc)
+func (ts *tenantServiceImpl) CreateTenantLocation(ctx context.Context, tloc *dto.CreateTenantLocation) (*dto.CreateTenantLocationResponse, error) {
+	locationEntity, err := ts.repository.CreateTenantLocation(ctx, tloc)
 	if err != nil {
 		return nil, err
 	}
@@ -25,8 +26,8 @@ func (ts *tenantServiceImpl) CreateTenantLocation(tloc *dto.CreateTenantLocation
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) UpdateTenantLocation(tloc *dto.UpdateTenantLocation) (*dto.UpdateTenantLocationResponse, error) {
-	eLocation, err := ts.repository.UpdateTenantLocation(tloc)
+func (ts *tenantServiceImpl) UpdateTenantLocation(ctx context.Context, tloc *dto.UpdateTenantLocation) (*dto.UpdateTenantLocationResponse, error) {
+	eLocation, err := ts.repository.UpdateTenantLocation(ctx, tloc)
 	if err != nil {
 		return nil, err
 	}
@@ -41,8 +42,8 @@ func (ts *tenantServiceImpl) UpdateTenantLocation(tloc *dto.UpdateTenantLocation
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) GetTenantLocation(tenantLocId uint, tenantID uint) (*dto.TenantLocationResponse, error) {
-	eLocation, err := ts.repository.FindTenantLocation(query.NewTenantLocationQuery(tenantID).WithID(tenantLocId))
+func (ts *tenantServiceImpl) GetTenantLocation(ctx context.Context, tenantLocId uint, tenantID uint) (*dto.TenantLocationResponse, error) {
+	eLocation, err := ts.repository.FindTenantLocation(ctx, query.NewTenantLocationQuery(tenantID).WithID(tenantLocId))
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +58,8 @@ func (ts *tenantServiceImpl) GetTenantLocation(tenantLocId uint, tenantID uint) 
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) GetTenantLocations(tenantID uint) (*dto.TenantLocationsResponse, error) {
-	eLocations, err := ts.repository.FindTenantLocations(query.NewTenantLocationQuery(tenantID))
+func (ts *tenantServiceImpl) GetTenantLocations(ctx context.Context, tenantID uint) (*dto.TenantLocationsResponse, error) {
+	eLocations, err := ts.repository.FindTenantLocations(ctx, query.NewTenantLocationQuery(tenantID))
 	if err != nil {
 		return nil, err
 	}

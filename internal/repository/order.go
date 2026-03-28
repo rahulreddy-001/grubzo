@@ -1,20 +1,21 @@
 package repository
 
 import (
+	"context"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 )
 
 type OrderRepository interface {
-	CreateOrder(input *dto.CreateOrderDTO) (uint, error)
-	GetOrder(orderID, tenantID uint) (*entity.Order, error)
+	CreateOrder(ctx context.Context, input *dto.CreateOrderDTO) (uint, error)
+	GetOrder(ctx context.Context, orderID, tenantID uint) (*entity.Order, error)
 
-	UpdateOrderPaymentStatus(updateDTO *dto.UpdateOrderPaymentStatusDTO) error
-	GetOrders(q *query.OrderQuery) ([]entity.Order, error) 
+	UpdateOrderPaymentStatus(ctx context.Context, updateDTO *dto.UpdateOrderPaymentStatusDTO) error
+	GetOrders(ctx context.Context, q *query.OrderQuery) ([]entity.Order, error)
 }
 
-func (repo *Repository) CreateOrder(input *dto.CreateOrderDTO) (uint, error) {
+func (repo *Repository) CreateOrder(ctx context.Context, input *dto.CreateOrderDTO) (uint, error) {
 
 	bill := entity.BillJSON{
 		Subtotal:     input.Bill.Subtotal,
@@ -40,7 +41,7 @@ func (repo *Repository) CreateOrder(input *dto.CreateOrderDTO) (uint, error) {
 
 	order := &entity.Order{
 		TenantID:      input.TenantID,
-		UserRefID:        input.UserID,
+		UserRefID:     input.UserID,
 		LocationID:    input.LocationID,
 		Status:        "pending",
 		PaymentStatus: "pending",
@@ -49,26 +50,25 @@ func (repo *Repository) CreateOrder(input *dto.CreateOrderDTO) (uint, error) {
 		Items:         entity.ItemsJSON{Items: items},
 	}
 
-	if err := repo.db.Create(order).Error; err != nil {
+	if err := repo.dbWithContext(ctx).Create(order).Error; err != nil {
 		return 0, err
 	}
 
 	return order.ID, nil
 }
 
-func (repo *Repository) GetOrder(orderID, tenantID uint) (*entity.Order, error) {
+func (repo *Repository) GetOrder(ctx context.Context, orderID, tenantID uint) (*entity.Order, error) {
 	var order entity.Order
-	if err := repo.db.Where("id = ? AND tenant_id = ?", orderID, tenantID).First(&order).Error; err != nil {
+	if err := repo.dbWithContext(ctx).Where("id = ? AND tenant_id = ?", orderID, tenantID).First(&order).Error; err != nil {
 		return nil, err
 	}
 	return &order, nil
 }
 
-
-func (repo *Repository) UpdateOrderPaymentStatus(updateDTO *dto.UpdateOrderPaymentStatusDTO) error {
-	orderRecord, err := repo.GetOrder(updateDTO.OrderID, updateDTO.TenantID)
+func (repo *Repository) UpdateOrderPaymentStatus(ctx context.Context, updateDTO *dto.UpdateOrderPaymentStatusDTO) error {
+	orderRecord, err := repo.GetOrder(ctx, updateDTO.OrderID, updateDTO.TenantID)
 	if err != nil {
-		return err	
+		return err
 	}
 	if updateDTO.OrderStatus != nil {
 		orderRecord.Status = *updateDTO.OrderStatus
@@ -82,13 +82,11 @@ func (repo *Repository) UpdateOrderPaymentStatus(updateDTO *dto.UpdateOrderPayme
 	if updateDTO.WalletRefundTxnID != nil {
 		orderRecord.WalletRefundTransactionID = updateDTO.WalletRefundTxnID
 	}
-	return repo.db.Save(orderRecord).Error
+	return repo.dbWithContext(ctx).Save(orderRecord).Error
 }
 
-
-func (repo *Repository) GetOrders(q *query.OrderQuery) ([]entity.Order, error) {
-
-	db := repo.db.Where("tenant_id = ?", q.TenantID)
+func (repo *Repository) GetOrders(ctx context.Context, q *query.OrderQuery) ([]entity.Order, error) {
+	db := repo.dbWithContext(ctx).Where("tenant_id = ?", q.TenantID)
 
 	if q.UserID != nil {
 		db = db.Where("user_ref_id = ?", *q.UserID)

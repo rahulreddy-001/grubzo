@@ -14,7 +14,7 @@ func (h Handlers) CreateTenant(c *gin.Context) {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	response, err := h.SS.TenantService.CreateTenant(createTenantDTO)
+	response, err := h.SS.TenantService.CreateTenant(c.Request.Context(), createTenantDTO)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -28,7 +28,7 @@ func (h Handlers) UpdateTenant(c *gin.Context) {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	response, err := h.SS.TenantService.UpdateTenant(createTenantDTO)
+	response, err := h.SS.TenantService.UpdateTenant(c.Request.Context(), createTenantDTO)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -44,7 +44,7 @@ func (h Handlers) GetTenantByID(c *gin.Context) {
 		ext.Ctx(c).BadRequestParams()
 		return
 	}
-	response, err := h.SS.TenantService.GetTenant(params.TenantID)
+	response, err := h.SS.TenantService.GetTenant(c.Request.Context(), params.TenantID)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -53,7 +53,7 @@ func (h Handlers) GetTenantByID(c *gin.Context) {
 }
 
 func (h Handlers) GetAllTenants(c *gin.Context) {
-	response, err := h.SS.TenantService.GetAllTenants()
+	response, err := h.SS.TenantService.GetAllTenants(c.Request.Context())
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return

@@ -30,7 +30,7 @@ type Item struct {
 
 func (h Handlers) CreateMenuItem(c *gin.Context) {
 	args := dto.CreateMenuItem{
-		TenantID: ext.Ctx(c).TenantID(),
+		TenantID:   ext.Ctx(c).TenantID(),
 		LocationID: ext.Ctx(c).LocationID(),
 	}
 	if err := c.ShouldBindJSON(&args); err != nil {
@@ -41,7 +41,7 @@ func (h Handlers) CreateMenuItem(c *gin.Context) {
 		args.Files = append(args.Files, uuid.FromStringOrNil(fileID))
 		h.Logger.Debug("args.Files", zap.Any("args.Files", args.Files))
 	}
-	response, err := h.SS.StoreService.CreateItem(&args)
+	response, err := h.SS.StoreService.CreateItem(c.Request.Context(), &args)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -62,7 +62,7 @@ func (h Handlers) UpdateMenuItem(c *gin.Context) {
 	for _, fileID := range args.FileIDs {
 		args.Files = append(args.Files, uuid.FromStringOrNil(fileID))
 	}
-	response, err := h.SS.StoreService.UpdateItem(&args)
+	response, err := h.SS.StoreService.UpdateItem(c.Request.Context(), &args)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -74,7 +74,7 @@ func (h Handlers) GetAllMenuItems(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
 	args := query.NewMenuItemQuery(tenantID).WithPreload()
 	args.WithLocationID(ext.Ctx(c).LocationID())
-	response, err := h.SS.StoreService.GetItems(args)
+	response, err := h.SS.StoreService.GetItems(c.Request.Context(), args)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
@@ -86,14 +86,13 @@ func (h Handlers) GetItemsForUser(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
 	locationID := ext.Ctx(c).LocationID()
 	queryArgs := query.NewMenuItemQuery(tenantID).WithLocationID(locationID).WithPreload()
-	response, err := h.SS.StoreService.GetItems(queryArgs)
+	response, err := h.SS.StoreService.GetItems(c.Request.Context(), queryArgs)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
 	}
 	c.JSON(http.StatusOK, response)
 }
-
 
 func (h Handlers) GetMenuItem(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
@@ -106,7 +105,7 @@ func (h Handlers) GetMenuItem(c *gin.Context) {
 	}
 	args := query.NewMenuItemQuery(tenantID).WithID(params.ItemID).WithPreload()
 	args.WithLocationID(ext.Ctx(c).LocationID())
-	response, err := h.SS.StoreService.GetItem(args)
+	response, err := h.SS.StoreService.GetItem(c.Request.Context(), args)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return

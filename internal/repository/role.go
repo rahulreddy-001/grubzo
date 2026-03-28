@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"grubzo/internal/models/entity"
@@ -11,15 +12,15 @@ import (
 )
 
 type RoleRepository interface {
-	GetAllUserRoles(tenantID *uint) ([]entity.UserRole, error)
-	CreateRole(tenantID uint, name string, permissions []string) error
-	AddPermissionsToRole(tenantID uint, roleName string, permissions []string) error
-	RemovePermissionsFromRole(tenantID uint, roleName string, permissions []string) error
+	GetAllUserRoles(ctx context.Context, tenantID *uint) ([]entity.UserRole, error)
+	CreateRole(ctx context.Context, tenantID uint, name string, permissions []string) error
+	AddPermissionsToRole(ctx context.Context, tenantID uint, roleName string, permissions []string) error
+	RemovePermissionsFromRole(ctx context.Context, tenantID uint, roleName string, permissions []string) error
 }
 
-func (repo *Repository) GetAllUserRoles(tenantID *uint) ([]entity.UserRole, error) {
+func (repo *Repository) GetAllUserRoles(ctx context.Context, tenantID *uint) ([]entity.UserRole, error) {
 	var userRoles []entity.UserRole
-	sess := repo.db.Session(&gorm.Session{}).Model(&entity.UserRole{})
+	sess := repo.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.UserRole{})
 	if tenantID != nil {
 		sess = sess.Where("tenant_id = ?", *tenantID)
 	}
@@ -29,13 +30,13 @@ func (repo *Repository) GetAllUserRoles(tenantID *uint) ([]entity.UserRole, erro
 	return userRoles, nil
 }
 
-func (repo *Repository) CreateRole(tenantID uint, name string, permissions []string) error {
+func (repo *Repository) CreateRole(ctx context.Context, tenantID uint, name string, permissions []string) error {
 	role := entity.UserRole{
 		TenantID:    tenantID,
 		Name:        name,
 		Permissions: permissions,
 	}
-	if err := repo.db.Create(&role).Error; err != nil {
+	if err := repo.dbWithContext(ctx).Create(&role).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return ext.Error(fmt.Sprintf("role %q already exists", name))
 		}
@@ -44,9 +45,9 @@ func (repo *Repository) CreateRole(tenantID uint, name string, permissions []str
 	return nil
 }
 
-func (repo *Repository) AddPermissionsToRole(tenantID uint, roleName string, newPerms []string) error {
+func (repo *Repository) AddPermissionsToRole(ctx context.Context, tenantID uint, roleName string, newPerms []string) error {
 	var role entity.UserRole
-	if err := repo.db.
+	if err := repo.dbWithContext(ctx).
 		Where("tenant_id = ? AND name = ?", tenantID, roleName).
 		First(&role).Error; err != nil {
 		return err
@@ -62,13 +63,13 @@ func (repo *Repository) AddPermissionsToRole(tenantID uint, roleName string, new
 		}
 	}
 
-	return repo.db.Model(&role).
+	return repo.dbWithContext(ctx).Model(&role).
 		Update("permissions", pq.StringArray(role.Permissions)).Error
 }
 
-func (repo *Repository) RemovePermissionsFromRole(tenantID uint, roleName string, permsToRemove []string) error {
+func (repo *Repository) RemovePermissionsFromRole(ctx context.Context, tenantID uint, roleName string, permsToRemove []string) error {
 	var role entity.UserRole
-	if err := repo.db.
+	if err := repo.dbWithContext(ctx).
 		Where("tenant_id = ? AND name = ?", tenantID, roleName).
 		First(&role).Error; err != nil {
 		return err
@@ -86,12 +87,12 @@ func (repo *Repository) RemovePermissionsFromRole(tenantID uint, roleName string
 		}
 	}
 
-	return repo.db.Model(&role).
+	return repo.dbWithContext(ctx).Model(&role).
 		Update("permissions", pq.StringArray(newPerms)).Error
 }
 
-func (repo *Repository) DeleteRole(tenantID uint, roleName string) error {
-	return repo.db.
+func (repo *Repository) DeleteRole(ctx context.Context, tenantID uint, roleName string) error {
+	return repo.dbWithContext(ctx).
 		Where("tenant_id = ? AND name = ?", tenantID, roleName).
 		Delete(&entity.UserRole{}).
 		Error

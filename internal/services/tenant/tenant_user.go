@@ -1,6 +1,7 @@
 package tenant
 
 import (
+	"context"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
 
@@ -8,9 +9,9 @@ import (
 	"go.uber.org/zap"
 )
 
-func (ts *tenantServiceImpl) CreateTenantUser(tUserArgs *dto.CreateTenantUser) (*dto.CreateTenantUserResponse, error) {
+func (ts *tenantServiceImpl) CreateTenantUser(ctx context.Context, tUserArgs *dto.CreateTenantUser) (*dto.CreateTenantUserResponse, error) {
 	tUserArgs.Password = tUserArgs.Email
-	user, err := ts.repository.CreateTenantUser(tUserArgs)
+	user, err := ts.repository.CreateTenantUser(ctx, tUserArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -26,8 +27,8 @@ func (ts *tenantServiceImpl) CreateTenantUser(tUserArgs *dto.CreateTenantUser) (
 
 }
 
-func (ts *tenantServiceImpl) UpdateTenantUser(args *dto.UpdateTenantUser) (*dto.UpdateTenantUserResponse, error) {
-	user, err := ts.repository.UpdateTenantUser(args)
+func (ts *tenantServiceImpl) UpdateTenantUser(ctx context.Context, args *dto.UpdateTenantUser) (*dto.UpdateTenantUserResponse, error) {
+	user, err := ts.repository.UpdateTenantUser(ctx, args)
 	if err != nil {
 		return nil, err
 	}
@@ -42,8 +43,8 @@ func (ts *tenantServiceImpl) UpdateTenantUser(args *dto.UpdateTenantUser) (*dto.
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) GetTenantUser(UserID uint, tenantID uint) (*dto.GetTenantUserResponse, error) {
-	user, err := ts.repository.FindTenantUser(query.NewTenantUserQuery(tenantID).WithID(UserID))
+func (ts *tenantServiceImpl) GetTenantUser(ctx context.Context, UserID uint, tenantID uint) (*dto.GetTenantUserResponse, error) {
+	user, err := ts.repository.FindTenantUser(ctx, query.NewTenantUserQuery(tenantID).WithID(UserID))
 	if err != nil {
 		return nil, err
 	}
@@ -58,8 +59,8 @@ func (ts *tenantServiceImpl) GetTenantUser(UserID uint, tenantID uint) (*dto.Get
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) GetTenantUsers(tenantID uint) (*dto.GetTenantUsersResponse, error) {
-	users, err := ts.repository.FindAllTenantUsers(query.NewTenantUserQuery(tenantID))
+func (ts *tenantServiceImpl) GetTenantUsers(ctx context.Context, tenantID uint) (*dto.GetTenantUsersResponse, error) {
+	users, err := ts.repository.FindAllTenantUsers(ctx, query.NewTenantUserQuery(tenantID))
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +78,8 @@ func (ts *tenantServiceImpl) GetTenantUsers(tenantID uint) (*dto.GetTenantUsersR
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) FetchTenantUsers(query *query.TenantUserQuery) (*dto.GetTenantUsersResponse, error) {
-	users, err := ts.repository.FindAllTenantUsers(query)
+func (ts *tenantServiceImpl) FetchTenantUsers(ctx context.Context, query *query.TenantUserQuery) (*dto.GetTenantUsersResponse, error) {
+	users, err := ts.repository.FindAllTenantUsers(ctx, query)
 	if err != nil {
 		return nil, err
 	}

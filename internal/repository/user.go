@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
@@ -12,10 +13,10 @@ import (
 )
 
 type UserRepository interface {
-	CreateUser(dto *dto.CreateUser) (*entity.User, error)
-	UpdateUser(dto *dto.UpdateUser) (*entity.User, error)
-	FindUser(query *query.UserQuery) (*entity.User, error)
-	FindAllUsers(query *query.UserQuery) ([]*entity.User, error)
+	CreateUser(ctx context.Context, dto *dto.CreateUser) (*entity.User, error)
+	UpdateUser(ctx context.Context, dto *dto.UpdateUser) (*entity.User, error)
+	FindUser(ctx context.Context, query *query.UserQuery) (*entity.User, error)
+	FindAllUsers(ctx context.Context, query *query.UserQuery) ([]*entity.User, error)
 	CheckUserPassword(user *entity.User, password string) bool
 }
 
@@ -41,7 +42,7 @@ func validateUser(usr *entity.User, db *gorm.DB) error {
 	return nil
 }
 
-func (r *Repository) CreateUser(dto *dto.CreateUser) (*entity.User, error) {
+func (r *Repository) CreateUser(ctx context.Context, dto *dto.CreateUser) (*entity.User, error) {
 	user := &entity.User{
 		TenantID: dto.TenantID,
 		UserID:   dto.UserID,
@@ -50,11 +51,12 @@ func (r *Repository) CreateUser(dto *dto.CreateUser) (*entity.User, error) {
 		Name:     dto.Name,
 	}
 
-	if err := validateUser(user, r.db); err != nil {
+	db := r.dbWithContext(ctx)
+	if err := validateUser(user, db); err != nil {
 		return nil, err
 	}
 	populateUserHash(user)
-	if err := r.db.Create(user).Error; err != nil {
+	if err := db.Create(user).Error; err != nil {
 		return nil, err
 	}
 
@@ -69,8 +71,8 @@ func (r *Repository) CheckUserPassword(user *entity.User, password string) bool 
 	return random.HashPassword(password, user.Salt) == user.Password
 }
 
-func (r *Repository) UpdateUser(dto *dto.UpdateUser) (*entity.User, error) {
-	user, err := r.FindUser(query.NewUserQuery(dto.TenantID).WithID(dto.ID))
+func (r *Repository) UpdateUser(ctx context.Context, dto *dto.UpdateUser) (*entity.User, error) {
+	user, err := r.FindUser(ctx, query.NewUserQuery(dto.TenantID).WithID(dto.ID))
 	if err != nil {
 		return nil, err
 	}
@@ -84,18 +86,19 @@ func (r *Repository) UpdateUser(dto *dto.UpdateUser) (*entity.User, error) {
 	if dto.Name != nil {
 		user.Name = *dto.Name
 	}
-	if err := validateUser(user, r.db); err != nil {
+	db := r.dbWithContext(ctx)
+	if err := validateUser(user, db); err != nil {
 		return nil, err
 	}
-	if err := r.db.Save(&user).Error; err != nil {
+	if err := db.Save(&user).Error; err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func (r *Repository) FindUser(filter *query.UserQuery) (*entity.User, error) {
+func (r *Repository) FindUser(ctx context.Context, filter *query.UserQuery) (*entity.User, error) {
 	user := &entity.User{}
-	sess := r.db.Session(&gorm.Session{}).Model(&entity.User{})
+	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.User{})
 
 	sess = sess.Where("tenant_id = ?", filter.TenantID)
 	if filter.ID != nil {
@@ -117,9 +120,9 @@ func (r *Repository) FindUser(filter *query.UserQuery) (*entity.User, error) {
 	return user, nil
 }
 
-func (r *Repository) FindAllUsers(filter *query.UserQuery) ([]*entity.User, error) {
+func (r *Repository) FindAllUsers(ctx context.Context, filter *query.UserQuery) ([]*entity.User, error) {
 	var users []*entity.User
-	sess := r.db.Session(&gorm.Session{}).Model(&entity.User{})
+	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.User{})
 
 	sess.Where("tenant_id = ?", filter.TenantID)
 	if filter.ID != nil {

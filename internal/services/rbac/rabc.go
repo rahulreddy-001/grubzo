@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"context"
 	"fmt"
 	"grubzo/internal/repository"
 	"grubzo/internal/services/rbac/permission"
@@ -22,7 +23,7 @@ func New(repo *repository.Repository) (*RBAC, error) {
 		roles: make(map[uint]role.Roles),
 		repo:  repo,
 	}
-	if err := r.reload(); err != nil {
+	if err := r.reload(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to init rbac: %w", err)
 	}
 	return r, nil
@@ -66,12 +67,12 @@ func (r *RBAC) IsAnyGranted(tenantID uint, roles []string, perm permission.Permi
 	return false
 }
 
-func (r *RBAC) Reload() error {
-	return r.reload()
+func (r *RBAC) Reload(ctx context.Context) error {
+	return r.reload(ctx)
 }
 
-func (r *RBAC) reload() error {
-	allRoles, err := r.repo.GetAllUserRoles(nil)
+func (r *RBAC) reload(ctx context.Context) error {
+	allRoles, err := r.repo.GetAllUserRoles(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -151,8 +152,8 @@ func (r *RBAC) GetAllRoles(tenantID uint) []string {
 	return roles
 }
 
-func (r *RBAC) GetAllRolePermissions(tenantID uint) (map[string][]string, error) {
-	userRoles, err := r.repo.GetAllUserRoles(&tenantID)
+func (r *RBAC) GetAllRolePermissions(ctx context.Context, tenantID uint) (map[string][]string, error) {
+	userRoles, err := r.repo.GetAllUserRoles(ctx, &tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch roles for tenant %d: %w", tenantID, err)
 	}

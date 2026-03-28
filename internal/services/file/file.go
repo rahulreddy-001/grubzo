@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/utils/storage"
 	"io"
@@ -8,6 +9,21 @@ import (
 
 	"github.com/gofrs/uuid"
 )
+
+type File interface {
+	GetTenantID() uint
+	GetID() uuid.UUID
+	GetFileName() string
+	GetMIMEType() string
+	GetFileSize() uint
+	GetFileType() entity.FileType
+	GetOwnerType() entity.OwnerType
+	GetOwnerID() uint
+	GetCreatedAt() time.Time
+	Open(ctx context.Context) (io.ReadSeekCloser, error)
+	GetAlternativeURL() string
+	JSON() map[string]any
+}
 
 type fileMetaImpl struct {
 	meta *entity.FileMeta
@@ -49,8 +65,8 @@ func (f *fileMetaImpl) GetCreatedAt() time.Time {
 	return f.meta.CreatedAt
 }
 
-func (f *fileMetaImpl) Open() (io.ReadSeekCloser, error) {
-	return f.fs.OpenFileByKey(f.GetID().String(), f.GetFileType())
+func (f *fileMetaImpl) Open(ctx context.Context) (io.ReadSeekCloser, error) {
+	return f.fs.OpenFileByKey(ctx, f.GetID().String(), f.GetFileType())
 }
 
 func (f *fileMetaImpl) GetAlternativeURL() string {

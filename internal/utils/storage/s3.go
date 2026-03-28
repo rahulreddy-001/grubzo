@@ -47,14 +47,14 @@ func NewS3FileStorage(bucket, region, endpoint, apiKey, apiSecret string, forceP
 	return m, nil
 }
 
-func (fs *S3FileStorage) OpenFileByKey(key string, fileType entity.FileType) (reader io.ReadSeekCloser, err error) {
+func (fs *S3FileStorage) OpenFileByKey(ctx context.Context, key string, fileType entity.FileType) (reader io.ReadSeekCloser, err error) {
 
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(fs.bucket),
 		Key:    aws.String(key),
 	}
 
-	file, err := fs.getObject(context.Background(), input)
+	file, err := fs.getObject(ctx, input)
 	if err != nil {
 		var nsk *types.NoSuchKey
 		var nf *types.NotFound
@@ -67,7 +67,7 @@ func (fs *S3FileStorage) OpenFileByKey(key string, fileType entity.FileType) (re
 
 }
 
-func (fs *S3FileStorage) SaveByKey(src io.Reader, key, name, contentType string, fileType entity.FileType) (err error) {
+func (fs *S3FileStorage) SaveByKey(ctx context.Context, src io.Reader, key, name, contentType string, fileType entity.FileType) (err error) {
 	input := &s3.PutObjectInput{
 		Bucket:             aws.String(fs.bucket),
 		Key:                aws.String(key),
@@ -77,17 +77,17 @@ func (fs *S3FileStorage) SaveByKey(src io.Reader, key, name, contentType string,
 	}
 
 	uploader := manager.NewUploader(fs.client)
-	_, err = uploader.Upload(context.Background(), input)
+	_, err = uploader.Upload(ctx, input)
 	return
 }
 
-func (fs *S3FileStorage) DeleteByKey(key string, _ entity.FileType) (err error) {
+func (fs *S3FileStorage) DeleteByKey(ctx context.Context, key string, _ entity.FileType) (err error) {
 	input := &s3.DeleteObjectInput{
 		Bucket: aws.String(fs.bucket),
 		Key:    aws.String(key),
 	}
 
-	_, err = fs.client.DeleteObject(context.Background(), input)
+	_, err = fs.client.DeleteObject(ctx, input)
 	if err != nil {
 		var nsk *types.NoSuchKey
 		if errors.As(err, &nsk) {

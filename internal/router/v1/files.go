@@ -26,7 +26,7 @@ func (h Handlers) FileUpload(c *gin.Context) {
 			ext.Ctx(c).RespondWithError(err)
 			return
 		}
-		fileMeta, err := h.SS.FileManager.Save(args)
+		fileMeta, err := h.SS.FileManager.Save(c.Request.Context(), args)
 		if err != nil {
 			ext.Ctx(c).RespondWithError(err)
 			return
@@ -54,12 +54,12 @@ func (h Handlers) GetFileByID(c *gin.Context) {
 		ext.Ctx(c).BadRequestParams()
 		return
 	}
-	fileMeta, err := h.SS.FileManager.Get(fileID, tenantID)
+	fileMeta, err := h.SS.FileManager.Get(c.Request.Context(), fileID, tenantID)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return
 	}
-	f, err := fileMeta.Open()
+	f, err := fileMeta.Open(c.Request.Context())
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return

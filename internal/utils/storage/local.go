@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"grubzo/internal/models/entity"
 	"io"
 	"os"
@@ -27,7 +28,7 @@ func NewLocalFileStorage(dir string) *LocalFileStorage {
 	return fs
 }
 
-func (fs *LocalFileStorage) OpenFileByKey(key string, _ entity.FileType) (io.ReadSeekCloser, error) {
+func (fs *LocalFileStorage) OpenFileByKey(_ context.Context, key string, _ entity.FileType) (io.ReadSeekCloser, error) {
 	fileName := fs.getFilePath(key)
 	reader, err := os.Open(fileName)
 	if err != nil {
@@ -36,7 +37,7 @@ func (fs *LocalFileStorage) OpenFileByKey(key string, _ entity.FileType) (io.Rea
 	return reader, nil
 }
 
-func (fs *LocalFileStorage) SaveByKey(src io.Reader, key, _, _ string, _ entity.FileType) error {
+func (fs *LocalFileStorage) SaveByKey(_ context.Context, src io.Reader, key, _, _ string, _ entity.FileType) error {
 	file, err := os.Create(fs.getFilePath(key))
 	if err != nil {
 		return err
@@ -47,7 +48,7 @@ func (fs *LocalFileStorage) SaveByKey(src io.Reader, key, _, _ string, _ entity.
 	return err
 }
 
-func (fs *LocalFileStorage) DeleteByKey(key string, _ entity.FileType) error {
+func (fs *LocalFileStorage) DeleteByKey(_ context.Context, key string, _ entity.FileType) error {
 	fileName := fs.getFilePath(key)
 	if _, err := os.Stat(fileName); err != nil {
 		return ErrFileNotFound

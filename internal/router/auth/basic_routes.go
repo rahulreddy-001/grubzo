@@ -29,7 +29,7 @@ func (h Handlers) Login(c *gin.Context) {
 		return
 	}
 	if req.Type == "user" {
-		userID, err := h.SS.AuthService.BasicUserLogin(req.Email, req.Password, req.TenantID)
+		userID, err := h.SS.AuthService.BasicUserLogin(c.Request.Context(), req.Email, req.Password, req.TenantID)
 		if err != nil {
 			ext.Ctx(c).RespondWithError(err)
 			return
@@ -49,7 +49,7 @@ func (h Handlers) Login(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "login successful", "session_token": userSession.Token()})
 		return
 	} else {
-		userID, err := h.SS.AuthService.BasicEmployeeLogin(req.Email, req.Password, req.TenantID)
+		userID, err := h.SS.AuthService.BasicEmployeeLogin(c.Request.Context(), req.Email, req.Password, req.TenantID)
 		if err != nil {
 			ext.Ctx(c).RespondWithError(err)
 			return
@@ -59,7 +59,7 @@ func (h Handlers) Login(c *gin.Context) {
 			ext.Ctx(c).RespondWithError(err)
 			return
 		}
-		userEntity, err := h.Repository.FindTenantUser(query.NewTenantUserQuery(req.TenantID).WithID(userID))
+		userEntity, err := h.Repository.FindTenantUser(c.Request.Context(), query.NewTenantUserQuery(req.TenantID).WithID(userID))
 		if err != nil {
 			ext.Ctx(c).RespondWithError(err)
 			return
