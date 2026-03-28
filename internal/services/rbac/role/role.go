@@ -1,5 +1,7 @@
 package role
 
+//go:generate go run ../../../../cmd/injecttrace -file role.go -receiver Role -service Role
+
 import (
 	"grubzo/internal/services/rbac/permission"
 )

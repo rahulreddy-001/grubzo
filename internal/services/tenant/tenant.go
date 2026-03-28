@@ -1,5 +1,6 @@
 package tenant
 
+//go:generate go run ../../../cmd/injecttrace -file tenant.go -receiver tenantServiceImpl -service TenantService
 import (
 	"context"
 	"grubzo/internal/config"
@@ -7,6 +8,7 @@ import (
 	"grubzo/internal/models/query"
 	"grubzo/internal/repository"
 
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
@@ -46,6 +48,9 @@ func InitTenantService(repository *repository.Repository, config *config.Config,
 }
 
 func (ts *tenantServiceImpl) CreateTenant(ctx context.Context, args *dto.CreateTenant) (*dto.CreateTenantResponse, error) {
+	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.CreateTenant")
+	defer span.End()
+
 	tenant, err := ts.repository.CreateTenant(ctx, args)
 	if err != nil {
 		return nil, err
@@ -62,6 +67,9 @@ func (ts *tenantServiceImpl) CreateTenant(ctx context.Context, args *dto.CreateT
 }
 
 func (ts *tenantServiceImpl) UpdateTenant(ctx context.Context, args *dto.UpdateTenant) (*dto.UpdateTenantResponse, error) {
+	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.UpdateTenant")
+	defer span.End()
+
 	tenant, err := ts.repository.UpdateTenant(ctx, args)
 	if err != nil {
 		return nil, err
@@ -78,6 +86,9 @@ func (ts *tenantServiceImpl) UpdateTenant(ctx context.Context, args *dto.UpdateT
 }
 
 func (ts *tenantServiceImpl) GetTenant(ctx context.Context, tenantID uint) (*dto.GetTenantResponse, error) {
+	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.GetTenant")
+	defer span.End()
+
 	tenant, err := ts.repository.GetTenant(ctx, query.NewTenantQuery().WithPreloads().WithID(tenantID))
 	if err != nil {
 		return nil, err
@@ -94,6 +105,9 @@ func (ts *tenantServiceImpl) GetTenant(ctx context.Context, tenantID uint) (*dto
 }
 
 func (ts *tenantServiceImpl) GetAllTenants(ctx context.Context) (*dto.GetAllTenantsResponse, error) {
+	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.GetAllTenants")
+	defer span.End()
+
 	tenants, err := ts.repository.GetTenants(ctx, query.NewTenantQuery())
 	if err != nil {
 		return nil, err

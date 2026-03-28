@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -30,11 +31,13 @@ type LokiWriter struct {
 	url    string
 	labels map[string]string
 
-	mu     sync.Mutex
-	buf    [][2]string
-	ticker *time.Ticker
-	stop   chan struct{}
-	closed bool
+	mu        sync.Mutex
+	buf       [][2]string
+	ticker    *time.Ticker
+	stop      chan struct{}
+	done      chan struct{}
+	closeOnce sync.Once
+	closed    bool
 }
 
 func NewLokiWriter(
@@ -50,6 +53,7 @@ func NewLokiWriter(
 		labels: labels,
 		ticker: time.NewTicker(flushInterval),
 		stop:   make(chan struct{}),
+		done:   make(chan struct{}),
 	}
 
 	go lw.flushLoop()
@@ -70,34 +74,35 @@ func (l *LokiWriter) Write(p []byte) (int, error) {
 
 	l.buf = append(l.buf, [2]string{
 		strconv.FormatInt(time.Now().UnixNano(), 10),
-		string(bytes.TrimSpace(p)),
+		compactLogLine(p),
 	})
 
 	return len(p), nil
 }
 
 func (l *LokiWriter) flushLoop() {
+	defer close(l.done)
+
 	for {
 		select {
 		case <-l.ticker.C:
-			l.flush()
+			_ = l.flush(context.Background())
 		case <-l.stop:
-			l.flush()
 			return
 		}
 	}
 }
 
-func (l *LokiWriter) flush() {
+func (l *LokiWriter) flush(ctx context.Context) error {
 	for {
 		batch := l.nextBatch()
 		if len(batch) == 0 {
-			return
+			return nil
 		}
 
-		if err := l.push(batch); err != nil {
+		if err := l.push(ctx, batch); err != nil {
 			l.requeue(batch)
-			return
+			return err
 		}
 	}
 }
@@ -131,7 +136,7 @@ func (l *LokiWriter) requeue(batch [][2]string) {
 	l.buf = append(batch, l.buf...)
 }
 
-func (l *LokiWriter) push(values [][2]string) error {
+func (l *LokiWriter) push(ctx context.Context, values [][2]string) error {
 	payload := lokiPayload{
 		Streams: []struct {
 			Stream map[string]string `json:"stream"`
@@ -152,9 +157,14 @@ func (l *LokiWriter) push(values [][2]string) error {
 	backoff := initialBackoff
 
 	for i := 0; i < maxRetries; i++ {
-		req, err := http.NewRequest(
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
+		req, err := http.NewRequestWithContext(
+			ctx,
 			http.MethodPost,
-			l.url+"/loki/api/v1/push",
+			l.url,
 			bytes.NewBuffer(data),
 		)
 		if err != nil {
@@ -165,30 +175,65 @@ func (l *LokiWriter) push(values [][2]string) error {
 
 		resp, err := l.client.Do(req)
 		if err == nil && resp != nil {
-			io.Copy(io.Discard, resp.Body)
-			resp.Body.Close()
+			_, _ = io.Copy(io.Discard, resp.Body)
+			_ = resp.Body.Close()
 
 			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 				return nil
 			}
 		}
 
-		time.Sleep(backoff)
+		timer := time.NewTimer(backoff)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return ctx.Err()
+		case <-timer.C:
+		}
 		backoff *= 2
 	}
 
 	return os.ErrDeadlineExceeded
 }
 
-func (l *LokiWriter) Close() {
-	l.mu.Lock()
-	if l.closed {
-		l.mu.Unlock()
-		return
-	}
-	l.closed = true
-	l.mu.Unlock()
+func (l *LokiWriter) Sync() error {
+	return l.flush(context.Background())
+}
 
-	close(l.stop)
-	l.ticker.Stop()
+func (l *LokiWriter) Close(ctx context.Context) error {
+	var closeErr error
+
+	l.closeOnce.Do(func() {
+		l.mu.Lock()
+		l.closed = true
+		l.mu.Unlock()
+
+		l.ticker.Stop()
+		close(l.stop)
+
+		select {
+		case <-l.done:
+		case <-ctx.Done():
+			closeErr = ctx.Err()
+			return
+		}
+
+		closeErr = l.flush(ctx)
+	})
+
+	return closeErr
+}
+
+func compactLogLine(p []byte) string {
+	line := bytes.TrimSpace(p)
+	if len(line) == 0 {
+		return ""
+	}
+
+	var compact bytes.Buffer
+	if err := json.Compact(&compact, line); err == nil {
+		return compact.String()
+	}
+
+	return string(line)
 }

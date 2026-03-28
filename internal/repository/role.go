@@ -1,14 +1,15 @@
 package repository
 
+//go:generate go run ../../cmd/injecttrace -file role.go -receiver Repository -service Repository
 import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/lib/pq"
+	"go.opentelemetry.io/otel"
+	"gorm.io/gorm"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/router/ext"
-
-	"github.com/lib/pq"
-	"gorm.io/gorm"
 )
 
 type RoleRepository interface {
@@ -19,6 +20,9 @@ type RoleRepository interface {
 }
 
 func (repo *Repository) GetAllUserRoles(ctx context.Context, tenantID *uint) ([]entity.UserRole, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetAllUserRoles")
+	defer span.End()
+
 	var userRoles []entity.UserRole
 	sess := repo.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.UserRole{})
 	if tenantID != nil {
@@ -31,6 +35,9 @@ func (repo *Repository) GetAllUserRoles(ctx context.Context, tenantID *uint) ([]
 }
 
 func (repo *Repository) CreateRole(ctx context.Context, tenantID uint, name string, permissions []string) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.CreateRole")
+	defer span.End()
+
 	role := entity.UserRole{
 		TenantID:    tenantID,
 		Name:        name,
@@ -46,6 +53,9 @@ func (repo *Repository) CreateRole(ctx context.Context, tenantID uint, name stri
 }
 
 func (repo *Repository) AddPermissionsToRole(ctx context.Context, tenantID uint, roleName string, newPerms []string) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.AddPermissionsToRole")
+	defer span.End()
+
 	var role entity.UserRole
 	if err := repo.dbWithContext(ctx).
 		Where("tenant_id = ? AND name = ?", tenantID, roleName).
@@ -68,6 +78,9 @@ func (repo *Repository) AddPermissionsToRole(ctx context.Context, tenantID uint,
 }
 
 func (repo *Repository) RemovePermissionsFromRole(ctx context.Context, tenantID uint, roleName string, permsToRemove []string) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.RemovePermissionsFromRole")
+	defer span.End()
+
 	var role entity.UserRole
 	if err := repo.dbWithContext(ctx).
 		Where("tenant_id = ? AND name = ?", tenantID, roleName).
@@ -92,6 +105,9 @@ func (repo *Repository) RemovePermissionsFromRole(ctx context.Context, tenantID 
 }
 
 func (repo *Repository) DeleteRole(ctx context.Context, tenantID uint, roleName string) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.DeleteRole")
+	defer span.End()
+
 	return repo.dbWithContext(ctx).
 		Where("tenant_id = ? AND name = ?", tenantID, roleName).
 		Delete(&entity.UserRole{}).

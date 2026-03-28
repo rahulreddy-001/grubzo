@@ -10,7 +10,7 @@ var c *config.Config
 
 func loadConfig() error {
 	var e error
-	once.Do(func(){
+	once.Do(func() {
 		if cfg, err := config.LoadConfig(); err != nil {
 			e = err
 		} else {

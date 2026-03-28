@@ -1,13 +1,14 @@
 package file
 
+//go:generate go run ../../../cmd/injecttrace -file file.go -receiver fileMetaImpl -service File
 import (
 	"context"
+	"github.com/gofrs/uuid"
+	"go.opentelemetry.io/otel"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/utils/storage"
 	"io"
 	"time"
-
-	"github.com/gofrs/uuid"
 )
 
 type File interface {
@@ -66,6 +67,9 @@ func (f *fileMetaImpl) GetCreatedAt() time.Time {
 }
 
 func (f *fileMetaImpl) Open(ctx context.Context) (io.ReadSeekCloser, error) {
+	ctx, span := otel.Tracer("File").Start(ctx, "File.Open")
+	defer span.End()
+
 	return f.fs.OpenFileByKey(ctx, f.GetID().String(), f.GetFileType())
 }
 

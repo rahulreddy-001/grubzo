@@ -1,5 +1,7 @@
 package user
 
+//go:generate go run ../../../cmd/injecttrace -file user.go -receiver userServiceImpl -service UserService
+
 import (
 	"context"
 	"grubzo/internal/config"
@@ -8,6 +10,7 @@ import (
 	"grubzo/internal/repository"
 
 	"github.com/jinzhu/copier"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
@@ -33,6 +36,9 @@ func InitUserService(repository *repository.Repository, config *config.Config, l
 }
 
 func (us *userServiceImpl) CreateUser(ctx context.Context, args *dto.CreateUser) (*dto.CreateUserResponse, error) {
+	ctx, span := otel.Tracer("UserService").Start(ctx, "UserService.CreateUser")
+	defer span.End()
+
 	user, err := us.repository.CreateUser(ctx, args)
 	if err != nil {
 		return nil, err
@@ -49,6 +55,9 @@ func (us *userServiceImpl) CreateUser(ctx context.Context, args *dto.CreateUser)
 }
 
 func (us *userServiceImpl) UpdateUser(ctx context.Context, args *dto.UpdateUser) (*dto.UpdateUserResponse, error) {
+	ctx, span := otel.Tracer("UserService").Start(ctx, "UserService.UpdateUser")
+	defer span.End()
+
 	user, err := us.repository.UpdateUser(ctx, args)
 	if err != nil {
 		return nil, err
@@ -65,6 +74,9 @@ func (us *userServiceImpl) UpdateUser(ctx context.Context, args *dto.UpdateUser)
 }
 
 func (us *userServiceImpl) GetUser(ctx context.Context, UserID uint, tenantID uint) (*dto.GetUserResponse, error) {
+	ctx, span := otel.Tracer("UserService").Start(ctx, "UserService.GetUser")
+	defer span.End()
+
 	user, err := us.repository.FindUser(ctx, query.NewUserQuery(tenantID).WithID(UserID))
 	if err != nil {
 		return nil, err
@@ -81,6 +93,9 @@ func (us *userServiceImpl) GetUser(ctx context.Context, UserID uint, tenantID ui
 }
 
 func (us *userServiceImpl) GetUsers(ctx context.Context, tenantID uint) (*dto.GetUsersResponse, error) {
+	ctx, span := otel.Tracer("UserService").Start(ctx, "UserService.GetUsers")
+	defer span.End()
+
 	users, err := us.repository.FindAllUsers(ctx, query.NewUserQuery(tenantID))
 	if err != nil {
 		return nil, err

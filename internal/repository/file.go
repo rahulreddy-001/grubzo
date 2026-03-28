@@ -1,14 +1,15 @@
 package repository
 
+//go:generate go run ../../cmd/injecttrace -file file.go -receiver Repository -service Repository
 import (
 	"context"
 	"errors"
+	"github.com/gofrs/uuid"
+	"go.opentelemetry.io/otel"
+	"gorm.io/gorm"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
-
-	"github.com/gofrs/uuid"
-	"gorm.io/gorm"
 )
 
 type FileRepository interface {
@@ -21,6 +22,9 @@ type FileRepository interface {
 }
 
 func (r *Repository) SaveFile(ctx context.Context, fileMeta *entity.FileMeta) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.SaveFile")
+	defer span.End()
+
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.FileMeta{})
 	if err := sess.Create(&fileMeta).Error; err != nil {
 		return err
@@ -29,6 +33,9 @@ func (r *Repository) SaveFile(ctx context.Context, fileMeta *entity.FileMeta) er
 }
 
 func (r *Repository) GetFile(ctx context.Context, id uuid.UUID, tenantID uint) (*entity.FileMeta, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetFile")
+	defer span.End()
+
 	fileMeta := &entity.FileMeta{}
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(entity.FileMeta{})
 	if err := sess.Where("tenant_id = ? AND id = ?", tenantID, id).First(&fileMeta).Error; err != nil {
@@ -40,6 +47,9 @@ func (r *Repository) GetFile(ctx context.Context, id uuid.UUID, tenantID uint) (
 }
 
 func (r *Repository) GetFiles(ctx context.Context, q *query.FilesQuery) (result []*entity.FileMeta, more bool, err error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetFiles")
+	defer span.End()
+
 	files := []*entity.FileMeta{}
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.FileMeta{}).Where("tenant_id = ?", q.TenantID)
 	if len(q.IDs) != 0 {
@@ -66,6 +76,9 @@ func (r *Repository) GetFiles(ctx context.Context, q *query.FilesQuery) (result 
 }
 
 func (r *Repository) DeleteFile(ctx context.Context, fileID uuid.UUID) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.DeleteFile")
+	defer span.End()
+
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.FileMeta{})
 	if err := sess.Where("id = ?", fileID).Delete(&entity.FileMeta{}).Error; err != nil {
 		return err
@@ -74,6 +87,9 @@ func (r *Repository) DeleteFile(ctx context.Context, fileID uuid.UUID) error {
 }
 
 func (r *Repository) DeleteFiles(ctx context.Context, tx *gorm.DB, filesID []uuid.UUID) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.DeleteFiles")
+	defer span.End()
+
 	if len(filesID) > 0 {
 		sess := r.dbOrTx(ctx, tx).Session(&gorm.Session{}).Model(&entity.FileMeta{})
 		if err := sess.Where("id IN ?", filesID).Delete(&entity.FileMeta{}).Error; err != nil {
@@ -84,6 +100,9 @@ func (r *Repository) DeleteFiles(ctx context.Context, tx *gorm.DB, filesID []uui
 }
 
 func (r *Repository) PopulateOwnerID(ctx context.Context, tx *gorm.DB, ownerID uint, ids []uuid.UUID, tenantId uint) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.PopulateOwnerID")
+	defer span.End()
+
 	if len(ids) > 0 {
 		if err := r.dbOrTx(ctx, tx).Model(&entity.FileMeta{}).
 			Where("tenant_id = ? AND id IN ?", tenantId, ids).

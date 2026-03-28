@@ -31,13 +31,17 @@ func serveCommand() *cobra.Command {
 		Short: "Serve grubzo API",
 		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
-			logger := getLogger()
-			defer logger.Sync()
+			logger, closeLogger := getLogger()
+			defer func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				_ = closeLogger(ctx)
+			}()
 
 			logger.Info(fmt.Sprintf("grubzo %s (revision %s)", Version, Revision))
 
 			// Tracer
-			shutdown, err := initTracer("grubzo_main", logger.Named("tracer"))
+			shutdown, err := initTracer("GrubzoServer", c, logger.Named("tracer"))
 			if err != nil {
 				logger.Fatal("failed to initilize tracer", zap.Error(err))
 			}

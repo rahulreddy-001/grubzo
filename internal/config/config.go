@@ -58,6 +58,7 @@ type Config struct {
 		} `json:"razorpay"`
 	} `json:"paymentGatewayKeys"`
 	LokiHost        string `json:"lokihost"`
+	TempoHost       string `json:"tempohost"`
 	JWT256BitSecret string `json:"jwt256bitsecret"`
 	SessionStorage  string `json:"sessionStorage"`
 	DevMode         bool   `json:"devMode"`

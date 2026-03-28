@@ -1,14 +1,15 @@
 package repository
 
+//go:generate go run ../../cmd/injecttrace -file tenant.go -receiver Repository -service Repository
 import (
 	"context"
 	"errors"
+	"go.opentelemetry.io/otel"
+	"gorm.io/gorm"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
-
-	"gorm.io/gorm"
 )
 
 type TenantRepository interface {
@@ -41,6 +42,9 @@ func tenantValidator(tenant *entity.Tenant, db *gorm.DB) error {
 }
 
 func (r *Repository) CreateTenant(ctx context.Context, dto *dto.CreateTenant) (*entity.Tenant, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.CreateTenant")
+	defer span.End()
+
 	tenant := &entity.Tenant{
 		Name: dto.Name,
 		Code: dto.Code,
@@ -56,6 +60,9 @@ func (r *Repository) CreateTenant(ctx context.Context, dto *dto.CreateTenant) (*
 }
 
 func (r *Repository) GetTenant(ctx context.Context, q *query.TenantQuery) (*entity.Tenant, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetTenant")
+	defer span.End()
+
 	tenant := &entity.Tenant{}
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Tenant{})
 
@@ -81,6 +88,9 @@ func (r *Repository) GetTenant(ctx context.Context, q *query.TenantQuery) (*enti
 }
 
 func (r *Repository) GetTenants(ctx context.Context, q *query.TenantQuery) ([]*entity.Tenant, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetTenants")
+	defer span.End()
+
 	var tenants []*entity.Tenant
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Tenant{})
 
@@ -103,6 +113,9 @@ func (r *Repository) GetTenants(ctx context.Context, q *query.TenantQuery) ([]*e
 }
 
 func (r *Repository) UpdateTenant(ctx context.Context, dto *dto.UpdateTenant) (*entity.Tenant, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.UpdateTenant")
+	defer span.End()
+
 	updates := map[string]any{}
 	if dto.Name != nil {
 		updates["name"] = *dto.Name
@@ -125,6 +138,9 @@ func (r *Repository) UpdateTenant(ctx context.Context, dto *dto.UpdateTenant) (*
 }
 
 func (r *Repository) SaveTenant(ctx context.Context, tenant *entity.Tenant) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.SaveTenant")
+	defer span.End()
+
 	db := r.dbWithContext(ctx)
 	if err := tenantValidator(tenant, db); err != nil {
 		return err

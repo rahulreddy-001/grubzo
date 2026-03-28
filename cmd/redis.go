@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"grubzo/internal/config"
 
+	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -17,5 +18,9 @@ func getRedisClient(cfg *config.Config) (*redis.Client, error) {
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
 		return nil, err
 	}
+	if err := redisotel.InstrumentTracing(rdb); err != nil {
+		return nil, err
+	}
+
 	return rdb, nil
 }

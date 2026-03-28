@@ -1,17 +1,18 @@
 package file
 
+//go:generate go run ../../../cmd/injecttrace -file manager.go -receiver managerImpl -service Manager
 import (
 	"context"
 	"fmt"
+	"github.com/gofrs/uuid"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/repository"
 	"grubzo/internal/router/ext"
 	"grubzo/internal/utils/storage"
-
-	"github.com/gofrs/uuid"
-	"go.uber.org/zap"
 )
 
 var (
@@ -43,6 +44,8 @@ func InitFileManager(repo repository.FileRepository, fs storage.FileStorage, l *
 }
 
 func (m *managerImpl) Save(ctx context.Context, args *dto.File) (File, error) {
+	ctx, span := otel.Tracer("Manager").Start(ctx, "Manager.Save")
+	defer span.End()
 
 	f := &entity.FileMeta{
 		TenantID:  args.TenantId,
@@ -74,6 +77,9 @@ func (m *managerImpl) Save(ctx context.Context, args *dto.File) (File, error) {
 }
 
 func (m *managerImpl) Get(ctx context.Context, id uuid.UUID, tenantID uint) (File, error) {
+	ctx, span := otel.Tracer("Manager").Start(ctx, "Manager.Get")
+	defer span.End()
+
 	meta, err := m.repo.GetFile(ctx, id, tenantID)
 	if err != nil {
 		return nil, err
@@ -82,6 +88,9 @@ func (m *managerImpl) Get(ctx context.Context, id uuid.UUID, tenantID uint) (Fil
 }
 
 func (m *managerImpl) List(ctx context.Context, q *query.FilesQuery) ([]File, bool, error) {
+	ctx, span := otel.Tracer("Manager").Start(ctx, "Manager.List")
+	defer span.End()
+
 	r, more, err := m.repo.GetFiles(ctx, q)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to GetFileMetas: %w", err)
@@ -90,6 +99,9 @@ func (m *managerImpl) List(ctx context.Context, q *query.FilesQuery) ([]File, bo
 }
 
 func (m *managerImpl) Delete(ctx context.Context, id uuid.UUID, tenantID uint) error {
+	ctx, span := otel.Tracer("Manager").Start(ctx, "Manager.Delete")
+	defer span.End()
+
 	meta, err := m.repo.GetFile(ctx, id, tenantID)
 	if err != nil {
 		return err

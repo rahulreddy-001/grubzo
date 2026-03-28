@@ -1,15 +1,16 @@
 package store
 
+//go:generate go run ../../../cmd/injecttrace -file item.go -receiver storeServiceImpl -service StoreService
 import (
 	"context"
+	"github.com/jinzhu/copier"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 	"grubzo/internal/config"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
 	"grubzo/internal/repository"
 	"grubzo/internal/services/file"
-
-	"github.com/jinzhu/copier"
-	"go.uber.org/zap"
 )
 
 type StoreService interface {
@@ -36,6 +37,9 @@ type storeServiceImpl struct {
 }
 
 func (ss *storeServiceImpl) GetItem(ctx context.Context, query *query.MenuItemQuery) (*dto.GetMenuItemResponse, error) {
+	ctx, span := otel.Tracer("StoreService").Start(ctx, "StoreService.GetItem")
+	defer span.End()
+
 	eItem, err := ss.repository.GetItem(ctx, query)
 	if err != nil {
 		return nil, err
@@ -52,6 +56,9 @@ func (ss *storeServiceImpl) GetItem(ctx context.Context, query *query.MenuItemQu
 }
 
 func (ss *storeServiceImpl) GetItems(ctx context.Context, query *query.MenuItemQuery) (*dto.GetMenuItemsResponse, error) {
+	ctx, span := otel.Tracer("StoreService").Start(ctx, "StoreService.GetItems")
+	defer span.End()
+
 	eItems, err := ss.repository.GetItems(ctx, query)
 	if err != nil {
 		return nil, err
@@ -70,6 +77,9 @@ func (ss *storeServiceImpl) GetItems(ctx context.Context, query *query.MenuItemQ
 }
 
 func (ss *storeServiceImpl) CreateItem(ctx context.Context, args *dto.CreateMenuItem) (*dto.CreateMenuItemResponse, error) {
+	ctx, span := otel.Tracer("StoreService").Start(ctx, "StoreService.CreateItem")
+	defer span.End()
+
 	eItem, err := ss.repository.CreateItem(ctx, args)
 	if err != nil {
 		return nil, err
@@ -86,6 +96,9 @@ func (ss *storeServiceImpl) CreateItem(ctx context.Context, args *dto.CreateMenu
 }
 
 func (ss *storeServiceImpl) UpdateItem(ctx context.Context, args *dto.UpdateMenuItem) (*dto.UpdateMenuItemResponse, error) {
+	ctx, span := otel.Tracer("StoreService").Start(ctx, "StoreService.UpdateItem")
+	defer span.End()
+
 	eItem, err := ss.repository.UpdateItem(ctx, args)
 	if err != nil {
 		return nil, err

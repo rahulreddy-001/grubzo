@@ -27,8 +27,8 @@ type UpdateMenuItem struct {
 	Description *string     `json:"Description"`
 	Price       *float64    `json:"Price"`
 	Category    *string     `json:"Category"`
-	FoodType    *string      `json:"FoodType"`
-	ItemStatus  *string      `json:"ItemStatus"`
+	FoodType    *string     `json:"FoodType"`
+	ItemStatus  *string     `json:"ItemStatus"`
 	FileIDs     []string    `json:"FileIDs" binding:"required"`
 	Files       []uuid.UUID `json:"files"`
 }

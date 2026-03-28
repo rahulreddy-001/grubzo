@@ -1,16 +1,17 @@
 package order
 
+//go:generate go run ../../../cmd/injecttrace -file cart.go -receiver cartServiceImpl -service CartService
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 	"grubzo/internal/config"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
 	"grubzo/internal/repository"
 	"grubzo/internal/router/ext"
 	"grubzo/internal/services/store"
-
-	"go.uber.org/zap"
 )
 
 type CartService interface {
@@ -62,6 +63,9 @@ func (cs *cartServiceImpl) getTenantIDUserIDLocationIDFromKey(key string) (uint,
 }
 
 func (cs *cartServiceImpl) GetAdjustedCart(ctx context.Context, key string) (*dto.Cart, []dto.Item) {
+	ctx, span := otel.Tracer("CartService").Start(ctx, "CartService.GetAdjustedCart")
+	defer span.End()
+
 	cart := cs.repository.GetCart(ctx, key)
 	if cart == nil {
 		return &dto.Cart{
@@ -74,6 +78,9 @@ func (cs *cartServiceImpl) GetAdjustedCart(ctx context.Context, key string) (*dt
 }
 
 func (cs *cartServiceImpl) getAdjustedCart(ctx context.Context, cart *dto.Cart) (*dto.Cart, []dto.Item) {
+	ctx, span := otel.Tracer("CartService").Start(ctx, "CartService.getAdjustedCart")
+	defer span.End()
+
 	tenantID, _, locationID := cs.getTenantIDUserIDLocationIDFromKey(cart.Key)
 	items, err := cs.repository.GetItems(ctx, query.NewMenuItemQuery(tenantID).WithLocationID(locationID).WithOrderable(true))
 	if err != nil {
@@ -108,6 +115,9 @@ func (cs *cartServiceImpl) getAdjustedCart(ctx context.Context, cart *dto.Cart) 
 }
 
 func (cs *cartServiceImpl) GetCart(ctx context.Context, key string) *dto.CartResponse {
+	ctx, span := otel.Tracer("CartService").Start(ctx, "CartService.GetCart")
+	defer span.End()
+
 	adjustedCart, removedItems := cs.GetAdjustedCart(ctx, key)
 	bill, _ := cs.biller.DraftBill(ctx, key, adjustedCart)
 	return &dto.CartResponse{
@@ -119,6 +129,9 @@ func (cs *cartServiceImpl) GetCart(ctx context.Context, key string) *dto.CartRes
 }
 
 func (cs *cartServiceImpl) SetItemQuantity(ctx context.Context, key string, action *dto.UpdateItemQuantity) (*dto.CartResponse, error) {
+	ctx, span := otel.Tracer("CartService").Start(ctx, "CartService.SetItemQuantity")
+	defer span.End()
+
 	cart, err := cs.repository.SetItemQuantity(ctx, key, action)
 	if err != nil {
 		cs.logger.Error("error adding items in cart", zap.Error(err))
@@ -135,6 +148,9 @@ func (cs *cartServiceImpl) SetItemQuantity(ctx context.Context, key string, acti
 }
 
 func (cs *cartServiceImpl) ClearCart(ctx context.Context, key string) *dto.CartResponse {
+	ctx, span := otel.Tracer("CartService").Start(ctx, "CartService.ClearCart")
+	defer span.End()
+
 	cart := cs.repository.ClearCart(ctx, key)
 	return &dto.CartResponse{
 		Message:      "Cart cleared successfully",

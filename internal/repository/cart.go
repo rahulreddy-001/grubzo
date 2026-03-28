@@ -1,10 +1,12 @@
 package repository
 
+//go:generate go run ../../cmd/injecttrace -file cart.go -receiver Repository -service Repository
 import (
 	"context"
 	"encoding/json"
 	"grubzo/internal/models/dto"
 
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
@@ -16,6 +18,9 @@ type CartRepository interface {
 }
 
 func (repo *Repository) SetCart(ctx context.Context, cart *dto.Cart) bool {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.SetCart")
+	defer span.End()
+
 	data, _ := json.Marshal(cart)
 	_, err := repo.rdb.Do(ctx, "JSON.SET", cart.Key, ".", string(data)).Result()
 	if err != nil {
@@ -26,6 +31,9 @@ func (repo *Repository) SetCart(ctx context.Context, cart *dto.Cart) bool {
 }
 
 func (repo *Repository) GetCart(ctx context.Context, key string) *dto.Cart {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetCart")
+	defer span.End()
+
 	res, err := repo.rdb.Do(ctx, "JSON.GET", key).Result()
 	if err != nil || res == nil {
 		return &dto.Cart{
@@ -41,6 +49,9 @@ func (repo *Repository) GetCart(ctx context.Context, key string) *dto.Cart {
 }
 
 func (repo *Repository) SetItemQuantity(ctx context.Context, key string, action *dto.UpdateItemQuantity) (*dto.Cart, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.SetItemQuantity")
+	defer span.End()
+
 	cart := repo.GetCart(ctx, key)
 
 	updatedItems := []dto.Item{}
@@ -78,6 +89,9 @@ func (repo *Repository) SetItemQuantity(ctx context.Context, key string, action 
 }
 
 func (repo *Repository) ClearCart(ctx context.Context, key string) *dto.Cart {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.ClearCart")
+	defer span.End()
+
 	repo.rdb.Del(ctx, key)
 	return &dto.Cart{
 		Key:   key,

@@ -72,7 +72,9 @@ func newRouter(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *r
 	}
 	r.Use(middlewares.RecoverPanic(logger.Named("painc_log")))
 	r.Use(middlewares.AccessLogging(logger.Named("access_log"), isDevMode))
-	r.Use(otelgin.Middleware("grubzo_gin"))
+	r.Use(otelgin.Middleware("grubzo_gin", otelgin.WithGinFilter(func(c *gin.Context) bool {
+		return c.FullPath() != ""
+	})))
 
 	authHandler := &auth.Handlers{
 		Db:           db,

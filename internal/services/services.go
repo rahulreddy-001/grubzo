@@ -1,5 +1,7 @@
 package services
 
+//go:generate go run ../../cmd/injecttrace -file services.go -receiver Services -service Services
+
 import (
 	"errors"
 	"fmt"

@@ -1,5 +1,7 @@
 package repository
 
+//go:generate go run ../../cmd/injecttrace -file repository.go -receiver Repository -service Repository
+
 import (
 	"grubzo/internal/migration"
 

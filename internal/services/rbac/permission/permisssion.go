@@ -1,5 +1,7 @@
 package permission
 
+//go:generate go run ../../../../cmd/injecttrace -file permisssion.go -receiver Permissions -service Permissions
+
 type Permission string
 
 type Permissions map[Permission]struct{}

@@ -11,7 +11,7 @@ type Order struct {
 	ID         uint `gorm:"primaryKey;autoIncrement"`
 	TenantID   uint `gorm:"not null;index"`
 	LocationID uint `gorm:"not null;index"`
-	UserRefID     uint `gorm:"not null;index"`
+	UserRefID  uint `gorm:"not null;index"`
 
 	Status                    string `gorm:"type:varchar(32);not null;default:'pending'"`   // pending, preparing, ready, delivered, cancelled
 	PaymentStatus             string `gorm:"type:varchar(32); not null; default:'pending'"` // pending, paid, refunded, voided
@@ -27,7 +27,7 @@ type Order struct {
 
 	WalletOrderTransaction  *WalletTransaction `gorm:"foreignKey:WalletOrderTransactionID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	WalletRefundTransaction *WalletTransaction `gorm:"foreignKey:WalletRefundTransactionID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-	User      *User `gorm:"foreignKey:UserRefID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	User                    *User              `gorm:"foreignKey:UserRefID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
 type BillJSON struct {
@@ -57,7 +57,7 @@ type OrderItemJSON struct {
 	ItemID uint   `json:"item_id"`
 	Name   string `json:"name"`
 	Price  int64  `json:"price"`
-	Qty    uint    `json:"qty"`
+	Qty    uint   `json:"qty"`
 	Total  int64  `json:"total"`
 }
 

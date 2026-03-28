@@ -1,16 +1,17 @@
 package payment
 
+//go:generate go run ../../../cmd/injecttrace -file razorpay.go -receiver razorpayServiceImpl -service RazorpayService
 import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/razorpay/razorpay-go"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 	"grubzo/internal/config"
 	"grubzo/internal/repository"
-
-	"github.com/razorpay/razorpay-go"
-	"go.uber.org/zap"
 )
 
 type RazorpayService interface {
@@ -39,7 +40,10 @@ func (rs *razorpayServiceImpl) client() *razorpay.Client {
 	)
 }
 
-func (rs *razorpayServiceImpl) CreateOrder(_ context.Context, amount int64, orderID string) (map[string]interface{}, error) {
+func (rs *razorpayServiceImpl) CreateOrder(ctx context.Context, amount int64, orderID string) (map[string]interface{}, error) {
+	ctx, span := otel.Tracer("RazorpayService").Start(ctx, "RazorpayService.CreateOrder")
+	defer span.End()
+
 	data := map[string]any{
 		"amount":   amount,
 		"currency": "INR",
@@ -48,7 +52,10 @@ func (rs *razorpayServiceImpl) CreateOrder(_ context.Context, amount int64, orde
 	return rs.client().Order.Create(data, nil)
 }
 
-func (rs *razorpayServiceImpl) VerifyPayment(_ context.Context, orderID, paymentID, signature string) error {
+func (rs *razorpayServiceImpl) VerifyPayment(ctx context.Context, orderID, paymentID, signature string) error {
+	ctx, span := otel.Tracer("RazorpayService").Start(ctx, "RazorpayService.VerifyPayment")
+	defer span.End()
+
 	mac := hmac.New(sha256.New, []byte(rs.config.PaymentGatewayKeys.Razorpay.KeySecret))
 	mac.Write([]byte(orderID + "|" + paymentID))
 	expectedSignature := hex.EncodeToString(mac.Sum(nil))

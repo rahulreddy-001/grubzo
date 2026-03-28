@@ -1,13 +1,14 @@
 package repository
 
+//go:generate go run ../../cmd/injecttrace -file wallet.go -receiver Repository -service Repository
 import (
 	"context"
 	"errors"
-	"grubzo/internal/models/dto"
-	"grubzo/internal/models/entity"
-
+	"go.opentelemetry.io/otel"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"grubzo/internal/models/dto"
+	"grubzo/internal/models/entity"
 )
 
 type WalletRepository interface {
@@ -20,6 +21,9 @@ type WalletRepository interface {
 }
 
 func (r *Repository) GetWalletBalance(ctx context.Context, tenantID uint, userID uint) (int64, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetWalletBalance")
+	defer span.End()
+
 	var wallet entity.WalletBalance
 	err := r.dbWithContext(ctx).Where("tenant_id = ? AND user_id = ?", tenantID, userID).First(&wallet).Error
 	if err != nil {
@@ -32,6 +36,9 @@ func (r *Repository) GetWalletBalance(ctx context.Context, tenantID uint, userID
 }
 
 func (r *Repository) RecordWalletTransaction(ctx context.Context, data *dto.WalletTransactionDTO) (*uint, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.RecordWalletTransaction")
+	defer span.End()
+
 	var txnID uint
 	err := r.dbWithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var currentBalance int64 = 0
@@ -96,6 +103,9 @@ func (r *Repository) RecordWalletTransaction(ctx context.Context, data *dto.Wall
 }
 
 func (r *Repository) RecordWalletRechargeTransaction(ctx context.Context, data *dto.WalletRechargeRequestDTO) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.RecordWalletRechargeTransaction")
+	defer span.End()
+
 	record := entity.WalletRecharge{
 		TenantID:       data.TenantID,
 		UserID:         data.UserID,
@@ -109,6 +119,9 @@ func (r *Repository) RecordWalletRechargeTransaction(ctx context.Context, data *
 }
 
 func (r *Repository) UpdateWalletRechargeTransactionStatus(ctx context.Context, orderID string, paymentID string, status string) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.UpdateWalletRechargeTransactionStatus")
+	defer span.End()
+
 	var walletTxID *uint = nil
 	paymentRecord := &entity.WalletRecharge{}
 	err := r.dbWithContext(ctx).Where("order_id = ?", orderID).First(paymentRecord).Error
@@ -139,6 +152,9 @@ func (r *Repository) UpdateWalletRechargeTransactionStatus(ctx context.Context, 
 }
 
 func (r *Repository) GetPendingWalletRecharges(ctx context.Context, tenantID uint, userID uint) ([]dto.PendingWalletRechargeDTO, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetPendingWalletRecharges")
+	defer span.End()
+
 	var records []entity.WalletRecharge
 	err := r.dbWithContext(ctx).Where("tenant_id = ? AND user_id = ? AND status = ?", tenantID, userID, "pending").Find(&records).Error
 	if err != nil {
@@ -158,6 +174,9 @@ func (r *Repository) GetPendingWalletRecharges(ctx context.Context, tenantID uin
 }
 
 func (r *Repository) GetWalletTransactions(ctx context.Context, tenantID uint, userID uint, limit int, offset int) ([]dto.WalletTransactionDTO, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetWalletTransactions")
+	defer span.End()
+
 	var records []entity.WalletTransaction
 	err := r.dbWithContext(ctx).Where("tenant_id = ? AND user_id = ?", tenantID, userID).Order("id DESC").Limit(limit).Offset(offset).Find(&records).Error
 	if err != nil {

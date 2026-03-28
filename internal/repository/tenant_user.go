@@ -1,17 +1,18 @@
 package repository
 
+//go:generate go run ../../cmd/injecttrace -file tenant_user.go -receiver Repository -service Repository
 import (
 	"context"
 	"errors"
+	"github.com/lib/pq"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
 	"grubzo/internal/utils/random"
-
-	"github.com/lib/pq"
-	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 type TenantUserRepository interface {
@@ -57,6 +58,9 @@ func (r *Repository) validateTenantUser(usr *entity.TenantUser, db *gorm.DB) err
 }
 
 func (r *Repository) CreateTenantUser(ctx context.Context, dto *dto.CreateTenantUser) (*entity.TenantUser, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.CreateTenantUser")
+	defer span.End()
+
 	tenantUser := &entity.TenantUser{
 		TenantID:   dto.TenantID,
 		Email:      dto.Email,
@@ -81,6 +85,9 @@ func (r *Repository) CreateTenantUser(ctx context.Context, dto *dto.CreateTenant
 }
 
 func (r *Repository) UpdateTenantUser(ctx context.Context, dto *dto.UpdateTenantUser) (*entity.TenantUser, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.UpdateTenantUser")
+	defer span.End()
+
 	tenantUser, err := r.FindTenantUser(ctx, query.NewTenantUserQuery(dto.TenantID).WithID(dto.ID))
 	if err != nil {
 		return nil, err
@@ -111,6 +118,9 @@ func (r *Repository) UpdateTenantUser(ctx context.Context, dto *dto.UpdateTenant
 }
 
 func (r *Repository) FindTenantUser(ctx context.Context, q *query.TenantUserQuery) (*entity.TenantUser, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.FindTenantUser")
+	defer span.End()
+
 	tenantUser := &entity.TenantUser{}
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.TenantUser{})
 
@@ -140,6 +150,9 @@ func (r *Repository) FindTenantUser(ctx context.Context, q *query.TenantUserQuer
 }
 
 func (r *Repository) FindAllTenantUsers(ctx context.Context, q *query.TenantUserQuery) ([]*entity.TenantUser, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.FindAllTenantUsers")
+	defer span.End()
+
 	var tenantUsers []*entity.TenantUser
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.TenantUser{})
 

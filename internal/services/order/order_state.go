@@ -1,5 +1,7 @@
 package order
 
+//go:generate go run ../../../cmd/injecttrace -file order_state.go -receiver orderStateMachine -service OrderStateMachine
+
 import (
 	"grubzo/internal/models/entity"
 	"grubzo/internal/router/ext"

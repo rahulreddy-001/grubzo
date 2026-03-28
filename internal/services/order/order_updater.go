@@ -1,12 +1,13 @@
 package order
 
+//go:generate go run ../../../cmd/injecttrace -file order_updater.go -receiver orderStatusUpdater -service OrderStatusUpdater
 import (
 	"context"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/repository"
 	"grubzo/internal/router/ext"
-
-	"go.uber.org/zap"
 )
 
 type orderStatusUpdater struct {
@@ -31,6 +32,9 @@ func newOrderStatusUpdater(
 }
 
 func (ou *orderStatusUpdater) Update(ctx context.Context, request *dto.UpdateOrderPaymentStatusRequest) error {
+	ctx, span := otel.Tracer("OrderStatusUpdater").Start(ctx, "OrderStatusUpdater.Update")
+	defer span.End()
+
 	order, err := ou.repository.GetOrder(ctx, request.OrderID, request.TenantID)
 	if err != nil {
 		return ext.Error("Order not found")

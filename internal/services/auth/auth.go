@@ -1,7 +1,10 @@
 package auth
 
+//go:generate go run ../../../cmd/injecttrace -file auth.go -receiver authServiceImpl -service AuthService
 import (
 	"context"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 	"grubzo/internal/config"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
@@ -10,8 +13,6 @@ import (
 	"grubzo/internal/services/rbac"
 	"grubzo/internal/services/user"
 	"grubzo/internal/utils"
-
-	"go.uber.org/zap"
 )
 
 type AuthService interface {
@@ -45,6 +46,9 @@ func InitAuthService(
 }
 
 func (a *authServiceImpl) BasicUserLogin(ctx context.Context, email, password string, tenantID uint) (uint, error) {
+	ctx, span := otel.Tracer("AuthService").Start(ctx, "AuthService.BasicUserLogin")
+	defer span.End()
+
 	u, err := a.repo.FindUser(ctx, query.NewUserQuery(tenantID).WithEmail(email))
 	if err != nil {
 		a.logger.Warn("user not found", zap.String("email", email), zap.Uint("tenantID", tenantID))
@@ -58,6 +62,9 @@ func (a *authServiceImpl) BasicUserLogin(ctx context.Context, email, password st
 }
 
 func (a *authServiceImpl) BasicEmployeeLogin(ctx context.Context, email, password string, tenantID uint) (uint, error) {
+	ctx, span := otel.Tracer("AuthService").Start(ctx, "AuthService.BasicEmployeeLogin")
+	defer span.End()
+
 	u, err := a.repo.FindTenantUser(ctx, query.NewTenantUserQuery(tenantID).WithEmail(email))
 	if err != nil {
 		a.logger.Warn("user not found", zap.String("email", email), zap.Uint("tenantID", tenantID))
@@ -71,6 +78,9 @@ func (a *authServiceImpl) BasicEmployeeLogin(ctx context.Context, email, passwor
 }
 
 func (a *authServiceImpl) GetMeInfo(ctx context.Context, userType string, userID, tenantID uint, locationID uint) (*dto.MeResponse, error) {
+	ctx, span := otel.Tracer("AuthService").Start(ctx, "AuthService.GetMeInfo")
+	defer span.End()
+
 	me := &dto.MeResponse{
 		Type: userType,
 		ID:   userID,

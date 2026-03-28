@@ -1,8 +1,11 @@
 package order
 
+//go:generate go run ../../../cmd/injecttrace -file order_biller.go -receiver orderBiller -service OrderBiller
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
@@ -10,8 +13,6 @@ import (
 	"grubzo/internal/services/store"
 	"maps"
 	"slices"
-
-	"go.uber.org/zap"
 )
 
 type orderBiller struct {
@@ -27,6 +28,9 @@ func newOrderBiller(storeService store.StoreService, logger *zap.Logger) *orderB
 }
 
 func (ob *orderBiller) DraftBill(ctx context.Context, key string, adjustedCart *dto.Cart) (*dto.CreateOrderBillDTO, error) {
+	ctx, span := otel.Tracer("OrderBiller").Start(ctx, "OrderBiller.DraftBill")
+	defer span.End()
+
 	createOrder, err := ob.BuildOrderDraft(ctx, key, "", adjustedCart)
 	if err != nil {
 		return nil, err
@@ -36,6 +40,9 @@ func (ob *orderBiller) DraftBill(ctx context.Context, key string, adjustedCart *
 }
 
 func (ob *orderBiller) BuildOrderDraft(ctx context.Context, key string, paymentMode string, adjustedCart *dto.Cart) (*dto.CreateOrderDTO, error) {
+	ctx, span := otel.Tracer("OrderBiller").Start(ctx, "OrderBiller.BuildOrderDraft")
+	defer span.End()
+
 	tenantID, userID, locationID, err := ob.getTenantIDUserIDLocationIDFromKey(key)
 	if err != nil {
 		return nil, ext.Error("Failed to build order")

@@ -1,14 +1,15 @@
 package repository
 
+//go:generate go run ../../cmd/injecttrace -file tenant_location.go -receiver Repository -service Repository
 import (
 	"context"
 	"errors"
+	"go.opentelemetry.io/otel"
+	"gorm.io/gorm"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
-
-	"gorm.io/gorm"
 )
 
 type TenantLocationRepository interface {
@@ -47,6 +48,9 @@ func tenantLocationValidator(loc *entity.TenantLocation, db *gorm.DB) error {
 }
 
 func (r *Repository) CreateTenantLocation(ctx context.Context, dto *dto.CreateTenantLocation) (*entity.TenantLocation, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.CreateTenantLocation")
+	defer span.End()
+
 	location := &entity.TenantLocation{
 		TenantID:  dto.TenantID,
 		Code:      dto.Code,
@@ -70,6 +74,9 @@ func (r *Repository) CreateTenantLocation(ctx context.Context, dto *dto.CreateTe
 }
 
 func (r *Repository) FindTenantLocation(ctx context.Context, q *query.TenantLocationQuery) (*entity.TenantLocation, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.FindTenantLocation")
+	defer span.End()
+
 	location := &entity.TenantLocation{}
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.TenantLocation{})
 
@@ -90,6 +97,9 @@ func (r *Repository) FindTenantLocation(ctx context.Context, q *query.TenantLoca
 }
 
 func (r *Repository) UpdateTenantLocation(ctx context.Context, dto *dto.UpdateTenantLocation) (*entity.TenantLocation, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.UpdateTenantLocation")
+	defer span.End()
+
 	location, err := r.FindTenantLocation(ctx, query.NewTenantLocationQuery(dto.TenantID).WithID(dto.ID))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -130,6 +140,9 @@ func (r *Repository) UpdateTenantLocation(ctx context.Context, dto *dto.UpdateTe
 }
 
 func (r *Repository) FindTenantLocations(ctx context.Context, q *query.TenantLocationQuery) ([]*entity.TenantLocation, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.FindTenantLocations")
+	defer span.End()
+
 	var locations []*entity.TenantLocation
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.TenantLocation{})
 

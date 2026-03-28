@@ -1,5 +1,6 @@
 package order
 
+//go:generate go run ../../../cmd/injecttrace -file wallet.go -receiver walletServiceImpl -service WalletService
 import (
 	"context"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"grubzo/internal/utils/random"
 	"strconv"
 
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
@@ -43,6 +45,9 @@ func (ws *walletServiceImpl) DebitForOrder(
 	orderID, tenantID, userID uint,
 	amount int64,
 ) (*uint, error) {
+	ctx, span := otel.Tracer("WalletService").Start(ctx, "WalletService.DebitForOrder")
+	defer span.End()
+
 	uniqueOrderID := fmt.Sprintf("debit_order_tid_%d_uid_%d_oid_%d_%s", tenantID, userID, orderID, random.SecureAlphaNumeric(6))
 	rechargeRequestDTO := &dto.WalletTransactionDTO{
 		TenantID:      tenantID,
@@ -61,6 +66,9 @@ func (ws *walletServiceImpl) RefundForOrder(
 	orderID, tenantID, userID uint,
 	amount int64,
 ) (*uint, error) {
+	ctx, span := otel.Tracer("WalletService").Start(ctx, "WalletService.RefundForOrder")
+	defer span.End()
+
 	uniqueOrderID := fmt.Sprintf("credit_order_tid_%d_uid_%d_oid_%d_%s", tenantID, userID, orderID, random.SecureAlphaNumeric(6))
 	rechargeRequestDTO := &dto.WalletTransactionDTO{
 		TenantID:      tenantID,
@@ -75,6 +83,9 @@ func (ws *walletServiceImpl) RefundForOrder(
 }
 
 func (ws *walletServiceImpl) CreateRechargeOrder(ctx context.Context, amount int64, userID uint, tenantID uint) (map[string]interface{}, error) {
+	ctx, span := otel.Tracer("WalletService").Start(ctx, "WalletService.CreateRechargeOrder")
+	defer span.End()
+
 	amountInPaise := amount * 100
 	uniqueOrderID := fmt.Sprintf("rapy_order_tid_%d_uid_%d_%s", tenantID, userID, random.SecureAlphaNumeric(6))
 	response, err := ws.rpayService.CreateOrder(ctx, amountInPaise, uniqueOrderID)
@@ -102,6 +113,9 @@ func (ws *walletServiceImpl) CreateRechargeOrder(ctx context.Context, amount int
 }
 
 func (ws *walletServiceImpl) VerifyRechargePayment(ctx context.Context, orderID, paymentID, signature string) error {
+	ctx, span := otel.Tracer("WalletService").Start(ctx, "WalletService.VerifyRechargePayment")
+	defer span.End()
+
 	err := ws.rpayService.VerifyPayment(ctx, orderID, paymentID, signature)
 	if err != nil {
 		ws.logger.Warn("failed to verify payment signature, invalid payment signature", zap.String("orderID", orderID), zap.String("paymentID", paymentID))
@@ -117,6 +131,9 @@ func (ws *walletServiceImpl) VerifyRechargePayment(ctx context.Context, orderID,
 }
 
 func (ws *walletServiceImpl) GetWalletBalanceWithTXNS(ctx context.Context, tenantID, userID uint) (*dto.WalletDTO, error) {
+	ctx, span := otel.Tracer("WalletService").Start(ctx, "WalletService.GetWalletBalanceWithTXNS")
+	defer span.End()
+
 	walletDTO, err := ws.repository.GetWalletBalance(ctx, tenantID, userID)
 	if err != nil {
 		ws.logger.Error("failed to get wallet balance", zap.Error(err), zap.Uint("tenantID", tenantID), zap.Uint("userID", userID))

@@ -1,13 +1,14 @@
 package order
 
+//go:generate go run ../../../cmd/injecttrace -file payment_processer.go -receiver orderPaymentProcessor -service OrderPaymentProcessor
 import (
 	"context"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/repository"
 	"grubzo/internal/router/ext"
-
-	"go.uber.org/zap"
 )
 
 type orderPaymentProcessor struct {
@@ -32,6 +33,9 @@ func newOrderPaymentProcessor(
 }
 
 func (op *orderPaymentProcessor) ValidatePlacement(ctx context.Context, tenantID, userID uint, draft *dto.CreateOrderDTO) error {
+	ctx, span := otel.Tracer("OrderPaymentProcessor").Start(ctx, "OrderPaymentProcessor.ValidatePlacement")
+	defer span.End()
+
 	if draft.PaymentMode != paymentModeWallet {
 		return nil
 	}
@@ -50,6 +54,9 @@ func (op *orderPaymentProcessor) ValidatePlacement(ctx context.Context, tenantID
 }
 
 func (op *orderPaymentProcessor) FinalizePlacement(ctx context.Context, orderID, tenantID, userID uint, draft *dto.CreateOrderDTO) error {
+	ctx, span := otel.Tracer("OrderPaymentProcessor").Start(ctx, "OrderPaymentProcessor.FinalizePlacement")
+	defer span.End()
+
 	if draft.PaymentMode != paymentModeWallet {
 		return nil
 	}
@@ -110,6 +117,9 @@ func (op *orderPaymentProcessor) ResolvePaymentStatus(order *entity.Order, reque
 }
 
 func (op *orderPaymentProcessor) ProcessStatusSideEffects(ctx context.Context, order *entity.Order, nextOrderStatus, nextPaymentStatus string) (*uint, error) {
+	ctx, span := otel.Tracer("OrderPaymentProcessor").Start(ctx, "OrderPaymentProcessor.ProcessStatusSideEffects")
+	defer span.End()
+
 	if order.PaymentMode != paymentModeWallet {
 		return nil, nil
 	}
@@ -126,6 +136,9 @@ func (op *orderPaymentProcessor) ProcessStatusSideEffects(ctx context.Context, o
 }
 
 func (op *orderPaymentProcessor) markOrderPaymentFailed(ctx context.Context, orderID, tenantID uint, txnID *uint) {
+	ctx, span := otel.Tracer("OrderPaymentProcessor").Start(ctx, "OrderPaymentProcessor.markOrderPaymentFailed")
+	defer span.End()
+
 	updatePaymentFailedDTO := &dto.UpdateOrderPaymentStatusDTO{
 		OrderID:          orderID,
 		TenantID:         tenantID,

@@ -1,5 +1,7 @@
 package order
 
+//go:generate go run ../../../cmd/injecttrace -file order_mapper.go -receiver orderServiceImpl -service OrderMapper
+
 import (
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"

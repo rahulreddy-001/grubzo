@@ -1,15 +1,16 @@
 package repository
 
+//go:generate go run ../../cmd/injecttrace -file user.go -receiver Repository -service Repository
 import (
 	"context"
 	"errors"
+	"go.opentelemetry.io/otel"
+	"gorm.io/gorm"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
 	"grubzo/internal/utils/random"
-
-	"gorm.io/gorm"
 )
 
 type UserRepository interface {
@@ -43,6 +44,9 @@ func validateUser(usr *entity.User, db *gorm.DB) error {
 }
 
 func (r *Repository) CreateUser(ctx context.Context, dto *dto.CreateUser) (*entity.User, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.CreateUser")
+	defer span.End()
+
 	user := &entity.User{
 		TenantID: dto.TenantID,
 		UserID:   dto.UserID,
@@ -72,6 +76,9 @@ func (r *Repository) CheckUserPassword(user *entity.User, password string) bool 
 }
 
 func (r *Repository) UpdateUser(ctx context.Context, dto *dto.UpdateUser) (*entity.User, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.UpdateUser")
+	defer span.End()
+
 	user, err := r.FindUser(ctx, query.NewUserQuery(dto.TenantID).WithID(dto.ID))
 	if err != nil {
 		return nil, err
@@ -97,6 +104,9 @@ func (r *Repository) UpdateUser(ctx context.Context, dto *dto.UpdateUser) (*enti
 }
 
 func (r *Repository) FindUser(ctx context.Context, filter *query.UserQuery) (*entity.User, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.FindUser")
+	defer span.End()
+
 	user := &entity.User{}
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.User{})
 
@@ -121,6 +131,9 @@ func (r *Repository) FindUser(ctx context.Context, filter *query.UserQuery) (*en
 }
 
 func (r *Repository) FindAllUsers(ctx context.Context, filter *query.UserQuery) ([]*entity.User, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.FindAllUsers")
+	defer span.End()
+
 	var users []*entity.User
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.User{})
 

@@ -1,15 +1,16 @@
 package order
 
+//go:generate go run ../../../cmd/injecttrace -file order_orchestrator.go -receiver orderServiceImpl -service OrderService
 import (
 	"context"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 	"grubzo/internal/config"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
 	"grubzo/internal/repository"
 	"grubzo/internal/router/ext"
 	"grubzo/internal/services/store"
-
-	"go.uber.org/zap"
 )
 
 type OrderService interface {
@@ -50,6 +51,9 @@ type orderServiceImpl struct {
 }
 
 func (os *orderServiceImpl) PlaceOrder(ctx context.Context, tenantID, userID, locationID uint, paymentMode string) (uint, error) {
+	ctx, span := otel.Tracer("OrderService").Start(ctx, "OrderService.PlaceOrder")
+	defer span.End()
+
 	key := os.cartService.GetRedisKey(tenantID, userID, locationID)
 	adjustedCart, removedItems := os.cartService.GetAdjustedCart(ctx, key)
 	if len(removedItems) > 0 {
@@ -79,6 +83,9 @@ func (os *orderServiceImpl) PlaceOrder(ctx context.Context, tenantID, userID, lo
 }
 
 func (os *orderServiceImpl) GetOrders(ctx context.Context, q *query.OrderQuery) ([]dto.OrderDTO, error) {
+	ctx, span := otel.Tracer("OrderService").Start(ctx, "OrderService.GetOrders")
+	defer span.End()
+
 	orders, err := os.repository.GetOrders(ctx, q)
 	if err != nil {
 		return nil, err
@@ -88,5 +95,8 @@ func (os *orderServiceImpl) GetOrders(ctx context.Context, q *query.OrderQuery) 
 }
 
 func (os *orderServiceImpl) UpdateOrderStatus(ctx context.Context, request *dto.UpdateOrderPaymentStatusRequest) error {
+	ctx, span := otel.Tracer("OrderService").Start(ctx, "OrderService.UpdateOrderStatus")
+	defer span.End()
+
 	return os.statusUpdater.Update(ctx, request)
 }

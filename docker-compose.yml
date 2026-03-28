@@ -16,7 +16,13 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /home/rahul.a/personal/dev/data/postgresql:/var/lib/postgresql/data
+      - ./data/postgresql:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d grubzo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     networks:
       - common
 
@@ -30,7 +36,10 @@ services:
     ports:
       - "5433:80"
     volumes:
-      - /home/rahul.a/personal/dev/data/pgadmin:/var/lib/pgadmin/config
+      - ./data/pgadmin:/var/lib/pgadmin/config
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - common
 
@@ -41,7 +50,13 @@ services:
     ports:
       - "5434:6379"
     volumes:
-      - /home/rahul.a/personal/dev/data/redis:/data
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     networks:
       - common
 
@@ -53,7 +68,7 @@ services:
       - "4318:4318"
       - "3100:3100"
     volumes:
-      - /home/rahul.a/personal/dev/data/tempo:/tmp/tempo_traces
+      - ./data/tempo:/tmp/tempo_traces
       - ./tempo.yaml:/etc/tempo/tempo.yaml
     command: ["-config.file=/etc/tempo/tempo.yaml"]
     networks:
@@ -66,7 +81,7 @@ services:
     ports:
       - "3200:3100"
     volumes:
-      - /home/rahul.a/personal/dev/data/loki:/loki
+      - ./data/loki:/loki
       - ./loki.yaml:/etc/loki/local-config.yaml
     command: ["-config.file=/etc/loki/local-config.yaml"]
     networks:
@@ -81,8 +96,9 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     depends_on:
-      - tempo
+      tempo:
+        condition: service_started
     volumes:
-      - /home/rahul.a/personal/dev/data/grafana:/var/lib/grafana
+      - ./data/grafana:/var/lib/grafana
     networks:
       - common

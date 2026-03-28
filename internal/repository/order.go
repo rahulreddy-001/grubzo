@@ -1,7 +1,9 @@
 package repository
 
+//go:generate go run ../../cmd/injecttrace -file order.go -receiver Repository -service Repository
 import (
 	"context"
+	"go.opentelemetry.io/otel"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
@@ -16,6 +18,8 @@ type OrderRepository interface {
 }
 
 func (repo *Repository) CreateOrder(ctx context.Context, input *dto.CreateOrderDTO) (uint, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.CreateOrder")
+	defer span.End()
 
 	bill := entity.BillJSON{
 		Subtotal:     input.Bill.Subtotal,
@@ -58,6 +62,9 @@ func (repo *Repository) CreateOrder(ctx context.Context, input *dto.CreateOrderD
 }
 
 func (repo *Repository) GetOrder(ctx context.Context, orderID, tenantID uint) (*entity.Order, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetOrder")
+	defer span.End()
+
 	var order entity.Order
 	if err := repo.dbWithContext(ctx).Where("id = ? AND tenant_id = ?", orderID, tenantID).First(&order).Error; err != nil {
 		return nil, err
@@ -66,6 +73,9 @@ func (repo *Repository) GetOrder(ctx context.Context, orderID, tenantID uint) (*
 }
 
 func (repo *Repository) UpdateOrderPaymentStatus(ctx context.Context, updateDTO *dto.UpdateOrderPaymentStatusDTO) error {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.UpdateOrderPaymentStatus")
+	defer span.End()
+
 	orderRecord, err := repo.GetOrder(ctx, updateDTO.OrderID, updateDTO.TenantID)
 	if err != nil {
 		return err
@@ -86,6 +96,9 @@ func (repo *Repository) UpdateOrderPaymentStatus(ctx context.Context, updateDTO 
 }
 
 func (repo *Repository) GetOrders(ctx context.Context, q *query.OrderQuery) ([]entity.Order, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetOrders")
+	defer span.End()
+
 	db := repo.dbWithContext(ctx).Where("tenant_id = ?", q.TenantID)
 
 	if q.UserID != nil {

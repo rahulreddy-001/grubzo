@@ -1,14 +1,15 @@
 package rbac
 
+//go:generate go run ../../../cmd/injecttrace -file rabc.go -receiver RBAC -service RBAC
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/otel"
+	"gorm.io/gorm"
 	"grubzo/internal/repository"
 	"grubzo/internal/services/rbac/permission"
 	"grubzo/internal/services/rbac/role"
 	"sync"
-
-	"gorm.io/gorm"
 )
 
 type RBAC struct {
@@ -68,10 +69,16 @@ func (r *RBAC) IsAnyGranted(tenantID uint, roles []string, perm permission.Permi
 }
 
 func (r *RBAC) Reload(ctx context.Context) error {
+	ctx, span := otel.Tracer("RBAC").Start(ctx, "RBAC.Reload")
+	defer span.End()
+
 	return r.reload(ctx)
 }
 
 func (r *RBAC) reload(ctx context.Context) error {
+	ctx, span := otel.Tracer("RBAC").Start(ctx, "RBAC.reload")
+	defer span.End()
+
 	allRoles, err := r.repo.GetAllUserRoles(ctx, nil)
 	if err != nil {
 		return err
@@ -153,6 +160,9 @@ func (r *RBAC) GetAllRoles(tenantID uint) []string {
 }
 
 func (r *RBAC) GetAllRolePermissions(ctx context.Context, tenantID uint) (map[string][]string, error) {
+	ctx, span := otel.Tracer("RBAC").Start(ctx, "RBAC.GetAllRolePermissions")
+	defer span.End()
+
 	userRoles, err := r.repo.GetAllUserRoles(ctx, &tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch roles for tenant %d: %w", tenantID, err)

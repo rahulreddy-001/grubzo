@@ -28,8 +28,8 @@ func getDatabase(c *config.Config) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := engine.Use(tracing.NewPlugin()); err != nil{
-		return  nil, err
+	if err := engine.Use(tracing.NewPlugin()); err != nil {
+		return nil, err
 	}
 	db, err := engine.DB()
 	if err != nil {

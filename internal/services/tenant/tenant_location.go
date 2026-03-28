@@ -1,5 +1,6 @@
 package tenant
 
+//go:generate go run ../../../cmd/injecttrace -file tenant_location.go -receiver tenantServiceImpl -service TenantService
 import (
 	"context"
 	"grubzo/internal/models/dto"
@@ -7,10 +8,14 @@ import (
 	"grubzo/internal/utils"
 
 	"github.com/jinzhu/copier"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
 func (ts *tenantServiceImpl) CreateTenantLocation(ctx context.Context, tloc *dto.CreateTenantLocation) (*dto.CreateTenantLocationResponse, error) {
+	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.CreateTenantLocation")
+	defer span.End()
+
 	locationEntity, err := ts.repository.CreateTenantLocation(ctx, tloc)
 	if err != nil {
 		return nil, err
@@ -27,6 +32,9 @@ func (ts *tenantServiceImpl) CreateTenantLocation(ctx context.Context, tloc *dto
 }
 
 func (ts *tenantServiceImpl) UpdateTenantLocation(ctx context.Context, tloc *dto.UpdateTenantLocation) (*dto.UpdateTenantLocationResponse, error) {
+	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.UpdateTenantLocation")
+	defer span.End()
+
 	eLocation, err := ts.repository.UpdateTenantLocation(ctx, tloc)
 	if err != nil {
 		return nil, err
@@ -43,6 +51,9 @@ func (ts *tenantServiceImpl) UpdateTenantLocation(ctx context.Context, tloc *dto
 }
 
 func (ts *tenantServiceImpl) GetTenantLocation(ctx context.Context, tenantLocId uint, tenantID uint) (*dto.TenantLocationResponse, error) {
+	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.GetTenantLocation")
+	defer span.End()
+
 	eLocation, err := ts.repository.FindTenantLocation(ctx, query.NewTenantLocationQuery(tenantID).WithID(tenantLocId))
 	if err != nil {
 		return nil, err
@@ -59,6 +70,9 @@ func (ts *tenantServiceImpl) GetTenantLocation(ctx context.Context, tenantLocId 
 }
 
 func (ts *tenantServiceImpl) GetTenantLocations(ctx context.Context, tenantID uint) (*dto.TenantLocationsResponse, error) {
+	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.GetTenantLocations")
+	defer span.End()
+
 	eLocations, err := ts.repository.FindTenantLocations(ctx, query.NewTenantLocationQuery(tenantID))
 	if err != nil {
 		return nil, err

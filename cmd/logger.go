@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+	"errors"
 	"grubzo/internal/utils"
 	"time"
 
@@ -9,7 +11,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func getLogger() (logger *zap.Logger) {
+func getLogger() (logger *zap.Logger, cleanup func(context.Context) error) {
 	if c.DevMode {
 		return getCLILogger()
 	}
@@ -25,7 +27,7 @@ func getLogger() (logger *zap.Logger) {
 	lokiWriter := utils.NewLokiWriter(
 		c.LokiHost,
 		map[string]string{
-			"job":     "grubzo_main",
+			"job":     "GrubzoServer",
 			"service": "grubzo",
 			"env":     "prod",
 		},
@@ -36,12 +38,17 @@ func getLogger() (logger *zap.Logger) {
 		zapcore.AddSync(lokiWriter),
 		zap.InfoLevel,
 	)
-	// lokiWriter.Close()
 	logger = zap.New(core)
-	return
+	cleanup = func(ctx context.Context) error {
+		return errors.Join(
+			logger.Sync(),
+			lokiWriter.Close(ctx),
+		)
+	}
+	return logger, cleanup
 }
 
-func getCLILogger() (logger *zap.Logger) {
+func getCLILogger() (logger *zap.Logger, cleanup func(context.Context) error) {
 	level := zap.NewAtomicLevel()
 	if c.DevMode {
 		level = zap.NewAtomicLevelAt(zap.DebugLevel)
@@ -67,5 +74,8 @@ func getCLILogger() (logger *zap.Logger) {
 		ErrorOutputPaths: []string{"stderr"},
 	}
 	logger, _ = cfg.Build()
-	return
+	cleanup = func(context.Context) error {
+		return logger.Sync()
+	}
+	return logger, cleanup
 }

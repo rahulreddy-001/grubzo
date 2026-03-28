@@ -1,15 +1,16 @@
 package repository
 
+//go:generate go run ../../cmd/injecttrace -file item.go -receiver Repository -service Repository
 import (
 	"context"
 	"errors"
+	"github.com/gofrs/uuid"
+	"go.opentelemetry.io/otel"
+	"gorm.io/gorm"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"slices"
-
-	"github.com/gofrs/uuid"
-	"gorm.io/gorm"
 )
 
 type ItemRepository interface {
@@ -20,6 +21,9 @@ type ItemRepository interface {
 }
 
 func (r Repository) CreateItem(ctx context.Context, dto *dto.CreateMenuItem) (*entity.Item, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.CreateItem")
+	defer span.End()
+
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Item{})
 	item := &entity.Item{
 		TenantID:    dto.TenantID,
@@ -46,6 +50,9 @@ func (r Repository) CreateItem(ctx context.Context, dto *dto.CreateMenuItem) (*e
 }
 
 func (r *Repository) UpdateItem(ctx context.Context, dto *dto.UpdateMenuItem) (*entity.Item, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.UpdateItem")
+	defer span.End()
+
 	err := r.dbWithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		item, err := r.GetItem(ctx, query.NewMenuItemQuery(dto.TenantID).WithID(dto.ID))
 		if err != nil {
@@ -99,6 +106,9 @@ func (r *Repository) UpdateItem(ctx context.Context, dto *dto.UpdateMenuItem) (*
 }
 
 func (r Repository) GetItem(ctx context.Context, filter *query.MenuItemQuery) (*entity.Item, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetItem")
+	defer span.End()
+
 	item := &entity.Item{}
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Item{}).Where("tenant_id = ?", filter.TenantID)
 	if filter.ID != nil {
@@ -122,6 +132,9 @@ func (r Repository) GetItem(ctx context.Context, filter *query.MenuItemQuery) (*
 }
 
 func (r Repository) GetItems(ctx context.Context, filter *query.MenuItemQuery) ([]*entity.Item, error) {
+	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetItems")
+	defer span.End()
+
 	items := []*entity.Item{}
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Item{}).Where("tenant_id = ?", filter.TenantID)
 	if filter.ID != nil {

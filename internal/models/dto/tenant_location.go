@@ -42,9 +42,8 @@ type TenantLocation struct {
 }
 
 func (dto *TenantLocation) FromEntity(e *entity.TenantLocation) error {
-    return copier.Copy(dto, e)
+	return copier.Copy(dto, e)
 }
-
 
 type CreateTenantLocationResponse struct {
 	Message  string         `json:"Message"`
