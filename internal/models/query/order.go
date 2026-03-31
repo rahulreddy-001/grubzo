@@ -1,11 +1,14 @@
 package query
 
 type OrderQuery struct {
-	TenantID   uint
-	UserID     *uint
-	LocationID *uint
-	Status     *string
-	PreLoads   bool
+	TenantID     uint
+	ID           *uint
+	UserID       *uint
+	LocationID   *uint
+	Status       *string
+	Limit        *int
+	OrderCreated bool
+	PreLoads     bool
 }
 
 func NewOrderQuery(tenantID uint) *OrderQuery {
@@ -17,6 +20,11 @@ func (q *OrderQuery) WithUser(userID uint) *OrderQuery {
 	return q
 }
 
+func (q *OrderQuery) WithID(orderID uint) *OrderQuery {
+	q.ID = &orderID
+	return q
+}
+
 func (q *OrderQuery) WithLocation(locationID uint) *OrderQuery {
 	q.LocationID = &locationID
 	return q
@@ -24,6 +32,16 @@ func (q *OrderQuery) WithLocation(locationID uint) *OrderQuery {
 
 func (q *OrderQuery) WithStatus(status string) *OrderQuery {
 	q.Status = &status
+	return q
+}
+
+func (q *OrderQuery) WithLimit(limit int) *OrderQuery {
+	q.Limit = &limit
+	return q
+}
+
+func (q *OrderQuery) OrderByCreatedAtDesc() *OrderQuery {
+	q.OrderCreated = true
 	return q
 }
 

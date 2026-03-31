@@ -21,6 +21,7 @@ type RepositoryInterface interface {
 	OrderRepository
 	FileRepository
 	RoleRepository
+	ChatRepository
 }
 
 var _ RepositoryInterface = (*Repository)(nil)

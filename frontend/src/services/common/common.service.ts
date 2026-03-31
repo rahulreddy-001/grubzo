@@ -8,7 +8,7 @@ import type {
   RBACResponse,
   Location,
 } from "../../types/common";
-import store, { type RootState } from "../store";
+import store from "../store";
 
 import {
   fetchRBACInfo,

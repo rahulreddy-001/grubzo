@@ -102,3 +102,21 @@ services:
       - ./data/grafana:/var/lib/grafana
     networks:
       - common
+  # ollama:
+  #   image: ollama/ollama
+  #   container_name: ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ./data/ollama:/root/.ollama
+  #   restart: unless-stopped
+  # ollama-pull:
+  #   image: ollama/ollama
+  #   container_name: ollama-pull
+  #   volumes:
+  #     - ./data/ollama:/root/.ollama
+  #   entrypoint: > 
+  #     /bin/sh -c "ollama serve & sleep 5 && ollama pull mistral && kill %1"
+  #   depends_on:
+  #     - ollama
+  #   restart: "no"

@@ -11,6 +11,7 @@ func Migrations() []*gormigrate.Migration {
 		v1(),
 		v2(),
 		v3(),
+		v4(),
 	}
 }
 
@@ -27,5 +28,7 @@ func AllTables() []interface{} {
 		&entity.WalletRecharge{},
 		&entity.WalletTransaction{},
 		&entity.Order{},
+		&entity.ChatSession{},
+		&entity.ChatMessage{},
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
+	"strings"
 )
 
 type TenantLocationRepository interface {
@@ -90,6 +91,29 @@ func (r *Repository) FindTenantLocation(ctx context.Context, q *query.TenantLoca
 	if q.IsPrimary != nil {
 		sess = sess.Where("is_primary = ?", *q.IsPrimary)
 	}
+	if q.LocationText != nil {
+		if text := strings.TrimSpace(*q.LocationText); text != "" {
+			like := "%" + strings.ToLower(text) + "%"
+			sess = sess.Where(
+				"LOWER(city) LIKE ? OR LOWER(state) LIKE ? OR LOWER(country) LIKE ? OR LOWER(zip_code) LIKE ?",
+				like,
+				like,
+				like,
+				like,
+			)
+		}
+	}
+	if q.SearchText != nil {
+		if text := strings.TrimSpace(*q.SearchText); text != "" {
+			like := "%" + strings.ToLower(text) + "%"
+			sess = sess.Where(
+				"LOWER(code) LIKE ? OR LOWER(address) LIKE ? OR LOWER(city) LIKE ?",
+				like,
+				like,
+				like,
+			)
+		}
+	}
 	if err := sess.First(&location).Error; err != nil {
 		return nil, err
 	}
@@ -155,6 +179,35 @@ func (r *Repository) FindTenantLocations(ctx context.Context, q *query.TenantLoc
 	}
 	if q.IsPrimary != nil {
 		sess = sess.Where("is_primary = ?", *q.IsPrimary)
+	}
+	if q.LocationText != nil {
+		if text := strings.TrimSpace(*q.LocationText); text != "" {
+			like := "%" + strings.ToLower(text) + "%"
+			sess = sess.Where(
+				"LOWER(city) LIKE ? OR LOWER(state) LIKE ? OR LOWER(country) LIKE ? OR LOWER(zip_code) LIKE ?",
+				like,
+				like,
+				like,
+				like,
+			)
+		}
+	}
+	if q.SearchText != nil {
+		if text := strings.TrimSpace(*q.SearchText); text != "" {
+			like := "%" + strings.ToLower(text) + "%"
+			sess = sess.Where(
+				"LOWER(code) LIKE ? OR LOWER(address) LIKE ? OR LOWER(city) LIKE ?",
+				like,
+				like,
+				like,
+			)
+		}
+	}
+	if q.OrderPrimaryFirst {
+		sess = sess.Order("is_primary desc, id asc")
+	}
+	if q.Limit != nil && *q.Limit > 0 {
+		sess = sess.Limit(*q.Limit)
 	}
 
 	if err := sess.Find(&locations).Error; err != nil {

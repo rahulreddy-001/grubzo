@@ -101,6 +101,9 @@ func (repo *Repository) GetOrders(ctx context.Context, q *query.OrderQuery) ([]e
 
 	db := repo.dbWithContext(ctx).Where("tenant_id = ?", q.TenantID)
 
+	if q.ID != nil {
+		db = db.Where("id = ?", *q.ID)
+	}
 	if q.UserID != nil {
 		db = db.Where("user_ref_id = ?", *q.UserID)
 	}
@@ -112,12 +115,18 @@ func (repo *Repository) GetOrders(ctx context.Context, q *query.OrderQuery) ([]e
 	}
 	if q.PreLoads {
 		for _, preload := range (entity.Order{}).GetPreloads() {
-			db.Preload(preload)
+			db = db.Preload(preload)
 		}
+	}
+	if q.OrderCreated {
+		db = db.Order("created_at desc")
+	}
+	if q.Limit != nil && *q.Limit > 0 {
+		db = db.Limit(*q.Limit)
 	}
 
 	var orders []entity.Order
-	if err := db.Order("created_at desc").Find(&orders).Error; err != nil {
+	if err := db.Find(&orders).Error; err != nil {
 		return nil, err
 	}
 

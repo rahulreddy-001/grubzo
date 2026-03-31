@@ -2,8 +2,10 @@ package router
 
 import (
 	"grubzo/internal/config"
+	"grubzo/internal/mcp"
 	"grubzo/internal/repository"
 	"grubzo/internal/router/auth"
+	mcprouter "grubzo/internal/router/mcp"
 	"grubzo/internal/router/middlewares"
 	"grubzo/internal/router/session"
 	v1 "grubzo/internal/router/v1"
@@ -40,6 +42,25 @@ func Setup(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repos
 
 	api := engine.router.Group("/api")
 	engine.v1.Setup(api)
+
+	mcpComponents, err := mcp.Build(mcp.Dependencies{
+		Logger:       logger.Named("grubzo_mcp"),
+		Config:       config,
+		DB:           db,
+		Redis:        rdb,
+		Repository:   repository,
+		Services:     ss,
+		SessionStore: engine.auth.SessionStore,
+	})
+	if err != nil {
+		logger.Fatal("failed to register mcp routes", zap.Error(err))
+	}
+	mcprouter.NewHandlers(
+		logger.Named("grubzo_mcp_router"),
+		repository,
+		engine.auth.SessionStore,
+		mcpComponents,
+	).Setup(engine.router)
 
 	return engine.router
 }

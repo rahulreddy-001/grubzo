@@ -9,7 +9,7 @@ interface CModelProps {
   onClose: () => void;
   title?: string;
   size?: "sm" | "md" | "lg" | "full";
-  anchor?: "right" | "left" | "bottom" | "top";
+  anchor?: "right" | "left" | "bottom" | "top" | "center";
   children?: React.ReactNode;
   actions?: React.ReactNode;
   closeOnBackdrop?: boolean;
@@ -61,7 +61,7 @@ const CModel: React.FC<CModelProps> = ({
             <Dialog.Close asChild>
               <IconButton
                 variant="ghost"
-                radius="full"
+                radius="small"
                 onClick={onClose}
                 className="cmodel-close"
               >

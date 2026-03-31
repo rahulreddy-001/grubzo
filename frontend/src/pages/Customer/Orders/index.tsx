@@ -38,7 +38,6 @@ const formatMoney = (p: number) => `₹${(p / 100).toFixed(2)}`;
 function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   const loadOrders = async () => {
@@ -62,7 +61,6 @@ function Orders() {
 
   const onSearch = (q: string) => {
     const query = q.trim().toLowerCase();
-    setSearch(q);
 
     if (!query) {
       setFilteredOrders(orders);

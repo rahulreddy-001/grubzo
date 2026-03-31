@@ -57,6 +57,20 @@ type Config struct {
 			KeySecret string `json:"keySecret"`
 		} `json:"razorpay"`
 	} `json:"paymentGatewayKeys"`
+	MCP struct {
+		Port         int    `json:"port"`
+		BasePath     string `json:"basePath"`
+		SystemPrompt string `json:"systemPrompt"`
+		LLM          struct {
+			Provider       string  `json:"provider"`
+			BaseURL        string  `json:"baseURL"`
+			APIKey         string  `json:"apiKey"`
+			Model          string  `json:"model"`
+			Temperature    float64 `json:"temperature"`
+			MaxTokens      int     `json:"maxTokens"`
+			TimeoutSeconds int     `json:"timeoutSeconds"`
+		} `json:"llm"`
+	} `json:"mcp"`
 	LokiHost        string `json:"lokihost"`
 	TempoHost       string `json:"tempohost"`
 	JWT256BitSecret string `json:"jwt256bitsecret"`

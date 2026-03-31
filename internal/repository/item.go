@@ -11,6 +11,7 @@ import (
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"slices"
+	"strings"
 )
 
 type ItemRepository interface {
@@ -112,20 +113,46 @@ func (r Repository) GetItem(ctx context.Context, filter *query.MenuItemQuery) (*
 	item := &entity.Item{}
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Item{}).Where("tenant_id = ?", filter.TenantID)
 	if filter.ID != nil {
-		sess.Where("id = ?", filter.ID)
+		sess = sess.Where("id = ?", *filter.ID)
+	}
+	if len(filter.IDs) > 0 {
+		sess = sess.Where("id IN ?", filter.IDs)
 	}
 	if filter.LocationID != nil {
-		sess.Where("location_id = ?", filter.LocationID)
+		sess = sess.Where("location_id = ?", *filter.LocationID)
 	}
 	if filter.Orderable != nil {
-		sess.Where("item_status = ?", "av")
+		sess = sess.Where("item_status = ?", "av")
+	}
+	if filter.CuisineText != nil {
+		if cuisine := strings.TrimSpace(*filter.CuisineText); cuisine != "" {
+			like := "%" + strings.ToLower(cuisine) + "%"
+			sess = sess.Where("LOWER(category) LIKE ? OR LOWER(food_type) LIKE ?", like, like)
+		}
+	}
+	if filter.SearchText != nil {
+		if text := strings.TrimSpace(*filter.SearchText); text != "" {
+			like := "%" + strings.ToLower(text) + "%"
+			sess = sess.Where(
+				"LOWER(name) LIKE ? OR LOWER(description) LIKE ? OR LOWER(category) LIKE ?",
+				like,
+				like,
+				like,
+			)
+		}
+	}
+	if filter.OrderUpdatedAt {
+		sess = sess.Order("updated_at desc")
+	}
+	if filter.Limit != nil && *filter.Limit > 0 {
+		sess = sess.Limit(*filter.Limit)
 	}
 	if filter.Preload {
 		for _, preload := range item.GetPreloads() {
-			sess.Preload(preload)
+			sess = sess.Preload(preload)
 		}
 	}
-	if err := sess.Find(item).Error; err != nil {
+	if err := sess.First(item).Error; err != nil {
 		return nil, err
 	}
 	return item, nil
@@ -138,17 +165,43 @@ func (r Repository) GetItems(ctx context.Context, filter *query.MenuItemQuery) (
 	items := []*entity.Item{}
 	sess := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Item{}).Where("tenant_id = ?", filter.TenantID)
 	if filter.ID != nil {
-		sess.Where("id = ?", filter.ID)
+		sess = sess.Where("id = ?", *filter.ID)
+	}
+	if len(filter.IDs) > 0 {
+		sess = sess.Where("id IN ?", filter.IDs)
 	}
 	if filter.LocationID != nil {
-		sess.Where("location_id = ?", filter.LocationID)
+		sess = sess.Where("location_id = ?", *filter.LocationID)
 	}
 	if filter.Orderable != nil {
-		sess.Where("item_status = ?", "av")
+		sess = sess.Where("item_status = ?", "av")
+	}
+	if filter.CuisineText != nil {
+		if cuisine := strings.TrimSpace(*filter.CuisineText); cuisine != "" {
+			like := "%" + strings.ToLower(cuisine) + "%"
+			sess = sess.Where("LOWER(category) LIKE ? OR LOWER(food_type) LIKE ?", like, like)
+		}
+	}
+	if filter.SearchText != nil {
+		if text := strings.TrimSpace(*filter.SearchText); text != "" {
+			like := "%" + strings.ToLower(text) + "%"
+			sess = sess.Where(
+				"LOWER(name) LIKE ? OR LOWER(description) LIKE ? OR LOWER(category) LIKE ?",
+				like,
+				like,
+				like,
+			)
+		}
+	}
+	if filter.OrderUpdatedAt {
+		sess = sess.Order("updated_at desc")
+	}
+	if filter.Limit != nil && *filter.Limit > 0 {
+		sess = sess.Limit(*filter.Limit)
 	}
 	if filter.Preload {
 		for _, preload := range (entity.Item{}).GetPreloads() {
-			sess.Preload(preload)
+			sess = sess.Preload(preload)
 		}
 	}
 	if err := sess.Find(&items).Error; err != nil {
