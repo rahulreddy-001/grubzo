@@ -20,8 +20,8 @@ const EmployeeForm: React.FC<{
 }> = ({ emp, cancel }) => {
   const isUpdate = !!emp;
   const { showError, showSuccess } = useErrorHandler();
-  const { Roles } = useSelector((s: RootState) => s.rbac);
-
+  const { Grid } = useSelector((s: RootState) => s.rbac);
+  const Roles = Object.keys(Grid ?? {});
   useEffect(() => {
     if (Roles.length == 0) {
       CommonService.fetchRBACInfo();
@@ -30,8 +30,8 @@ const EmployeeForm: React.FC<{
 
   const form = useFormik<Employee>({
     initialValues: {
-      ID: emp?.ID ?? -1,
-      LocationID: emp?.LocationID ?? -1,
+      ID: emp?.ID ?? 0,
+      LocationID: emp?.LocationID ?? 0,
       Name: emp?.Name ?? "",
       Email: emp?.Email ?? "",
       Roles: emp?.Roles || [],
@@ -72,7 +72,7 @@ const EmployeeForm: React.FC<{
             label={isUpdate ? "Update" : "Add"}
             variant="solid"
             onClick={form.submitForm}
-            disabled={form.isSubmitting || !form.isValid || !!form.values.Name}
+            disabled={form.isSubmitting || !form.isValid}
             processing={form.isSubmitting}
           />
         </Flex>

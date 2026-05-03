@@ -4,12 +4,13 @@ package rbac
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/otel"
-	"gorm.io/gorm"
 	"grubzo/internal/repository"
 	"grubzo/internal/services/rbac/permission"
 	"grubzo/internal/services/rbac/role"
 	"sync"
+
+	"go.opentelemetry.io/otel"
+	"gorm.io/gorm"
 )
 
 type RBAC struct {

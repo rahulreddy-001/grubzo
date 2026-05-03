@@ -1,9 +1,3 @@
-version: "3.9"
-
-networks:
-  common:
-    external: true
-
 services:
   postgres:
     image: postgres:16
@@ -23,8 +17,6 @@ services:
       timeout: 3s
       retries: 10
       start_period: 10s
-    networks:
-      - common
 
   pgadmin:
     image: dpage/pgadmin4:9.9
@@ -40,8 +32,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - common
 
   redis:
     image: redis/redis-stack-server:7.4.0-v7-x86_64
@@ -57,8 +47,6 @@ services:
       timeout: 3s
       retries: 10
       start_period: 10s
-    networks:
-      - common
 
   tempo:
     image: grafana/tempo:2.4.1
@@ -69,10 +57,8 @@ services:
       - "3100:3100"
     volumes:
       - ./data/tempo:/tmp/tempo_traces
-      - ./tempo.yaml:/etc/tempo/tempo.yaml
+      - ./metrics/tempo.yaml:/etc/tempo/tempo.yaml
     command: ["-config.file=/etc/tempo/tempo.yaml"]
-    networks:
-      - common
 
   loki:
     image: grafana/loki:latest
@@ -84,8 +70,17 @@ services:
       - ./data/loki:/loki
       - ./loki.yaml:/etc/loki/local-config.yaml
     command: ["-config.file=/etc/loki/local-config.yaml"]
-    networks:
-      - common
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus_container
+    volumes:
+      - ./data/prometheus:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "3300:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   grafana:
     image: grafana/grafana:11.2.0
@@ -100,8 +95,6 @@ services:
         condition: service_started
     volumes:
       - ./data/grafana:/var/lib/grafana
-    networks:
-      - common
   # ollama:
   #   image: ollama/ollama
   #   container_name: ollama
@@ -115,7 +108,7 @@ services:
   #   container_name: ollama-pull
   #   volumes:
   #     - ./data/ollama:/root/.ollama
-  #   entrypoint: > 
+  #   entrypoint: >
   #     /bin/sh -c "ollama serve & sleep 5 && ollama pull mistral && kill %1"
   #   depends_on:
   #     - ollama

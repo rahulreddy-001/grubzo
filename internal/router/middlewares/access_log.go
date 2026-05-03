@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"grubzo/internal/utils/random"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -23,12 +24,11 @@ func AccessLogging(logger *zap.Logger, dev bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
-		stop := time.Now()
-
+		latency := time.Since(start)
 		req := c.Request
 		res := c.Writer
 		if dev {
-			logger.Sugar().Infof("%3d | %s | %s %s %d", res.Status, stop.Sub(start), req.Method, req.URL, res.Size)
+			logger.Sugar().Infof("%3d | %s | %s %s %d", res.Status, latency, req.Method, req.URL, res.Size)
 		} else {
 			logger.Info("",
 				zap.String("requestId", getRequestID(c)),
@@ -42,8 +42,20 @@ func AccessLogging(logger *zap.Logger, dev bool) gin.HandlerFunc {
 					RequestURL:    req.URL.String(),
 					RequestSize:   req.Header.Get(echo.HeaderContentLength),
 					ResponseSize:  strconv.Itoa(res.Size()),
-					Latency:       strconv.FormatFloat(stop.Sub(start).Seconds(), 'f', 9, 64) + "s",
-				}))
+					Latency:       strconv.FormatFloat(latency.Seconds(), 'f', 9, 64) + "s",
+				}),
+			)
+
+			HttpRequestsTotal.WithLabelValues(
+				req.Method,
+				req.URL.Path,
+				http.StatusText(res.Status()),
+			).Inc()
+
+			HttpDuration.WithLabelValues(
+				req.Method,
+				req.URL.Path,
+			).Observe(latency.Seconds())
 		}
 	}
 }

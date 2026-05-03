@@ -14,11 +14,11 @@ func (h Handlers) CreateTenantUser(c *gin.Context) {
 	createArgs := &dto.CreateTenantUser{
 		TenantID: tenantID,
 	}
-	createArgs.LocationID = ext.Ctx(c).LocationID()
 	if err := c.ShouldBindBodyWithJSON(createArgs); err != nil {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
+	createArgs.LocationID = ext.Ctx(c).LocationID()
 	response, err := h.SS.TenantService.CreateTenantUser(c.Request.Context(), createArgs)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
@@ -33,11 +33,11 @@ func (h Handlers) UpdateTenantUser(c *gin.Context) {
 	updateArgs := &dto.UpdateTenantUser{
 		TenantID: tenantID,
 	}
-	updateArgs.LocationID = &locationID
 	if err := c.ShouldBindBodyWithJSON(updateArgs); err != nil {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
+	updateArgs.LocationID = &locationID
 	response, err := h.SS.TenantService.UpdateTenantUser(c.Request.Context(), updateArgs)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)

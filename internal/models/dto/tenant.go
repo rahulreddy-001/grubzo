@@ -1,6 +1,7 @@
 package dto
 
 type CreateTenant struct {
+	ID   *uint  `json:"ID"`
 	Name string `json:"Name" binding:"required"`
 	Code string `json:"Code" binding:"required"`
 }

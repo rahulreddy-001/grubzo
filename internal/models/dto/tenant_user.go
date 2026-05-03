@@ -6,7 +6,7 @@ type CreateTenantUser struct {
 	Password   string   `json:"Password"`
 	Name       string   `json:"Name" binding:"required"`
 	Roles      []string `json:"Roles" binding:"required"`
-	LocationID uint     `json:"LocationID" binding:"required"`
+	LocationID uint     `json:"LocationID"`
 }
 
 type UpdateTenantUser struct {

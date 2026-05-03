@@ -128,11 +128,17 @@ func (a *Auth) Init() *Auth {
 				ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
 				return
 			}
+			trueRef := true
+			locationEntity, _ := a.repo.FindTenantLocation(c, &query.TenantLocationQuery{
+				TenantID:  userEntity.TenantID,
+				IsPrimary: &trueRef,
+			})
 			userSession.Set("user", &session.UserSession{
 				TenantID: userEntity.TenantID,
 				UserID:   userEntity.ID,
 				Email:    userEntity.Email,
 				Type:     "user",
+				Location: locationEntity.ID,
 			})
 			a.RedirectToLoginSuccessPage(c)
 		})

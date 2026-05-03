@@ -40,11 +40,17 @@ func (h Handlers) Login(c *gin.Context) {
 			ext.Ctx(c).RespondWithError(err)
 			return
 		}
+		trueRef := true
+		locationEntity, _ := h.Repository.FindTenantLocation(c, &query.TenantLocationQuery{
+			TenantID:  req.TenantID,
+			IsPrimary: &trueRef,
+		})
 		userSession.Set("user", &session.UserSession{
 			Type:     "user",
 			UserID:   userID,
 			TenantID: req.TenantID,
 			Email:    req.Email,
+			Location: locationEntity.ID,
 		})
 		c.JSON(200, gin.H{"message": "login successful", "session_token": userSession.Token()})
 		return

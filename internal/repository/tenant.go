@@ -4,12 +4,13 @@ package repository
 import (
 	"context"
 	"errors"
-	"go.opentelemetry.io/otel"
-	"gorm.io/gorm"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
+
+	"go.opentelemetry.io/otel"
+	"gorm.io/gorm"
 )
 
 type TenantRepository interface {
@@ -46,6 +47,7 @@ func (r *Repository) CreateTenant(ctx context.Context, dto *dto.CreateTenant) (*
 	defer span.End()
 
 	tenant := &entity.Tenant{
+		ID:   *dto.ID,
 		Name: dto.Name,
 		Code: dto.Code,
 	}

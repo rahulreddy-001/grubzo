@@ -15,6 +15,7 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -26,6 +27,7 @@ type Router struct {
 	router *gin.Engine
 	auth   *auth.Handlers
 	v1     *v1.Handlers
+	mcp    *mcprouter.Handlers
 }
 
 func Setup(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repository.Repository, ss *services.Services, config *config.Config) *gin.Engine {
@@ -34,6 +36,7 @@ func Setup(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repos
 	engine.router.GET("/health", func(c *gin.Context) {
 		c.String(200, "OK")
 	})
+	engine.router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	engine.router.NoRoute(getReactReverseProxy())
 
@@ -43,24 +46,7 @@ func Setup(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repos
 	api := engine.router.Group("/api")
 	engine.v1.Setup(api)
 
-	mcpComponents, err := mcp.Build(mcp.Dependencies{
-		Logger:       logger.Named("grubzo_mcp"),
-		Config:       config,
-		DB:           db,
-		Redis:        rdb,
-		Repository:   repository,
-		Services:     ss,
-		SessionStore: engine.auth.SessionStore,
-	})
-	if err != nil {
-		logger.Fatal("failed to register mcp routes", zap.Error(err))
-	}
-	mcprouter.NewHandlers(
-		logger.Named("grubzo_mcp_router"),
-		repository,
-		engine.auth.SessionStore,
-		mcpComponents,
-	).Setup(engine.router)
+	engine.mcp.Setup(engine.router)
 
 	return engine.router
 }
@@ -112,10 +98,31 @@ func newRouter(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *r
 		SessionStore: sessionStore,
 		SS:           ss,
 	}
+
+	mcpComponents, err := mcp.Build(mcp.Dependencies{
+		Logger:       logger.Named("grubzo_mcp"),
+		Config:       config,
+		DB:           db,
+		Redis:        rdb,
+		Repository:   repository,
+		Services:     ss,
+		SessionStore: sessionStore,
+	})
+	if err != nil {
+		logger.Fatal("failed to register mcp routes", zap.Error(err))
+	}
+
+	mcpHandlers := mcprouter.NewHandlers(
+		logger.Named("grubzo_mcp_router"),
+		repository,
+		sessionStore,
+		mcpComponents,
+	)
 	router := &Router{
 		router: r,
 		auth:   authHandler,
 		v1:     v1Handler,
+		mcp:    mcpHandlers,
 	}
 	return router
 }

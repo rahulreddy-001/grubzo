@@ -3,9 +3,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"grubzo/internal/models/dto"
 	"grubzo/internal/repository"
 	"grubzo/internal/services"
+	"grubzo/internal/services/rbac/role"
 	"grubzo/internal/utils/gormzap"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,6 +29,7 @@ type Server struct {
 }
 
 func serveCommand() *cobra.Command {
+	var createTenant bool
 	cmd := cobra.Command{
 		Use:   "serve",
 		Short: "Serve grubzo API",
@@ -92,35 +96,45 @@ func serveCommand() *cobra.Command {
 				logger.Fatal("failed to create server", zap.Error(err))
 			}
 
-			// if init {
-			// 	logger.Info("data initializing...")
-
-			// 	if err := repo.CreateUserRoles(role.SystemRoleModels()...); err != nil {
-			// 		logger.Fatal("failed to init system user roles", zap.Error(err))
-			// 	}
-			// 	if err := server.SS.RBAC.Reload(); err != nil {
-			// 		logger.Fatal("failed to reload rbac", zap.Error(err))
-			// 	}
-
-			// 	fid, err := file.GenerateIconFile(server.SS.FileManager, "traq")
-			// 	if err != nil {
-			// 		logger.Fatal("failed to generate icon file", zap.Error(err))
-			// 	}
-			// 	u, err := repo.CreateUser(repository.CreateUserArgs{
-			// 		Name:       "grubzo",
-			// 		Password:   "grubzo",
-			// 		Role:       role.Admin,
-			// 		IconFileID: fid,
-			// 	})
-			// 	if err == nil {
-			// 		logger.Info("grubzo user was created", zap.Stringer("uid", u.GetID()))
-			// 	} else {
-			// 		logger.Fatal("failed to init admin user", zap.Error(err))
-			// 	}
-
-			// 	logger.Info("data initialization finished")
-			// }
-
+			if createTenant {
+				tenantID := uint(2)
+				_, err = repository.CreateTenant(context.Background(), &dto.CreateTenant{
+					ID:   &tenantID,
+					Name: "Grubzo",
+					Code: "GRUBZO",
+				})
+				if err != nil {
+					log.Fatal(err)
+				}
+				locEntity, err := repository.CreateTenantLocation(context.Background(), &dto.CreateTenantLocation{
+					TenantID:  tenantID,
+					Code:      "LOC_1",
+					Address:   "Road No 4, Plants Colony, Uppal",
+					City:      "Hyderabad",
+					State:     "Telangana",
+					Country:   "India",
+					ZipCode:   "500092",
+					IsPrimary: true,
+				})
+				if err != nil {
+					log.Fatal(err)
+				}
+				if err = repository.CreateRole(context.Background(), tenantID, role.Admin, []string{}); err != nil {
+					log.Fatal(err)
+				}
+				_, err = repository.CreateTenantUser(context.Background(), &dto.CreateTenantUser{
+					TenantID:   tenantID,
+					Email:      "admin@grubzo.com",
+					Password:   "123456",
+					Name:       "Grubzo Admin",
+					LocationID: locEntity.ID,
+					Roles:      []string{role.Admin},
+				})
+				if err != nil {
+					log.Fatal(err)
+				}
+				logger.Info("Tenant created successfully...")
+			}
 			go func() {
 				if err := server.Start(fmt.Sprintf(":%d", c.App.Port)); err != nil {
 					logger.Info("shutting down the server")
@@ -139,6 +153,8 @@ func serveCommand() *cobra.Command {
 			logger.Info("grubzo shutdown")
 		},
 	}
+	flags := cmd.Flags()
+	flags.BoolVar(&createTenant, "CreateTenant", false, "Create Tenant")
 	return &cmd
 }
 

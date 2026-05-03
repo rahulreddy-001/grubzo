@@ -4,15 +4,16 @@ package repository
 import (
 	"context"
 	"errors"
-	"github.com/lib/pq"
-	"go.opentelemetry.io/otel"
-	"go.uber.org/zap"
-	"gorm.io/gorm"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
 	"grubzo/internal/utils/random"
+
+	"github.com/lib/pq"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type TenantUserRepository interface {
