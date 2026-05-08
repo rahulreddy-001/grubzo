@@ -3,12 +3,13 @@ package order
 //go:generate go run ../../../cmd/injecttrace -file payment_processer.go -receiver orderPaymentProcessor -service OrderPaymentProcessor
 import (
 	"context"
-	"go.opentelemetry.io/otel"
-	"go.uber.org/zap"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/repository"
 	"grubzo/internal/router/ext"
+
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 )
 
 type orderPaymentProcessor struct {
@@ -129,6 +130,7 @@ func (op *orderPaymentProcessor) ProcessStatusSideEffects(ctx context.Context, o
 
 	refundTxnID, err := op.walletService.RefundForOrder(ctx, order.ID, order.TenantID, order.UserRefID, op.biller.refundAmount(order))
 	if err != nil {
+		op.logger.Error("failed to refund wallet payment", zap.Uint("order_id", order.ID), zap.Uint("tenant_id", order.TenantID))
 		return nil, ext.Error("Failed to refund wallet payment")
 	}
 

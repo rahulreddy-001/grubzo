@@ -23,7 +23,7 @@ func getDatabase(c *config.Config) (*gorm.DB, error) {
 	)
 
 	engine, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		TranslateError: true,
+		TranslateError: false,
 	})
 	if err != nil {
 		return nil, err

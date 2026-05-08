@@ -15,7 +15,7 @@ const RBACPanel: React.FC = () => {
   const { showSuccess, showError } = useErrorHandler();
 
   const { Grid, Permissions, isLoading } = useSelector(
-    (s: RootState) => s.rbac
+    (s: RootState) => s.rbac,
   );
 
   React.useEffect(() => {
@@ -38,8 +38,8 @@ const RBACPanel: React.FC = () => {
   const updatePermissions = (roleID: number, newPermissions: string[]) => {
     setGrid((prev) =>
       prev.map((r) =>
-        r.ID === roleID ? { ...r, Permissions: newPermissions } : r
-      )
+        r.ID === roleID ? { ...r, Permissions: newPermissions } : r,
+      ),
     );
   };
 
@@ -63,7 +63,7 @@ const RBACPanel: React.FC = () => {
 
       roles.forEach((role) => {
         const origSet = new Set(
-          Array.isArray(original[role]) ? original[role] : []
+          Array.isArray(original[role]) ? original[role] : [],
         );
         const currSet = map[role] || new Set();
 

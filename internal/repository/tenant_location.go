@@ -4,13 +4,14 @@ package repository
 import (
 	"context"
 	"errors"
-	"go.opentelemetry.io/otel"
-	"gorm.io/gorm"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
 	"strings"
+
+	"go.opentelemetry.io/otel"
+	"gorm.io/gorm"
 )
 
 type TenantLocationRepository interface {
@@ -68,6 +69,13 @@ func (r *Repository) CreateTenantLocation(ctx context.Context, dto *dto.CreateTe
 		return nil, err
 	}
 	if err := db.Create(location).Error; err != nil {
+		// TODO
+		// var pgErr *pgconn.PgError
+		// if errors.As(err, &pgErr) {
+		// 	if pgErr.ConstraintName == "uni_tenant_locations_code" {
+		// 		return nil, ext.Error("A location with this code already exists.")
+		// 	}
+		// }
 		return nil, err
 	}
 

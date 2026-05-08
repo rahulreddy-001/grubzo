@@ -57,7 +57,7 @@ services:
       - "3100:3100"
     volumes:
       - ./data/tempo:/tmp/tempo_traces
-      - ./metrics/tempo.yaml:/etc/tempo/tempo.yaml
+      - ./monitoring/tempo.yaml:/etc/tempo/tempo.yaml
     command: ["-config.file=/etc/tempo/tempo.yaml"]
 
   loki:
@@ -68,7 +68,7 @@ services:
       - "3200:3100"
     volumes:
       - ./data/loki:/loki
-      - ./loki.yaml:/etc/loki/local-config.yaml
+      - ./monitoring/loki.yaml:/etc/loki/local-config.yaml
     command: ["-config.file=/etc/loki/local-config.yaml"]
 
   prometheus:
@@ -76,7 +76,7 @@ services:
     container_name: prometheus_container
     volumes:
       - ./data/prometheus:/prometheus
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "3300:9090"
     extra_hosts:

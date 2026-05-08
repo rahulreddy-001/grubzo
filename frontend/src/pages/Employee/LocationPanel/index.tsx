@@ -45,7 +45,7 @@ const LocationPanel: React.FC = () => {
           <CButton
             label="Create Location"
             startIcon={<Plus size={16} />}
-            onClick={handleOpen}
+            onClick={() => handleOpen(null)}
           />
         }
         columns={[
