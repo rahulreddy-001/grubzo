@@ -17,16 +17,16 @@ import (
 type ChatRepository interface {
 	EnsureChatSession(ctx context.Context, input *ChatSessionInput) (*entity.ChatSession, error)
 	AppendChatMessage(ctx context.Context, sessionID string, input StoredChatMessage) error
-	ListChatMessages(ctx context.Context, sessionID string, userID, tenantID uint) ([]entity.ChatMessage, error)
-	ListChatSessions(ctx context.Context, userID, tenantID uint) ([]ChatSessionSummary, error)
-	DeleteChatSession(ctx context.Context, sessionID string, userID, tenantID uint) error
+	ListChatMessages(ctx context.Context, sessionID string, userID, tenantID uint64) ([]entity.ChatMessage, error)
+	ListChatSessions(ctx context.Context, userID, tenantID uint64) ([]ChatSessionSummary, error)
+	DeleteChatSession(ctx context.Context, sessionID string, userID, tenantID uint64) error
 }
 
 type ChatSessionInput struct {
 	SessionID  string
-	UserID     uint
-	TenantID   uint
-	LocationID uint
+	UserID     uint64
+	TenantID   uint64
+	LocationID uint64
 	Provider   string
 	Model      string
 }
@@ -142,7 +142,7 @@ func (r *Repository) AppendChatMessage(ctx context.Context, sessionID string, in
 		Error
 }
 
-func (r *Repository) ListChatMessages(ctx context.Context, sessionID string, userID, tenantID uint) ([]entity.ChatMessage, error) {
+func (r *Repository) ListChatMessages(ctx context.Context, sessionID string, userID, tenantID uint64) ([]entity.ChatMessage, error) {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.ListChatMessages")
 	defer span.End()
 
@@ -161,7 +161,7 @@ func (r *Repository) ListChatMessages(ctx context.Context, sessionID string, use
 	return messages, err
 }
 
-func (r *Repository) ListChatSessions(ctx context.Context, userID, tenantID uint) ([]ChatSessionSummary, error) {
+func (r *Repository) ListChatSessions(ctx context.Context, userID, tenantID uint64) ([]ChatSessionSummary, error) {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.ListChatSessions")
 	defer span.End()
 
@@ -224,7 +224,7 @@ func (r *Repository) ListChatSessions(ctx context.Context, userID, tenantID uint
 	return summaries, nil
 }
 
-func (r *Repository) DeleteChatSession(ctx context.Context, sessionID string, userID, tenantID uint) error {
+func (r *Repository) DeleteChatSession(ctx context.Context, sessionID string, userID, tenantID uint64) error {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.DeleteChatSession")
 	defer span.End()
 

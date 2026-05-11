@@ -18,12 +18,12 @@ const (
 )
 
 type UserSession struct {
-	UserID   uint     `json:"user_id"`
-	TenantID uint     `json:"tenant_id"`
+	UserID   uint64   `json:"user_id"`
+	TenantID uint64   `json:"tenant_id"`
 	Email    string   `json:"email"`
 	Type     string   `json:"type"`
 	Roles    []string `json:"roles"`
-	Location uint     `json:"location"`
+	Location uint64   `json:"location"`
 }
 
 var (
@@ -35,8 +35,8 @@ var (
 
 type Session interface {
 	Token() string
-	UserID() uint
-	TenantID() uint
+	UserID() uint64
+	TenantID() uint64
 	CreatedAt() time.Time
 	LoggedIn() bool
 	Expired() bool
@@ -50,12 +50,12 @@ type Session interface {
 }
 
 type Store interface {
-	IssueSession(userID, tenantID uint, data map[string]interface{}) (Session, error)
+	IssueSession(userID, tenantID uint64, data map[string]interface{}) (Session, error)
 
 	GetSession(c *gin.Context) (Session, error)
-	RenewSession(c *gin.Context, userID, tenantID uint) (Session, error)
+	RenewSession(c *gin.Context, userID, tenantID uint64) (Session, error)
 	RevokeSession(c *gin.Context) error
 
 	GetSessionByToken(token string) (Session, error)
-	GetSessionsByUserID(userID, tenantID uint) ([]Session, error)
+	GetSessionsByUserID(userID, tenantID uint64) ([]Session, error)
 }

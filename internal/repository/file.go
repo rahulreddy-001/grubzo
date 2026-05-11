@@ -14,11 +14,11 @@ import (
 
 type FileRepository interface {
 	SaveFile(ctx context.Context, fileMeta *entity.FileMeta) error
-	GetFile(ctx context.Context, id uuid.UUID, tenantId uint) (*entity.FileMeta, error)
+	GetFile(ctx context.Context, id uuid.UUID, tenantId uint64) (*entity.FileMeta, error)
 	GetFiles(ctx context.Context, query *query.FilesQuery) (result []*entity.FileMeta, more bool, err error)
 	DeleteFile(ctx context.Context, fileID uuid.UUID) error
 	DeleteFiles(ctx context.Context, tx *gorm.DB, fileID []uuid.UUID) error
-	PopulateOwnerID(ctx context.Context, tx *gorm.DB, ownerID uint, ids []uuid.UUID, tenantId uint) error
+	PopulateOwnerID(ctx context.Context, tx *gorm.DB, ownerID uint64, ids []uuid.UUID, tenantId uint64) error
 }
 
 func (r *Repository) SaveFile(ctx context.Context, fileMeta *entity.FileMeta) error {
@@ -32,7 +32,7 @@ func (r *Repository) SaveFile(ctx context.Context, fileMeta *entity.FileMeta) er
 	return nil
 }
 
-func (r *Repository) GetFile(ctx context.Context, id uuid.UUID, tenantID uint) (*entity.FileMeta, error) {
+func (r *Repository) GetFile(ctx context.Context, id uuid.UUID, tenantID uint64) (*entity.FileMeta, error) {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetFile")
 	defer span.End()
 
@@ -99,7 +99,7 @@ func (r *Repository) DeleteFiles(ctx context.Context, tx *gorm.DB, filesID []uui
 	return nil
 }
 
-func (r *Repository) PopulateOwnerID(ctx context.Context, tx *gorm.DB, ownerID uint, ids []uuid.UUID, tenantId uint) error {
+func (r *Repository) PopulateOwnerID(ctx context.Context, tx *gorm.DB, ownerID uint64, ids []uuid.UUID, tenantId uint64) error {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.PopulateOwnerID")
 	defer span.End()
 

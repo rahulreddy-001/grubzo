@@ -1,7 +1,7 @@
 package query
 
 type TenantQuery struct {
-	ID       *uint
+	ID       *uint64
 	Code     *string
 	PreLoads bool
 }
@@ -12,7 +12,7 @@ func NewTenantQuery() *TenantQuery {
 	}
 }
 
-func (q *TenantQuery) WithID(id uint) *TenantQuery {
+func (q *TenantQuery) WithID(id uint64) *TenantQuery {
 	q.ID = &id
 	return q
 }

@@ -1,19 +1,19 @@
 package query
 
 type UserQuery struct {
-	TenantID uint
-	ID       *uint
+	TenantID uint64
+	ID       *uint64
 	Email    *string
-	UserId   *uint
+	UserId   *uint64
 }
 
-func NewUserQuery(tenantID uint) *UserQuery {
+func NewUserQuery(tenantID uint64) *UserQuery {
 	return &UserQuery{
 		TenantID: tenantID,
 	}
 }
 
-func (f *UserQuery) WithID(id uint) *UserQuery {
+func (f *UserQuery) WithID(id uint64) *UserQuery {
 	f.ID = &id
 	return f
 }
@@ -23,7 +23,7 @@ func (f *UserQuery) WithEmail(email string) *UserQuery {
 	return f
 }
 
-func (f *UserQuery) WithUserId(userId uint) *UserQuery {
+func (f *UserQuery) WithUserId(userId uint64) *UserQuery {
 	f.UserId = &userId
 	return f
 }

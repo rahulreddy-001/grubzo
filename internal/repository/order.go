@@ -10,14 +10,14 @@ import (
 )
 
 type OrderRepository interface {
-	CreateOrder(ctx context.Context, input *dto.CreateOrderDTO) (uint, error)
-	GetOrder(ctx context.Context, orderID, tenantID uint) (*entity.Order, error)
+	CreateOrder(ctx context.Context, input *dto.CreateOrderDTO) (uint64, error)
+	GetOrder(ctx context.Context, orderID, tenantID uint64) (*entity.Order, error)
 
 	UpdateOrderPaymentStatus(ctx context.Context, updateDTO *dto.UpdateOrderPaymentStatusDTO) error
 	GetOrders(ctx context.Context, q *query.OrderQuery) ([]entity.Order, error)
 }
 
-func (repo *Repository) CreateOrder(ctx context.Context, input *dto.CreateOrderDTO) (uint, error) {
+func (repo *Repository) CreateOrder(ctx context.Context, input *dto.CreateOrderDTO) (uint64, error) {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.CreateOrder")
 	defer span.End()
 
@@ -61,7 +61,7 @@ func (repo *Repository) CreateOrder(ctx context.Context, input *dto.CreateOrderD
 	return order.ID, nil
 }
 
-func (repo *Repository) GetOrder(ctx context.Context, orderID, tenantID uint) (*entity.Order, error) {
+func (repo *Repository) GetOrder(ctx context.Context, orderID, tenantID uint64) (*entity.Order, error) {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetOrder")
 	defer span.End()
 

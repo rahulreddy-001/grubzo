@@ -4,9 +4,9 @@ import "time"
 
 type ChatSession struct {
 	ID         string    `gorm:"primaryKey;type:varchar(64)"`
-	UserID     uint      `gorm:"not null;index"`
-	TenantID   uint      `gorm:"not null;index"`
-	LocationID uint      `gorm:"not null;index"`
+	UserID     uint64    `gorm:"not null;index"`
+	TenantID   uint64    `gorm:"not null;index"`
+	LocationID uint64    `gorm:"not null;index"`
 	Provider   string    `gorm:"type:varchar(64);not null"`
 	Model      string    `gorm:"type:varchar(128);not null"`
 	CreatedAt  time.Time `gorm:"precision:6"`
@@ -18,7 +18,7 @@ func (ChatSession) TableName() string {
 }
 
 type ChatMessage struct {
-	ID         uint      `gorm:"primaryKey;autoIncrement"`
+	ID         uint64    `gorm:"primaryKey;autoIncrement"`
 	SessionID  string    `gorm:"type:varchar(64);not null;index"`
 	Role       string    `gorm:"type:varchar(32);not null"`
 	Kind       string    `gorm:"type:varchar(32);not null"`

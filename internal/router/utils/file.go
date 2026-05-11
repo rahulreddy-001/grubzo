@@ -20,8 +20,8 @@ func mapMimeToFileType(mime string) entity.FileType {
 
 func BuildFileSaveArgs(
 	fh *multipart.FileHeader,
-	tenantId uint,
-	ownerId *uint,
+	tenantId uint64,
+	ownerId *uint64,
 	ownerType entity.OwnerType,
 	order int,
 ) (*dto.File, error) {

@@ -7,8 +7,8 @@ import (
 )
 
 type CreateMenuItem struct {
-	TenantID    uint        `json:"TenantID" binding:"required"`
-	LocationID  uint        `json:"LocationID" binding:"required"`
+	TenantID    uint64      `json:"TenantID" binding:"required"`
+	LocationID  uint64      `json:"LocationID" binding:"required"`
 	Name        string      `json:"Name" binding:"required"`
 	Description string      `json:"Description" binding:"required"`
 	Price       float64     `json:"Price" binding:"required"`
@@ -20,9 +20,9 @@ type CreateMenuItem struct {
 }
 
 type UpdateMenuItem struct {
-	TenantID    uint        `json:"TenantID" binding:"required"`
-	ID          uint        `json:"ID" binding:"required"`
-	LocationID  uint        `json:"LocationID"`
+	TenantID    uint64      `json:"TenantID" binding:"required"`
+	ID          uint64      `json:"ID" binding:"required"`
+	LocationID  uint64      `json:"LocationID"`
 	Name        *string     `json:"Name" `
 	Description *string     `json:"Description"`
 	Price       *float64    `json:"Price"`
@@ -34,9 +34,9 @@ type UpdateMenuItem struct {
 }
 
 type MenuItem struct {
-	ID          uint      `json:"ID" binding:"required"`
-	TenantID    uint      `json:"TenantID" binding:"required"`
-	LocationID  uint      `json:"LocationID" binding:"required"`
+	ID          uint64    `json:"ID" binding:"required"`
+	TenantID    uint64    `json:"TenantID" binding:"required"`
+	LocationID  uint64    `json:"LocationID" binding:"required"`
 	Name        string    `json:"Name" binding:"required"`
 	Description string    `json:"Description" binding:"required"`
 	Price       float64   `json:"Price" binding:"required"`

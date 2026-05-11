@@ -1,31 +1,31 @@
 package query
 
 type OrderQuery struct {
-	TenantID     uint
-	ID           *uint
-	UserID       *uint
-	LocationID   *uint
+	TenantID     uint64
+	ID           *uint64
+	UserID       *uint64
+	LocationID   *uint64
 	Status       *string
 	Limit        *int
 	OrderCreated bool
 	PreLoads     bool
 }
 
-func NewOrderQuery(tenantID uint) *OrderQuery {
+func NewOrderQuery(tenantID uint64) *OrderQuery {
 	return &OrderQuery{TenantID: tenantID}
 }
 
-func (q *OrderQuery) WithUser(userID uint) *OrderQuery {
+func (q *OrderQuery) WithUser(userID uint64) *OrderQuery {
 	q.UserID = &userID
 	return q
 }
 
-func (q *OrderQuery) WithID(orderID uint) *OrderQuery {
+func (q *OrderQuery) WithID(orderID uint64) *OrderQuery {
 	q.ID = &orderID
 	return q
 }
 
-func (q *OrderQuery) WithLocation(locationID uint) *OrderQuery {
+func (q *OrderQuery) WithLocation(locationID uint64) *OrderQuery {
 	q.LocationID = &locationID
 	return q
 }

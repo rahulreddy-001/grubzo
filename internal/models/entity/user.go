@@ -3,8 +3,8 @@ package entity
 import "time"
 
 type User struct {
-	ID        uint      `gorm:"primaryKey;autoIncrement"`
-	TenantID  uint      `gorm:"not null;index"`
+	ID        uint64    `gorm:"primaryKey;autoIncrement"`
+	TenantID  uint64    `gorm:"not null;index"`
 	UserID    string    `gorm:"type:text;not null;index"`
 	Email     string    `gorm:"type:varchar(128);not null;index"`
 	Password  string    `gorm:"type:varchar(256);not null;default:''"`

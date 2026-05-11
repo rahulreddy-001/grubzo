@@ -14,7 +14,7 @@ import (
 )
 
 type RBAC struct {
-	roles      map[uint]role.Roles
+	roles      map[uint64]role.Roles
 	rolesMutex sync.RWMutex
 	repo       *repository.Repository
 	db         *gorm.DB
@@ -22,7 +22,7 @@ type RBAC struct {
 
 func New(repo *repository.Repository) (*RBAC, error) {
 	r := &RBAC{
-		roles: make(map[uint]role.Roles),
+		roles: make(map[uint64]role.Roles),
 		repo:  repo,
 	}
 	if err := r.reload(context.Background()); err != nil {
@@ -31,13 +31,13 @@ func New(repo *repository.Repository) (*RBAC, error) {
 	return r, nil
 }
 
-func (r *RBAC) IsGranted(tenantID uint, roleName string, perm permission.Permission) bool {
+func (r *RBAC) IsGranted(tenantID uint64, roleName string, perm permission.Permission) bool {
 	r.rolesMutex.RLock()
 	defer r.rolesMutex.RUnlock()
 	return r.isGranted(tenantID, roleName, perm)
 }
 
-func (r *RBAC) isGranted(tenantID uint, roleName string, perm permission.Permission) bool {
+func (r *RBAC) isGranted(tenantID uint64, roleName string, perm permission.Permission) bool {
 	if roleName == role.Admin {
 		return true
 	}
@@ -47,7 +47,7 @@ func (r *RBAC) isGranted(tenantID uint, roleName string, perm permission.Permiss
 	return false
 }
 
-func (r *RBAC) IsAllGranted(tenantID uint, roles []string, perm permission.Permission) bool {
+func (r *RBAC) IsAllGranted(tenantID uint64, roles []string, perm permission.Permission) bool {
 	r.rolesMutex.RLock()
 	defer r.rolesMutex.RUnlock()
 	for _, roleName := range roles {
@@ -58,7 +58,7 @@ func (r *RBAC) IsAllGranted(tenantID uint, roles []string, perm permission.Permi
 	return true
 }
 
-func (r *RBAC) IsAnyGranted(tenantID uint, roles []string, perm permission.Permission) bool {
+func (r *RBAC) IsAnyGranted(tenantID uint64, roles []string, perm permission.Permission) bool {
 	r.rolesMutex.RLock()
 	defer r.rolesMutex.RUnlock()
 	for _, roleName := range roles {
@@ -84,7 +84,7 @@ func (r *RBAC) reload(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	tenantRoleMap := make(map[uint]role.Roles)
+	tenantRoleMap := make(map[uint64]role.Roles)
 	for _, v := range allRoles {
 		perms := permission.Permissions{}
 		for _, permStr := range v.Permissions {
@@ -108,7 +108,7 @@ func (r *RBAC) reload(ctx context.Context) error {
 	return nil
 }
 
-func (r *RBAC) GetGrantedPermissions(tenantID uint, roleName string) []permission.Permission {
+func (r *RBAC) GetGrantedPermissions(tenantID uint64, roleName string) []permission.Permission {
 	if roleName == role.Admin {
 		return permission.List
 	}
@@ -124,7 +124,7 @@ func (r *RBAC) GetGrantedPermissions(tenantID uint, roleName string) []permissio
 	return nil
 }
 
-func (r *RBAC) GetGrantedPermissionsForRoles(tenantID uint, roleNames []string) []permission.Permission {
+func (r *RBAC) GetGrantedPermissionsForRoles(tenantID uint64, roleNames []string) []permission.Permission {
 	r.rolesMutex.RLock()
 	defer r.rolesMutex.RUnlock()
 	perms := []permission.Permission{}
@@ -147,7 +147,7 @@ func (r *RBAC) GetAllPermisssions() []permission.Permission {
 	return permission.List
 }
 
-func (r *RBAC) GetAllRoles(tenantID uint) []string {
+func (r *RBAC) GetAllRoles(tenantID uint64) []string {
 	r.rolesMutex.RLock()
 	defer r.rolesMutex.RUnlock()
 
@@ -160,7 +160,7 @@ func (r *RBAC) GetAllRoles(tenantID uint) []string {
 	return roles
 }
 
-func (r *RBAC) GetAllRolePermissions(ctx context.Context, tenantID uint) (map[string][]string, error) {
+func (r *RBAC) GetAllRolePermissions(ctx context.Context, tenantID uint64) (map[string][]string, error) {
 	ctx, span := otel.Tracer("RBAC").Start(ctx, "RBAC.GetAllRolePermissions")
 	defer span.End()
 

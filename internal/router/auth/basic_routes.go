@@ -7,10 +7,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func (h Handlers) Login(c *gin.Context) {
-	tenantID := uint(2)
+	tenantID := uint64(2)
 	sess, err := h.SessionStore.GetSession(c)
 	if err == nil && sess.LoggedIn() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "already logged in"})
@@ -19,7 +20,7 @@ func (h Handlers) Login(c *gin.Context) {
 	var req struct {
 		Email    string `json:"Email" binding:"required"`
 		Password string `json:"Password" binding:"required"`
-		TenantID uint   `json:"TenantID" binding:"required"`
+		TenantID uint64 `json:"TenantID" binding:"required"`
 		Type     string `json:"Type" binding:"required,oneof=user employee"`
 	}
 	req.TenantID = tenantID
@@ -78,6 +79,7 @@ func (h Handlers) Login(c *gin.Context) {
 			Roles:    userEntity.Roles,
 			Location: userEntity.LocationID,
 		})
+		h.Logger.Debug("UserSessionWhileLogIn", zap.Any("userSession", userEntity.LocationID))
 		c.JSON(200, gin.H{"message": "login successful", "session_token": userSession.Token()})
 		return
 	}

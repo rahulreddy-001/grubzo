@@ -24,7 +24,7 @@ const (
 )
 
 type FileMeta struct {
-	TenantID  uint      `gorm:"not null;index"`
+	TenantID  uint64    `gorm:"not null;index"`
 	ID        uuid.UUID `gorm:"primaryKey"`
 	Name      string    `gorm:"type:text;not null"`
 	Mime      string    `gorm:"type:text;not null"`
@@ -32,7 +32,7 @@ type FileMeta struct {
 	Type      FileType  `gorm:"type:varchar(32);not null"`
 	OwnerType OwnerType `gorm:"not null"`
 	Order     int8      `gorm:"type:smallint;not null; default:1"`
-	OwnerID   *uint     `gorm:"index"`
+	OwnerID   *uint64   `gorm:"index"`
 
 	CreatedAt time.Time      `gorm:"precision:6"`
 	UpdatedAt time.Time      `gorm:"precision:6"`

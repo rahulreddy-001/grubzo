@@ -97,7 +97,7 @@ func serveCommand() *cobra.Command {
 			}
 
 			if createTenant {
-				tenantID := uint(2)
+				tenantID := uint64(2)
 				_, err = repository.CreateTenant(context.Background(), &dto.CreateTenant{
 					ID:   &tenantID,
 					Name: "Grubzo",

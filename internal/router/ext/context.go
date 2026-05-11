@@ -49,7 +49,7 @@ func (c *Context) IsLoggedIn() bool {
 	return sess.UserID != 0
 }
 
-func (c *Context) TenantID() uint {
+func (c *Context) TenantID() uint64 {
 	sess, err := c.GetUserSession()
 	if err != nil {
 		return 0
@@ -57,7 +57,7 @@ func (c *Context) TenantID() uint {
 	return sess.TenantID
 }
 
-func (c *Context) UserID() uint {
+func (c *Context) UserID() uint64 {
 	sess, err := c.GetUserSession()
 	if err != nil {
 		return 0
@@ -65,7 +65,7 @@ func (c *Context) UserID() uint {
 	return sess.UserID
 }
 
-func (c *Context) LocationID() uint {
+func (c *Context) LocationID() uint64 {
 	sess, err := c.GetUserSession()
 	if err != nil {
 		return 0

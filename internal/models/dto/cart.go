@@ -6,13 +6,13 @@ type Cart struct {
 }
 
 type Item struct {
-	Item     uint `json:"Item"`
-	Quantity uint `json:"Quantity"`
+	Item     uint64 `json:"Item"`
+	Quantity uint   `json:"Quantity"`
 }
 
 type UpdateItemQuantity struct {
-	Item     uint  `json:"Item" binding:"required"`
-	Quantity *uint `json:"Quantity" binding:"required"`
+	Item     uint64 `json:"Item" binding:"required"`
+	Quantity *uint  `json:"Quantity" binding:"required"`
 }
 
 type CartResponse struct {

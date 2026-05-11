@@ -16,9 +16,9 @@ import (
 )
 
 type AuthService interface {
-	BasicUserLogin(ctx context.Context, email, password string, tenantID uint) (uint, error)
-	BasicEmployeeLogin(ctx context.Context, email, password string, tenantID uint) (uint, error)
-	GetMeInfo(ctx context.Context, userType string, userID, tenantID uint, LocationID uint) (*dto.MeResponse, error)
+	BasicUserLogin(ctx context.Context, email, password string, tenantID uint64) (uint64, error)
+	BasicEmployeeLogin(ctx context.Context, email, password string, tenantID uint64) (uint64, error)
+	GetMeInfo(ctx context.Context, userType string, userID, tenantID uint64, LocationID uint64) (*dto.MeResponse, error)
 }
 
 type authServiceImpl struct {
@@ -45,13 +45,13 @@ func InitAuthService(
 	}, nil
 }
 
-func (a *authServiceImpl) BasicUserLogin(ctx context.Context, email, password string, tenantID uint) (uint, error) {
+func (a *authServiceImpl) BasicUserLogin(ctx context.Context, email, password string, tenantID uint64) (uint64, error) {
 	ctx, span := otel.Tracer("AuthService").Start(ctx, "AuthService.BasicUserLogin")
 	defer span.End()
 
 	u, err := a.repo.FindUser(ctx, query.NewUserQuery(tenantID).WithEmail(email))
 	if err != nil {
-		a.logger.Warn("user not found", zap.String("email", email), zap.Uint("tenantID", tenantID))
+		a.logger.Warn("user not found", zap.String("email", email), zap.Uint64("tenantID", tenantID))
 		return 0, ext.Error("invalid username or password")
 	}
 	if !a.repo.CheckUserPassword(u, password) {
@@ -61,13 +61,13 @@ func (a *authServiceImpl) BasicUserLogin(ctx context.Context, email, password st
 	return u.ID, nil
 }
 
-func (a *authServiceImpl) BasicEmployeeLogin(ctx context.Context, email, password string, tenantID uint) (uint, error) {
+func (a *authServiceImpl) BasicEmployeeLogin(ctx context.Context, email, password string, tenantID uint64) (uint64, error) {
 	ctx, span := otel.Tracer("AuthService").Start(ctx, "AuthService.BasicEmployeeLogin")
 	defer span.End()
 
 	u, err := a.repo.FindTenantUser(ctx, query.NewTenantUserQuery(tenantID).WithEmail(email))
 	if err != nil {
-		a.logger.Warn("user not found", zap.String("email", email), zap.Uint("tenantID", tenantID))
+		a.logger.Warn("user not found", zap.String("email", email), zap.Uint64("tenantID", tenantID))
 		return 0, ext.Error("invalid username or password")
 	}
 	if !a.repo.CheckTenantUserPassword(u, password) {
@@ -77,7 +77,7 @@ func (a *authServiceImpl) BasicEmployeeLogin(ctx context.Context, email, passwor
 	return u.ID, nil
 }
 
-func (a *authServiceImpl) GetMeInfo(ctx context.Context, userType string, userID, tenantID uint, locationID uint) (*dto.MeResponse, error) {
+func (a *authServiceImpl) GetMeInfo(ctx context.Context, userType string, userID, tenantID uint64, locationID uint64) (*dto.MeResponse, error) {
 	ctx, span := otel.Tracer("AuthService").Start(ctx, "AuthService.GetMeInfo")
 	defer span.End()
 

@@ -79,7 +79,7 @@ func (a *Auth) WithLogger(logger *zap.Logger) *Auth {
 }
 
 func (a *Auth) Init() *Auth {
-	tenantID := uint(2)
+	tenantID := uint64(2)
 	for _, p := range a.providers {
 		provider := p
 		a.router.GET(fmt.Sprintf("/login/%s", provider.GetType()), func(ctx *gin.Context) {

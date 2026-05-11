@@ -7,9 +7,9 @@ import (
 )
 
 type Item struct {
-	ID          uint           `gorm:"primaryKey;autoIncrement"`
-	TenantID    uint           `gorm:"not null;index"`
-	LocationID  uint           `gorm:"not null:index"`
+	ID          uint64         `gorm:"primaryKey;autoIncrement"`
+	TenantID    uint64         `gorm:"not null;index"`
+	LocationID  uint64         `gorm:"not null:index"`
 	Name        string         `gorm:"type:varchar(128);not null;default:''"`
 	Description string         `gorm:"type:text;not null;default:''"`
 	Price       float64        `gorm:"not null;default:0"`

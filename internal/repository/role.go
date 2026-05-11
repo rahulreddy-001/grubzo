@@ -13,13 +13,13 @@ import (
 )
 
 type RoleRepository interface {
-	GetAllUserRoles(ctx context.Context, tenantID *uint) ([]entity.UserRole, error)
-	CreateRole(ctx context.Context, tenantID uint, name string, permissions []string) error
-	AddPermissionsToRole(ctx context.Context, tenantID uint, roleName string, permissions []string) error
-	RemovePermissionsFromRole(ctx context.Context, tenantID uint, roleName string, permissions []string) error
+	GetAllUserRoles(ctx context.Context, tenantID *uint64) ([]entity.UserRole, error)
+	CreateRole(ctx context.Context, tenantID uint64, name string, permissions []string) error
+	AddPermissionsToRole(ctx context.Context, tenantID uint64, roleName string, permissions []string) error
+	RemovePermissionsFromRole(ctx context.Context, tenantID uint64, roleName string, permissions []string) error
 }
 
-func (repo *Repository) GetAllUserRoles(ctx context.Context, tenantID *uint) ([]entity.UserRole, error) {
+func (repo *Repository) GetAllUserRoles(ctx context.Context, tenantID *uint64) ([]entity.UserRole, error) {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetAllUserRoles")
 	defer span.End()
 
@@ -34,7 +34,7 @@ func (repo *Repository) GetAllUserRoles(ctx context.Context, tenantID *uint) ([]
 	return userRoles, nil
 }
 
-func (repo *Repository) CreateRole(ctx context.Context, tenantID uint, name string, permissions []string) error {
+func (repo *Repository) CreateRole(ctx context.Context, tenantID uint64, name string, permissions []string) error {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.CreateRole")
 	defer span.End()
 
@@ -52,7 +52,7 @@ func (repo *Repository) CreateRole(ctx context.Context, tenantID uint, name stri
 	return nil
 }
 
-func (repo *Repository) AddPermissionsToRole(ctx context.Context, tenantID uint, roleName string, newPerms []string) error {
+func (repo *Repository) AddPermissionsToRole(ctx context.Context, tenantID uint64, roleName string, newPerms []string) error {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.AddPermissionsToRole")
 	defer span.End()
 
@@ -77,7 +77,7 @@ func (repo *Repository) AddPermissionsToRole(ctx context.Context, tenantID uint,
 		Update("permissions", pq.StringArray(role.Permissions)).Error
 }
 
-func (repo *Repository) RemovePermissionsFromRole(ctx context.Context, tenantID uint, roleName string, permsToRemove []string) error {
+func (repo *Repository) RemovePermissionsFromRole(ctx context.Context, tenantID uint64, roleName string, permsToRemove []string) error {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.RemovePermissionsFromRole")
 	defer span.End()
 
@@ -104,7 +104,7 @@ func (repo *Repository) RemovePermissionsFromRole(ctx context.Context, tenantID 
 		Update("permissions", pq.StringArray(newPerms)).Error
 }
 
-func (repo *Repository) DeleteRole(ctx context.Context, tenantID uint, roleName string) error {
+func (repo *Repository) DeleteRole(ctx context.Context, tenantID uint64, roleName string) error {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.DeleteRole")
 	defer span.End()
 

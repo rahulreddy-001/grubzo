@@ -8,7 +8,7 @@ import (
 )
 
 type File struct {
-	TenantId  uint
+	TenantId  uint64
 	Id        uuid.UUID
 	FileName  string
 	FileSize  uint
@@ -17,6 +17,6 @@ type File struct {
 	FileOrder int16
 	OwnerType entity.OwnerType
 	Order     int8
-	OwnerId   *uint
+	OwnerId   *uint64
 	Src       io.Reader
 }

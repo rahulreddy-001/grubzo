@@ -53,7 +53,7 @@ func (h Handlers) GetTenantLocation(c *gin.Context) {
 	}
 	locIDs := strings.Split(idsParam, ",")
 	first, _ := strconv.Atoi(locIDs[0])
-	response, err := h.SS.TenantService.GetTenantLocation(c.Request.Context(), uint(first), tenantID)
+	response, err := h.SS.TenantService.GetTenantLocation(c.Request.Context(), uint64(first), tenantID)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return

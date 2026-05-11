@@ -8,16 +8,16 @@ import (
 )
 
 type Order struct {
-	ID         uint `gorm:"primaryKey;autoIncrement"`
-	TenantID   uint `gorm:"not null;index"`
-	LocationID uint `gorm:"not null;index"`
-	UserRefID  uint `gorm:"not null;index"`
+	ID         uint64 `gorm:"primaryKey;autoIncrement"`
+	TenantID   uint64 `gorm:"not null;index"`
+	LocationID uint64 `gorm:"not null;index"`
+	UserRefID  uint64 `gorm:"not null;index"`
 
-	Status                    string `gorm:"type:varchar(32);not null;default:'pending'"`   // pending, preparing, ready, delivered, cancelled
-	PaymentStatus             string `gorm:"type:varchar(32); not null; default:'pending'"` // pending, paid, refunded, voided
-	PaymentMode               string `gorm:"type:varchar(32);not null"`                     // wallet, pos
-	WalletOrderTransactionID  *uint  `gorm:"index"`
-	WalletRefundTransactionID *uint  `gorm:"index"`
+	Status                    string  `gorm:"type:varchar(32);not null;default:'pending'"`   // pending, preparing, ready, delivered, cancelled
+	PaymentStatus             string  `gorm:"type:varchar(32); not null; default:'pending'"` // pending, paid, refunded, voided
+	PaymentMode               string  `gorm:"type:varchar(32);not null"`                     // wallet, pos
+	WalletOrderTransactionID  *uint64 `gorm:"index"`
+	WalletRefundTransactionID *uint64 `gorm:"index"`
 
 	BillInfo BillJSON  `gorm:"type:jsonb;not null"`
 	Items    ItemsJSON `gorm:"type:jsonb;not null"`
@@ -54,7 +54,7 @@ func (b *BillJSON) Scan(value interface{}) error {
 }
 
 type OrderItemJSON struct {
-	ItemID uint   `json:"item_id"`
+	ItemID uint64 `json:"item_id"`
 	Name   string `json:"name"`
 	Price  int64  `json:"price"`
 	Qty    uint   `json:"qty"`

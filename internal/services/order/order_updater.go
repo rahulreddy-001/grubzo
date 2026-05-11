@@ -61,7 +61,7 @@ func (ou *orderStatusUpdater) Update(ctx context.Context, request *dto.UpdateOrd
 
 	refundTxnID, err := ou.paymentProcessor.ProcessStatusSideEffects(ctx, order, nextOrderStatus, nextPaymentStatus)
 	if err != nil {
-		ou.logger.Error("failed to process order status side effects", zap.Error(err), zap.Uint("orderID", order.ID), zap.Uint("tenantID", order.TenantID))
+		ou.logger.Error("failed to process order status side effects", zap.Error(err), zap.Uint64("orderID", order.ID), zap.Uint64("tenantID", order.TenantID))
 		return err
 	}
 	update.WalletRefundTxnID = refundTxnID

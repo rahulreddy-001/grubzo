@@ -12,14 +12,14 @@ import (
 )
 
 type File interface {
-	GetTenantID() uint
+	GetTenantID() uint64
 	GetID() uuid.UUID
 	GetFileName() string
 	GetMIMEType() string
 	GetFileSize() uint
 	GetFileType() entity.FileType
 	GetOwnerType() entity.OwnerType
-	GetOwnerID() uint
+	GetOwnerID() uint64
 	GetCreatedAt() time.Time
 	Open(ctx context.Context) (io.ReadSeekCloser, error)
 	GetAlternativeURL() string
@@ -31,7 +31,7 @@ type fileMetaImpl struct {
 	fs   storage.FileStorage
 }
 
-func (f *fileMetaImpl) GetTenantID() uint {
+func (f *fileMetaImpl) GetTenantID() uint64 {
 	return f.meta.TenantID
 }
 
@@ -58,7 +58,7 @@ func (f *fileMetaImpl) GetFileType() entity.FileType {
 func (f *fileMetaImpl) GetOwnerType() entity.OwnerType {
 	return f.meta.OwnerType
 }
-func (f *fileMetaImpl) GetOwnerID() uint {
+func (f *fileMetaImpl) GetOwnerID() uint64 {
 	return *f.meta.OwnerID
 }
 

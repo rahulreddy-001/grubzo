@@ -13,14 +13,14 @@ import (
 
 type memorySession struct {
 	t         string
-	userID    uint
-	tenantID  uint
+	userID    uint64
+	tenantID  uint64
 	createdAt time.Time
 	data      map[string]interface{}
 	sync.Mutex
 }
 
-func newMemorySession(t string, userID, tenantID uint, createdAt time.Time, data map[string]interface{}) *memorySession {
+func newMemorySession(t string, userID, tenantID uint64, createdAt time.Time, data map[string]interface{}) *memorySession {
 	return &memorySession{
 		t:         t,
 		userID:    userID,
@@ -31,8 +31,8 @@ func newMemorySession(t string, userID, tenantID uint, createdAt time.Time, data
 }
 
 func (s *memorySession) Token() string        { return s.t }
-func (s *memorySession) UserID() uint         { return s.userID }
-func (s *memorySession) TenantID() uint       { return s.tenantID }
+func (s *memorySession) UserID() uint64       { return s.userID }
+func (s *memorySession) TenantID() uint64     { return s.tenantID }
 func (s *memorySession) CreatedAt() time.Time { return s.createdAt }
 func (s *memorySession) LoggedIn() bool       { return s.userID != 0 }
 func (s *memorySession) Expired() bool {
@@ -126,7 +126,7 @@ func (ms *memoryStore) GetSessionByToken(token string) (Session, error) {
 	return s, nil
 }
 
-func (ms *memoryStore) GetSessionsByUserID(userID, tenantID uint) ([]Session, error) {
+func (ms *memoryStore) GetSessionsByUserID(userID, tenantID uint64) ([]Session, error) {
 	if userID == 0 {
 		return []Session{}, nil
 	}
@@ -157,7 +157,7 @@ func (ms *memoryStore) RevokeSession(c *gin.Context) error {
 	return nil
 }
 
-func (ms *memoryStore) RenewSession(c *gin.Context, userID, tenantID uint) (Session, error) {
+func (ms *memoryStore) RenewSession(c *gin.Context, userID, tenantID uint64) (Session, error) {
 	oldToken, _ := c.Cookie(CookieName)
 	if len(oldToken) > 0 {
 		ms.Lock()
@@ -182,7 +182,7 @@ func (ms *memoryStore) RenewSession(c *gin.Context, userID, tenantID uint) (Sess
 	return s, nil
 }
 
-func (ms *memoryStore) IssueSession(userID, tenantID uint, data map[string]interface{}) (Session, error) {
+func (ms *memoryStore) IssueSession(userID, tenantID uint64, data map[string]interface{}) (Session, error) {
 	if data == nil {
 		data = map[string]interface{}{}
 	}

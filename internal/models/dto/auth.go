@@ -6,7 +6,7 @@ import (
 
 type MeResponse struct {
 	Type         string                  `json:"Type"`
-	ID           uint                    `json:"ID"`
+	ID           uint64                  `json:"ID"`
 	Name         string                  `json:"Name"`
 	Email        string                  `json:"Email"`
 	Location     TenantLocation          `json:"Location"`

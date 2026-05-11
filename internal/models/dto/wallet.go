@@ -3,8 +3,8 @@ package dto
 import "time"
 
 type WalletTransactionDTO struct {
-	TenantID      uint      `json:"TenantID"`
-	UserID        uint      `json:"UserID"`
+	TenantID      uint64    `json:"TenantID"`
+	UserID        uint64    `json:"UserID"`
 	Amount        int64     `json:"Amount"`
 	BalanceAfter  int64     `json:"BalanceAfter"`
 	Type          string    `json:"Type"`          // credit, debit
@@ -38,7 +38,7 @@ type WalletTransactionsDTO struct {
 }
 
 type PendingWalletRechargeDTO struct {
-	ID               uint   `json:"ID"`
+	ID               uint64 `json:"ID"`
 	Amount           int64  `json:"Amount"`
 	PaymentGateway   string `json:"PaymentGateway"`
 	PaymentReference string `json:"PaymentReference"`
@@ -56,8 +56,8 @@ type WalletResponseDTO struct {
 }
 
 type WalletRechargeRequestDTO struct {
-	TenantID       uint
-	UserID         uint
+	TenantID       uint64
+	UserID         uint64
 	Amount         int64
 	PaymentGateway string
 	OrderIDReceipt string

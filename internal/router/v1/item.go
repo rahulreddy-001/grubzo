@@ -13,8 +13,8 @@ import (
 )
 
 type Item struct {
-	ID                uint
-	LocationID        uint
+	ID                uint64
+	LocationID        uint64
 	Name              string
 	Description       string
 	Price             float64
@@ -97,7 +97,7 @@ func (h Handlers) GetItemsForUser(c *gin.Context) {
 func (h Handlers) GetMenuItem(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
 	var params struct {
-		ItemID uint `json:"ItemID" binding:"required"`
+		ItemID uint64 `json:"ItemID" binding:"required"`
 	}
 	if err := c.ShouldBindUri(&params); err != nil {
 		ext.Ctx(c).BadRequestBody()

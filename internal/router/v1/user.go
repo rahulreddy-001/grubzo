@@ -56,7 +56,7 @@ func (h Handlers) UpdateUser(c *gin.Context) {
 func (h Handlers) GetUser(c *gin.Context) {
 	tenantID := ext.Ctx(c).TenantID()
 	var params struct {
-		UserID uint `json:"UserID" binding:"required"`
+		UserID uint64 `json:"UserID" binding:"required"`
 	}
 	if err := c.ShouldBindUri(&params); err != nil {
 		ext.Ctx(c).BadRequestParams()

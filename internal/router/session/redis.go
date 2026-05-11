@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,22 +16,29 @@ import (
 
 type sessionRecord struct {
 	Token    string    `json:"token"`
-	UserID   uint      `json:"user_id"`
-	TenantID uint      `json:"tenant_id"`
+	UserID   uint64    `json:"user_id"`
+	TenantID uint64    `json:"tenant_id"`
 	Data     []byte    `json:"data"`
 	Created  time.Time `json:"created_at"`
 }
 
 func (r *sessionRecord) toMap() (map[string]any, error) {
 	data := map[string]any{}
-	err := json.Unmarshal(r.Data, &data)
-	return data, err
+
+	decoder := json.NewDecoder(bytes.NewReader(r.Data))
+	decoder.UseNumber()
+
+	if err := decoder.Decode(&data); err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 type redisSession struct {
 	t         string
-	userID    uint
-	tenantID  uint
+	userID    uint64
+	tenantID  uint64
 	createdAt time.Time
 	data      map[string]any
 	db        *redis.Client
@@ -38,7 +46,7 @@ type redisSession struct {
 	sync.Mutex
 }
 
-func createRedisSession(ctx context.Context, token string, userID uint, tenantID uint, data map[string]any, db *redis.Client) *redisSession {
+func createRedisSession(ctx context.Context, token string, userID uint64, tenantID uint64, data map[string]any, db *redis.Client) *redisSession {
 	if data == nil {
 		data = map[string]any{}
 	}
@@ -77,8 +85,8 @@ func (rs *redisSession) sync() error {
 }
 
 func (rs *redisSession) Token() string        { return rs.t }
-func (rs *redisSession) UserID() uint         { return rs.userID }
-func (rs *redisSession) TenantID() uint       { return rs.tenantID }
+func (rs *redisSession) UserID() uint64       { return rs.userID }
+func (rs *redisSession) TenantID() uint64     { return rs.tenantID }
 func (rs *redisSession) CreatedAt() time.Time { return rs.createdAt }
 func (rs *redisSession) LoggedIn() bool       { return rs.userID != 0 }
 
@@ -132,11 +140,11 @@ func NewRedisSessionStore(db *redis.Client) Store {
 	}
 }
 
-func (rs *redisStore) IssueSession(userID uint, tenantID uint, data map[string]any) (Session, error) {
+func (rs *redisStore) IssueSession(userID uint64, tenantID uint64, data map[string]any) (Session, error) {
 	return rs.issueSession(context.Background(), userID, tenantID, data)
 }
 
-func (rs *redisStore) issueSession(ctx context.Context, userID uint, tenantID uint, data map[string]any) (Session, error) {
+func (rs *redisStore) issueSession(ctx context.Context, userID uint64, tenantID uint64, data map[string]any) (Session, error) {
 	token := fmt.Sprintf("%s:%s", "session", random.SecureAlphaNumeric(50))
 	session := createRedisSession(ctx, token, userID, tenantID, data, rs.db)
 	if err := session.sync(); err != nil {
@@ -178,7 +186,7 @@ func (rs *redisStore) RevokeSession(c *gin.Context) error {
 	return nil
 }
 
-func (rs *redisStore) GetSessionsByUserID(userID, tenantID uint) ([]Session, error) {
+func (rs *redisStore) GetSessionsByUserID(userID, tenantID uint64) ([]Session, error) {
 	//TODO: create FTSearch index `idx_session_user_id_tenant_id`
 	qs := fmt.Sprintf("@user_id[%d %d] @tenant_id[%d %d] ", userID, userID, tenantID, tenantID)
 	searchResult, err := rs.db.FTSearch(context.Background(), "idx_session_user_id_tenant_id", qs).Result()
@@ -210,7 +218,7 @@ func (rs *redisStore) GetSessionsByUserID(userID, tenantID uint) ([]Session, err
 	return sessions, nil
 }
 
-func (rs *redisStore) RenewSession(c *gin.Context, userID, tenantID uint) (Session, error) {
+func (rs *redisStore) RenewSession(c *gin.Context, userID, tenantID uint64) (Session, error) {
 	rs.RevokeSession(c)
 	newSession, err := rs.issueSession(c.Request.Context(), userID, tenantID, nil)
 	if err != nil {

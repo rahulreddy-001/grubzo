@@ -7,7 +7,7 @@ import (
 )
 
 type CreateTenantLocation struct {
-	TenantID  uint   `json:"TenantId" binding:"required"`
+	TenantID  uint64 `json:"TenantId" binding:"required"`
 	Code      string `json:"Code" binding:"required"`
 	Address   string `json:"Address" binding:"required"`
 	City      string `json:"City" binding:"required"`
@@ -18,8 +18,8 @@ type CreateTenantLocation struct {
 }
 
 type UpdateTenantLocation struct {
-	TenantID  uint    `json:"TenantId" binding:"required"`
-	ID        uint    `json:"ID" binding:"required"`
+	TenantID  uint64  `json:"TenantId" binding:"required"`
+	ID        uint64  `json:"ID" binding:"required"`
 	Code      *string `json:"Code"`
 	Address   *string `json:"Address"`
 	City      *string `json:"City"`
@@ -30,8 +30,8 @@ type UpdateTenantLocation struct {
 }
 
 type TenantLocation struct {
-	ID        uint   `json:"ID" binding:"required"`
-	TenantID  uint   `json:"TenantId" binding:"required"`
+	ID        uint64 `json:"ID" binding:"required"`
+	TenantID  uint64 `json:"TenantId" binding:"required"`
 	Code      string `json:"Code" binding:"required"`
 	Address   string `json:"Address" binding:"required"`
 	City      string `json:"City" binding:"required"`

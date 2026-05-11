@@ -16,20 +16,20 @@ type TenantService interface {
 	// Tenant
 	CreateTenant(ctx context.Context, dto *dto.CreateTenant) (*dto.CreateTenantResponse, error)
 	UpdateTenant(ctx context.Context, dto *dto.UpdateTenant) (*dto.UpdateTenantResponse, error)
-	GetTenant(ctx context.Context, tenantID uint) (*dto.GetTenantResponse, error)
+	GetTenant(ctx context.Context, tenantID uint64) (*dto.GetTenantResponse, error)
 	GetAllTenants(ctx context.Context) (*dto.GetAllTenantsResponse, error)
 
 	// TenantLocation
 	CreateTenantLocation(ctx context.Context, dto *dto.CreateTenantLocation) (*dto.CreateTenantLocationResponse, error)
 	UpdateTenantLocation(ctx context.Context, dto *dto.UpdateTenantLocation) (*dto.UpdateTenantLocationResponse, error)
-	GetTenantLocation(ctx context.Context, tenantLocId uint, tenantID uint) (*dto.TenantLocationResponse, error)
-	GetTenantLocations(ctx context.Context, tenantID uint) (*dto.TenantLocationsResponse, error)
+	GetTenantLocation(ctx context.Context, tenantLocId uint64, tenantID uint64) (*dto.TenantLocationResponse, error)
+	GetTenantLocations(ctx context.Context, tenantID uint64) (*dto.TenantLocationsResponse, error)
 
 	//TenantUser
 	CreateTenantUser(ctx context.Context, dto *dto.CreateTenantUser) (*dto.CreateTenantUserResponse, error)
 	UpdateTenantUser(ctx context.Context, dto *dto.UpdateTenantUser) (*dto.UpdateTenantUserResponse, error)
-	GetTenantUser(ctx context.Context, UserID uint, tenantID uint) (*dto.GetTenantUserResponse, error)
-	GetTenantUsers(ctx context.Context, tenantID uint) (*dto.GetTenantUsersResponse, error)
+	GetTenantUser(ctx context.Context, UserID uint64, tenantID uint64) (*dto.GetTenantUserResponse, error)
+	GetTenantUsers(ctx context.Context, tenantID uint64) (*dto.GetTenantUsersResponse, error)
 	FetchTenantUsers(ctx context.Context, query *query.TenantUserQuery) (*dto.GetTenantUsersResponse, error)
 }
 
@@ -85,7 +85,7 @@ func (ts *tenantServiceImpl) UpdateTenant(ctx context.Context, args *dto.UpdateT
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) GetTenant(ctx context.Context, tenantID uint) (*dto.GetTenantResponse, error) {
+func (ts *tenantServiceImpl) GetTenant(ctx context.Context, tenantID uint64) (*dto.GetTenantResponse, error) {
 	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.GetTenant")
 	defer span.End()
 

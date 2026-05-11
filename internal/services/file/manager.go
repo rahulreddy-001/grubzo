@@ -21,8 +21,8 @@ var (
 
 type Manager interface {
 	Save(ctx context.Context, args *dto.File) (File, error)
-	Get(ctx context.Context, id uuid.UUID, tenantId uint) (File, error)
-	Delete(ctx context.Context, id uuid.UUID, tenantId uint) error
+	Get(ctx context.Context, id uuid.UUID, tenantId uint64) (File, error)
+	Delete(ctx context.Context, id uuid.UUID, tenantId uint64) error
 	List(ctx context.Context, q *query.FilesQuery) ([]File, bool, error)
 	MakeFileMeta(f *entity.FileMeta) File
 	MakeFileMetas(f []*entity.FileMeta) []File
@@ -76,7 +76,7 @@ func (m *managerImpl) Save(ctx context.Context, args *dto.File) (File, error) {
 	return m.MakeFileMeta(f), nil
 }
 
-func (m *managerImpl) Get(ctx context.Context, id uuid.UUID, tenantID uint) (File, error) {
+func (m *managerImpl) Get(ctx context.Context, id uuid.UUID, tenantID uint64) (File, error) {
 	ctx, span := otel.Tracer("Manager").Start(ctx, "Manager.Get")
 	defer span.End()
 
@@ -98,7 +98,7 @@ func (m *managerImpl) List(ctx context.Context, q *query.FilesQuery) ([]File, bo
 	return m.MakeFileMetas(r), more, nil
 }
 
-func (m *managerImpl) Delete(ctx context.Context, id uuid.UUID, tenantID uint) error {
+func (m *managerImpl) Delete(ctx context.Context, id uuid.UUID, tenantID uint64) error {
 	ctx, span := otel.Tracer("Manager").Start(ctx, "Manager.Delete")
 	defer span.End()
 

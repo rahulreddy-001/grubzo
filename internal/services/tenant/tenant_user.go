@@ -51,7 +51,7 @@ func (ts *tenantServiceImpl) UpdateTenantUser(ctx context.Context, args *dto.Upd
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) GetTenantUser(ctx context.Context, UserID uint, tenantID uint) (*dto.GetTenantUserResponse, error) {
+func (ts *tenantServiceImpl) GetTenantUser(ctx context.Context, UserID uint64, tenantID uint64) (*dto.GetTenantUserResponse, error) {
 	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.GetTenantUser")
 	defer span.End()
 
@@ -70,7 +70,7 @@ func (ts *tenantServiceImpl) GetTenantUser(ctx context.Context, UserID uint, ten
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) GetTenantUsers(ctx context.Context, tenantID uint) (*dto.GetTenantUsersResponse, error) {
+func (ts *tenantServiceImpl) GetTenantUsers(ctx context.Context, tenantID uint64) (*dto.GetTenantUsersResponse, error) {
 	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.GetTenantUsers")
 	defer span.End()
 

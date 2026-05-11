@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: postgres:16
+    # image: postgres:16
+    image: mongo-fdw-pg16:latest
     container_name: postgres_container
     restart: unless-stopped
     environment:
@@ -95,6 +96,22 @@ services:
         condition: service_started
     volumes:
       - ./data/grafana:/var/lib/grafana
+  mongo:
+    image: mongo:8
+    container_name: mongo_container
+
+    ports:
+      - "5436:27017"
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+
+    volumes:
+      - ./data/mongo:/data/db
+
+    restart: unless-stopped
+
   # ollama:
   #   image: ollama/ollama
   #   container_name: ollama

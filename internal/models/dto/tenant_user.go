@@ -1,22 +1,22 @@
 package dto
 
 type CreateTenantUser struct {
-	TenantID   uint     `json:"TenantID" binding:"required"`
+	TenantID   uint64   `json:"TenantID" binding:"required"`
 	Email      string   `json:"Email" binding:"required"`
 	Password   string   `json:"Password"`
 	Name       string   `json:"Name" binding:"required"`
 	Roles      []string `json:"Roles" binding:"required"`
-	LocationID uint     `json:"LocationID"`
+	LocationID uint64   `json:"LocationID"`
 }
 
 type UpdateTenantUser struct {
-	TenantID   uint     `json:"TenantID" binding:"required"`
-	ID         uint     `json:"ID" binding:"required"`
+	TenantID   uint64   `json:"TenantID" binding:"required"`
+	ID         uint64   `json:"ID" binding:"required"`
 	Email      *string  `json:"Email"`
 	Password   *string  `json:"Password"`
 	Name       *string  `json:"Name"`
 	Roles      []string `json:"Roles"`
-	LocationID *uint    `json:"LocationID"`
+	LocationID *uint64  `json:"LocationID"`
 }
 
 type CreateTenantUserResponse CommonTenantUserResponse
@@ -34,9 +34,9 @@ type GetTenantUsersResponse struct {
 }
 
 type TenantUserInfo struct {
-	ID         uint     `json:"ID"`
+	ID         uint64   `json:"ID"`
 	Email      string   `json:"Email"`
 	Name       string   `json:"Name"`
 	Roles      []string `json:"Roles"`
-	LocationID uint     `json:"LocationID"`
+	LocationID uint64   `json:"LocationID"`
 }

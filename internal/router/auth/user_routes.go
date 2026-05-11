@@ -7,6 +7,7 @@ import (
 	"grubzo/internal/services/rbac/permission"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func (h *Handlers) Me(c *gin.Context) {
@@ -15,6 +16,7 @@ func (h *Handlers) Me(c *gin.Context) {
 		ext.Ctx(c).Unauthorized()
 		return
 	}
+	h.Logger.Debug("UserSession", zap.Any("userSession", userSession))
 	response, err := h.SS.AuthService.GetMeInfo(
 		c.Request.Context(),
 		userSession.Type,
@@ -31,7 +33,7 @@ func (h *Handlers) Me(c *gin.Context) {
 
 func (h *Handlers) SetUserLocation(c *gin.Context) {
 	var params struct {
-		LocationID uint `json:"LocationID" binding:"required"`
+		LocationID uint64 `json:"LocationID" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&params); err != nil {
 		ext.Ctx(c).BadRequestBody()

@@ -1,8 +1,8 @@
 package query
 
 type TenantLocationQuery struct {
-	TenantID          uint
-	ID                *uint
+	TenantID          uint64
+	ID                *uint64
 	Code              *string
 	IsPrimary         *bool
 	SearchText        *string
@@ -11,13 +11,13 @@ type TenantLocationQuery struct {
 	OrderPrimaryFirst bool
 }
 
-func NewTenantLocationQuery(tenantID uint) *TenantLocationQuery {
+func NewTenantLocationQuery(tenantID uint64) *TenantLocationQuery {
 	return &TenantLocationQuery{
 		TenantID: tenantID,
 	}
 }
 
-func (f *TenantLocationQuery) WithID(id uint) *TenantLocationQuery {
+func (f *TenantLocationQuery) WithID(id uint64) *TenantLocationQuery {
 	f.ID = &id
 	return f
 }

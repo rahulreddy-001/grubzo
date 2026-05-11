@@ -14,7 +14,7 @@ import (
 )
 
 type OrderService interface {
-	PlaceOrder(ctx context.Context, tenantID, userID, locationID uint, paymentMode string) (uint, error)
+	PlaceOrder(ctx context.Context, tenantID, userID, locationID uint64, paymentMode string) (uint64, error)
 	GetOrders(ctx context.Context, q *query.OrderQuery) ([]dto.OrderDTO, error)
 	UpdateOrderStatus(ctx context.Context, request *dto.UpdateOrderPaymentStatusRequest) error
 }
@@ -50,7 +50,7 @@ type orderServiceImpl struct {
 	logger           *zap.Logger
 }
 
-func (os *orderServiceImpl) PlaceOrder(ctx context.Context, tenantID, userID, locationID uint, paymentMode string) (uint, error) {
+func (os *orderServiceImpl) PlaceOrder(ctx context.Context, tenantID, userID, locationID uint64, paymentMode string) (uint64, error) {
 	ctx, span := otel.Tracer("OrderService").Start(ctx, "OrderService.PlaceOrder")
 	defer span.End()
 

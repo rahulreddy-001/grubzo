@@ -17,8 +17,8 @@ import (
 type UserService interface {
 	CreateUser(ctx context.Context, dto *dto.CreateUser) (*dto.CreateUserResponse, error)
 	UpdateUser(ctx context.Context, dto *dto.UpdateUser) (*dto.UpdateUserResponse, error)
-	GetUser(ctx context.Context, UserID uint, tenantID uint) (*dto.GetUserResponse, error)
-	GetUsers(ctx context.Context, tenantID uint) (*dto.GetUsersResponse, error)
+	GetUser(ctx context.Context, UserID uint64, tenantID uint64) (*dto.GetUserResponse, error)
+	GetUsers(ctx context.Context, tenantID uint64) (*dto.GetUsersResponse, error)
 }
 
 type userServiceImpl struct {
@@ -73,7 +73,7 @@ func (us *userServiceImpl) UpdateUser(ctx context.Context, args *dto.UpdateUser)
 	return response, nil
 }
 
-func (us *userServiceImpl) GetUser(ctx context.Context, UserID uint, tenantID uint) (*dto.GetUserResponse, error) {
+func (us *userServiceImpl) GetUser(ctx context.Context, UserID uint64, tenantID uint64) (*dto.GetUserResponse, error) {
 	ctx, span := otel.Tracer("UserService").Start(ctx, "UserService.GetUser")
 	defer span.End()
 
@@ -92,7 +92,7 @@ func (us *userServiceImpl) GetUser(ctx context.Context, UserID uint, tenantID ui
 	return response, nil
 }
 
-func (us *userServiceImpl) GetUsers(ctx context.Context, tenantID uint) (*dto.GetUsersResponse, error) {
+func (us *userServiceImpl) GetUsers(ctx context.Context, tenantID uint64) (*dto.GetUsersResponse, error) {
 	ctx, span := otel.Tracer("UserService").Start(ctx, "UserService.GetUsers")
 	defer span.End()
 

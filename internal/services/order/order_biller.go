@@ -51,7 +51,7 @@ func (ob *orderBiller) BuildOrderDraft(ctx context.Context, key string, paymentM
 	if len(adjustedCart.Items) == 0 {
 		return nil, ext.Error("Cart is empty")
 	}
-	itemsMap := map[uint]*dto.MenuItem{}
+	itemsMap := map[uint64]*dto.MenuItem{}
 	for _, cartItem := range adjustedCart.Items {
 		itemsMap[cartItem.Item] = nil
 	}
@@ -138,8 +138,8 @@ func (ob *orderBiller) calculateBill(subtotal int64) dto.CreateOrderBillDTO {
 	}
 }
 
-func (ob *orderBiller) getTenantIDUserIDLocationIDFromKey(key string) (uint, uint, uint, error) {
-	var tenantID, userID, locationID uint
+func (ob *orderBiller) getTenantIDUserIDLocationIDFromKey(key string) (uint64, uint64, uint64, error) {
+	var tenantID, userID, locationID uint64
 
 	if _, err := fmt.Sscanf(
 		key,

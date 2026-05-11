@@ -7,7 +7,7 @@ import (
 )
 
 type UserRole struct {
-	TenantID    uint           `gorm:"not null;primaryKey"`
+	TenantID    uint64         `gorm:"not null;primaryKey"`
 	Name        string         `gorm:"type:varchar(30);not null;primaryKey"`
 	Permissions pq.StringArray `gorm:"type:text[];not null;default:'{}'"`
 

@@ -33,7 +33,7 @@ func newOrderPaymentProcessor(
 	}
 }
 
-func (op *orderPaymentProcessor) ValidatePlacement(ctx context.Context, tenantID, userID uint, draft *dto.CreateOrderDTO) error {
+func (op *orderPaymentProcessor) ValidatePlacement(ctx context.Context, tenantID, userID uint64, draft *dto.CreateOrderDTO) error {
 	ctx, span := otel.Tracer("OrderPaymentProcessor").Start(ctx, "OrderPaymentProcessor.ValidatePlacement")
 	defer span.End()
 
@@ -43,7 +43,7 @@ func (op *orderPaymentProcessor) ValidatePlacement(ctx context.Context, tenantID
 
 	currentBalance, err := op.repository.GetWalletBalance(ctx, tenantID, userID)
 	if err != nil {
-		op.logger.Error("failed to fetch wallet balance for order placement", zap.Error(err), zap.Uint("tenantID", tenantID), zap.Uint("userID", userID))
+		op.logger.Error("failed to fetch wallet balance for order placement", zap.Error(err), zap.Uint64("tenantID", tenantID), zap.Uint64("userID", userID))
 		return ext.Error("Failed to place order")
 	}
 
@@ -54,7 +54,7 @@ func (op *orderPaymentProcessor) ValidatePlacement(ctx context.Context, tenantID
 	return nil
 }
 
-func (op *orderPaymentProcessor) FinalizePlacement(ctx context.Context, orderID, tenantID, userID uint, draft *dto.CreateOrderDTO) error {
+func (op *orderPaymentProcessor) FinalizePlacement(ctx context.Context, orderID, tenantID, userID uint64, draft *dto.CreateOrderDTO) error {
 	ctx, span := otel.Tracer("OrderPaymentProcessor").Start(ctx, "OrderPaymentProcessor.FinalizePlacement")
 	defer span.End()
 
@@ -64,7 +64,7 @@ func (op *orderPaymentProcessor) FinalizePlacement(ctx context.Context, orderID,
 
 	order, err := op.repository.GetOrder(ctx, orderID, tenantID)
 	if err != nil {
-		op.logger.Error("failed to fetch order after creation", zap.Error(err), zap.Uint("orderID", orderID), zap.Uint("tenantID", tenantID))
+		op.logger.Error("failed to fetch order after creation", zap.Error(err), zap.Uint64("orderID", orderID), zap.Uint64("tenantID", tenantID))
 		return ext.Error("Order not found")
 	}
 	if order.PaymentStatus == paymentStatusPaid {
@@ -74,7 +74,7 @@ func (op *orderPaymentProcessor) FinalizePlacement(ctx context.Context, orderID,
 	txnID, err := op.walletService.DebitForOrder(ctx, orderID, tenantID, userID, op.biller.payableAmount(draft))
 	if err != nil {
 		op.markOrderPaymentFailed(ctx, orderID, tenantID, txnID)
-		op.logger.Error("wallet debit failed during order placement", zap.Error(err), zap.Uint("orderID", orderID), zap.Uint("tenantID", tenantID), zap.Uint("userID", userID))
+		op.logger.Error("wallet debit failed during order placement", zap.Error(err), zap.Uint64("orderID", orderID), zap.Uint64("tenantID", tenantID), zap.Uint64("userID", userID))
 		return ext.Error("Order has been cancelled due to payment failure")
 	}
 
@@ -85,7 +85,7 @@ func (op *orderPaymentProcessor) FinalizePlacement(ctx context.Context, orderID,
 	}
 	updatePaymentDTO.SetOrderStatus(orderStatusPending).SetPaymentStatus(paymentStatusPaid)
 	if err := op.repository.UpdateOrderPaymentStatus(ctx, updatePaymentDTO); err != nil {
-		op.logger.Error("wallet debited but order update failed", zap.Error(err), zap.Uint("orderID", orderID), zap.Uint("tenantID", tenantID))
+		op.logger.Error("wallet debited but order update failed", zap.Error(err), zap.Uint64("orderID", orderID), zap.Uint64("tenantID", tenantID))
 		return ext.Error("Payment recorded but order update failed")
 	}
 
@@ -117,7 +117,7 @@ func (op *orderPaymentProcessor) ResolvePaymentStatus(order *entity.Order, reque
 	return requestedPaymentStatus
 }
 
-func (op *orderPaymentProcessor) ProcessStatusSideEffects(ctx context.Context, order *entity.Order, nextOrderStatus, nextPaymentStatus string) (*uint, error) {
+func (op *orderPaymentProcessor) ProcessStatusSideEffects(ctx context.Context, order *entity.Order, nextOrderStatus, nextPaymentStatus string) (*uint64, error) {
 	ctx, span := otel.Tracer("OrderPaymentProcessor").Start(ctx, "OrderPaymentProcessor.ProcessStatusSideEffects")
 	defer span.End()
 
@@ -130,14 +130,14 @@ func (op *orderPaymentProcessor) ProcessStatusSideEffects(ctx context.Context, o
 
 	refundTxnID, err := op.walletService.RefundForOrder(ctx, order.ID, order.TenantID, order.UserRefID, op.biller.refundAmount(order))
 	if err != nil {
-		op.logger.Error("failed to refund wallet payment", zap.Uint("order_id", order.ID), zap.Uint("tenant_id", order.TenantID))
+		op.logger.Error("failed to refund wallet payment", zap.Uint64("order_id", order.ID), zap.Uint64("tenant_id", order.TenantID))
 		return nil, ext.Error("Failed to refund wallet payment")
 	}
 
 	return refundTxnID, nil
 }
 
-func (op *orderPaymentProcessor) markOrderPaymentFailed(ctx context.Context, orderID, tenantID uint, txnID *uint) {
+func (op *orderPaymentProcessor) markOrderPaymentFailed(ctx context.Context, orderID, tenantID uint64, txnID *uint64) {
 	ctx, span := otel.Tracer("OrderPaymentProcessor").Start(ctx, "OrderPaymentProcessor.markOrderPaymentFailed")
 	defer span.End()
 
@@ -149,6 +149,6 @@ func (op *orderPaymentProcessor) markOrderPaymentFailed(ctx context.Context, ord
 	updatePaymentFailedDTO.SetOrderStatus(orderStatusCancelled).SetPaymentStatus(paymentStatusVoided)
 
 	if err := op.repository.UpdateOrderPaymentStatus(ctx, updatePaymentFailedDTO); err != nil {
-		op.logger.Error("failed to cancel order after wallet debit failure", zap.Error(err), zap.Uint("orderID", orderID), zap.Uint("tenantID", tenantID))
+		op.logger.Error("failed to cancel order after wallet debit failure", zap.Error(err), zap.Uint64("orderID", orderID), zap.Uint64("tenantID", tenantID))
 	}
 }

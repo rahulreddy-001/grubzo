@@ -1,10 +1,10 @@
 package query
 
 type MenuItemQuery struct {
-	TenantID       uint
-	ID             *uint
-	IDs            []uint
-	LocationID     *uint
+	TenantID       uint64
+	ID             *uint64
+	IDs            []uint64
+	LocationID     *uint64
 	Orderable      *bool
 	SearchText     *string
 	CuisineText    *string
@@ -13,22 +13,22 @@ type MenuItemQuery struct {
 	Preload        bool
 }
 
-func NewMenuItemQuery(TenantID uint) *MenuItemQuery {
+func NewMenuItemQuery(TenantID uint64) *MenuItemQuery {
 	return &MenuItemQuery{
 		TenantID: TenantID,
 	}
 }
-func (f *MenuItemQuery) WithID(ID uint) *MenuItemQuery {
+func (f *MenuItemQuery) WithID(ID uint64) *MenuItemQuery {
 	f.ID = &ID
 	return f
 }
 
-func (f *MenuItemQuery) WithIDs(IDs []uint) *MenuItemQuery {
+func (f *MenuItemQuery) WithIDs(IDs []uint64) *MenuItemQuery {
 	f.IDs = IDs
 	return f
 }
 
-func (f *MenuItemQuery) WithLocationID(ID uint) *MenuItemQuery {
+func (f *MenuItemQuery) WithLocationID(ID uint64) *MenuItemQuery {
 	f.LocationID = &ID
 	return f
 }

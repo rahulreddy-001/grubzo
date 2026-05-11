@@ -1,7 +1,7 @@
 package dto
 
 type CreateUser struct {
-	TenantID uint   `json:"TenantID" binding:"required"`
+	TenantID uint64 `json:"TenantID" binding:"required"`
 	UserID   string `json:"UserID"`
 	Email    string `json:"Email" binding:"required"`
 	Password string `json:"Password" binding:"required"`
@@ -9,8 +9,8 @@ type CreateUser struct {
 }
 
 type UpdateUser struct {
-	TenantID uint    `json:"TenantID" binding:"required"`
-	ID       uint    `json:"ID" binding:"required"`
+	TenantID uint64  `json:"TenantID" binding:"required"`
+	ID       uint64  `json:"ID" binding:"required"`
 	Email    *string `json:"Email"`
 	Password *string `json:"Password"`
 	Name     *string `json:"Name"`
@@ -31,7 +31,7 @@ type GetUsersResponse struct {
 }
 
 type UserInfo struct {
-	ID     uint   `json:"ID"`
+	ID     uint64 `json:"ID"`
 	UserID string `json:"UserID"`
 	Email  string `json:"Email"`
 	Name   string `json:"Name"`

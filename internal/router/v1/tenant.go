@@ -38,7 +38,7 @@ func (h Handlers) UpdateTenant(c *gin.Context) {
 
 func (h Handlers) GetTenantByID(c *gin.Context) {
 	var params struct {
-		TenantID uint `uri:"tenant_id" binding:"required"`
+		TenantID uint64 `uri:"tenant_id" binding:"required"`
 	}
 	if err := c.ShouldBindUri(&params); err != nil {
 		ext.Ctx(c).BadRequestParams()

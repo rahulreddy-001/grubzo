@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"grubzo/internal/config"
+	"net/url"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -12,15 +13,33 @@ import (
 	"gorm.io/plugin/opentelemetry/tracing"
 )
 
+func buildDSN(c *config.Config) string {
+	u := &url.URL{
+		Scheme: "postgres",
+		Host:   fmt.Sprintf("%s:%d", c.Database.SQL.Host, c.Database.SQL.PORT),
+		Path:   c.Database.SQL.DB,
+	}
+
+	if c.Database.SQL.Password != "" {
+		u.User = url.UserPassword(
+			c.Database.SQL.User,
+			c.Database.SQL.Password,
+		)
+	} else {
+		u.User = url.User(c.Database.SQL.User)
+	}
+
+	q := u.Query()
+	q.Set("sslmode", "disable")
+	q.Set("TimeZone", "UTC")
+
+	u.RawQuery = q.Encode()
+
+	return u.String()
+}
+
 func getDatabase(c *config.Config) (*gorm.DB, error) {
-	dsn := fmt.Sprintf(
-		"user=%s password=%s host=%s port=%d dbname=%s sslmode=disable TimeZone=UTC",
-		c.Database.SQL.User,
-		c.Database.SQL.Password,
-		c.Database.SQL.Host,
-		c.Database.SQL.PORT,
-		c.Database.SQL.DB,
-	)
+	dsn := buildDSN(c)
 
 	engine, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		TranslateError: false,

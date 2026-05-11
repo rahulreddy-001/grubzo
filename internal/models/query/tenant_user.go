@@ -1,21 +1,21 @@
 package query
 
 type TenantUserQuery struct {
-	TenantID    uint
-	ID          *uint
+	TenantID    uint64
+	ID          *uint64
 	Email       *string
 	Roles       []string
-	LocationID  *uint
+	LocationID  *uint64
 	WithPreload bool
 }
 
-func NewTenantUserQuery(tenantID uint) *TenantUserQuery {
+func NewTenantUserQuery(tenantID uint64) *TenantUserQuery {
 	return &TenantUserQuery{
 		TenantID: tenantID,
 	}
 }
 
-func (f *TenantUserQuery) WithID(id uint) *TenantUserQuery {
+func (f *TenantUserQuery) WithID(id uint64) *TenantUserQuery {
 	f.ID = &id
 	return f
 }
@@ -30,7 +30,7 @@ func (f *TenantUserQuery) WithRole(roles []string) *TenantUserQuery {
 	return f
 }
 
-func (f *TenantUserQuery) WithLocationID(id uint) *TenantUserQuery {
+func (f *TenantUserQuery) WithLocationID(id uint64) *TenantUserQuery {
 	f.LocationID = &id
 	return f
 }

@@ -5,13 +5,13 @@ import (
 )
 
 type Tenant struct {
-	ID        uint      `gorm:"primaryKey;autoIncrement"`
+	ID        uint64    `gorm:"primaryKey;autoIncrement"`
 	Name      string    `gorm:"not null;default:''"`
 	Code      string    `gorm:"not null;unique"`
 	CreatedAt time.Time `gorm:"precision:6"`
 	UpdatedAt time.Time `gorm:"precision:6"`
 
-	TenantLocations []TenantLocation `gorm:"foreignKey:TenantID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	TenantLocations []TenantLocation `gorm:"foreignKey:TenantID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (Tenant) TableName() string {

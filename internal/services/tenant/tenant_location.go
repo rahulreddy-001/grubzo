@@ -50,7 +50,7 @@ func (ts *tenantServiceImpl) UpdateTenantLocation(ctx context.Context, tloc *dto
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) GetTenantLocation(ctx context.Context, tenantLocId uint, tenantID uint) (*dto.TenantLocationResponse, error) {
+func (ts *tenantServiceImpl) GetTenantLocation(ctx context.Context, tenantLocId uint64, tenantID uint64) (*dto.TenantLocationResponse, error) {
 	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.GetTenantLocation")
 	defer span.End()
 
@@ -69,7 +69,7 @@ func (ts *tenantServiceImpl) GetTenantLocation(ctx context.Context, tenantLocId 
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) GetTenantLocations(ctx context.Context, tenantID uint) (*dto.TenantLocationsResponse, error) {
+func (ts *tenantServiceImpl) GetTenantLocations(ctx context.Context, tenantID uint64) (*dto.TenantLocationsResponse, error) {
 	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.GetTenantLocations")
 	defer span.End()
 

@@ -12,15 +12,15 @@ import (
 )
 
 type WalletRepository interface {
-	GetWalletBalance(ctx context.Context, tenantID uint, userID uint) (int64, error)
-	RecordWalletTransaction(ctx context.Context, data *dto.WalletTransactionDTO) (*uint, error)
+	GetWalletBalance(ctx context.Context, tenantID uint64, userID uint64) (int64, error)
+	RecordWalletTransaction(ctx context.Context, data *dto.WalletTransactionDTO) (*uint64, error)
 	RecordWalletRechargeTransaction(ctx context.Context, data *dto.WalletRechargeRequestDTO) error
 	UpdateWalletRechargeTransactionStatus(ctx context.Context, orderID string, paymentID, status string) error
-	GetPendingWalletRecharges(ctx context.Context, tenantID uint, userID uint) ([]dto.PendingWalletRechargeDTO, error)
-	GetWalletTransactions(ctx context.Context, tenantID uint, userID uint, limit int, offset int) ([]dto.WalletTransactionDTO, error)
+	GetPendingWalletRecharges(ctx context.Context, tenantID uint64, userID uint64) ([]dto.PendingWalletRechargeDTO, error)
+	GetWalletTransactions(ctx context.Context, tenantID uint64, userID uint64, limit int, offset int) ([]dto.WalletTransactionDTO, error)
 }
 
-func (r *Repository) GetWalletBalance(ctx context.Context, tenantID uint, userID uint) (int64, error) {
+func (r *Repository) GetWalletBalance(ctx context.Context, tenantID uint64, userID uint64) (int64, error) {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetWalletBalance")
 	defer span.End()
 
@@ -35,11 +35,11 @@ func (r *Repository) GetWalletBalance(ctx context.Context, tenantID uint, userID
 	return wallet.Balance, nil
 }
 
-func (r *Repository) RecordWalletTransaction(ctx context.Context, data *dto.WalletTransactionDTO) (*uint, error) {
+func (r *Repository) RecordWalletTransaction(ctx context.Context, data *dto.WalletTransactionDTO) (*uint64, error) {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.RecordWalletTransaction")
 	defer span.End()
 
-	var txnID uint
+	var txnID uint64
 	err := r.dbWithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var currentBalance int64 = 0
 		var wallet entity.WalletBalance
@@ -122,7 +122,7 @@ func (r *Repository) UpdateWalletRechargeTransactionStatus(ctx context.Context, 
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.UpdateWalletRechargeTransactionStatus")
 	defer span.End()
 
-	var walletTxID *uint = nil
+	var walletTxID *uint64 = nil
 	paymentRecord := &entity.WalletRecharge{}
 	err := r.dbWithContext(ctx).Where("order_id = ?", orderID).First(paymentRecord).Error
 	if err != nil {
@@ -151,7 +151,7 @@ func (r *Repository) UpdateWalletRechargeTransactionStatus(ctx context.Context, 
 	return r.dbWithContext(ctx).Save(paymentRecord).Error
 }
 
-func (r *Repository) GetPendingWalletRecharges(ctx context.Context, tenantID uint, userID uint) ([]dto.PendingWalletRechargeDTO, error) {
+func (r *Repository) GetPendingWalletRecharges(ctx context.Context, tenantID uint64, userID uint64) ([]dto.PendingWalletRechargeDTO, error) {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetPendingWalletRecharges")
 	defer span.End()
 
@@ -173,7 +173,7 @@ func (r *Repository) GetPendingWalletRecharges(ctx context.Context, tenantID uin
 	return pendingRecharges, nil
 }
 
-func (r *Repository) GetWalletTransactions(ctx context.Context, tenantID uint, userID uint, limit int, offset int) ([]dto.WalletTransactionDTO, error) {
+func (r *Repository) GetWalletTransactions(ctx context.Context, tenantID uint64, userID uint64, limit int, offset int) ([]dto.WalletTransactionDTO, error) {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.GetWalletTransactions")
 	defer span.End()
 

@@ -28,10 +28,10 @@ type Dispatcher struct {
 }
 
 type browseMenuInput struct {
-	Query       string `json:"query"`
-	VendorID    *uint  `json:"vendor_id,omitempty"`
-	CuisineType string `json:"cuisine_type,omitempty"`
-	Limit       int    `json:"limit,omitempty"`
+	Query       string  `json:"query"`
+	VendorID    *uint64 `json:"vendor_id,omitempty"`
+	CuisineType string  `json:"cuisine_type,omitempty"`
+	Limit       int     `json:"limit,omitempty"`
 }
 
 type searchVendorsInput struct {
@@ -41,29 +41,29 @@ type searchVendorsInput struct {
 }
 
 type getVendorDetailsInput struct {
-	VendorID uint `json:"vendor_id"`
+	VendorID uint64 `json:"vendor_id"`
 }
 
 type trackOrderInput struct {
-	OrderID uint `json:"order_id"`
+	OrderID uint64 `json:"order_id"`
 }
 
 type orderHistoryInput struct {
-	UserID *uint  `json:"user_id,omitempty"`
-	Status string `json:"status,omitempty"`
-	Limit  int    `json:"limit,omitempty"`
+	UserID *uint64 `json:"user_id,omitempty"`
+	Status string  `json:"status,omitempty"`
+	Limit  int     `json:"limit,omitempty"`
 }
 
 type placeOrderInput struct {
 	Items           []placeOrderItem `json:"items"`
-	VendorID        *uint            `json:"vendor_id,omitempty"`
+	VendorID        *uint64          `json:"vendor_id,omitempty"`
 	DeliveryAddress string           `json:"delivery_address,omitempty"`
 	PaymentMethod   string           `json:"payment_method"`
 }
 
 type placeOrderItem struct {
-	ItemID   uint `json:"item_id"`
-	Quantity uint `json:"quantity"`
+	ItemID   uint64 `json:"item_id"`
+	Quantity uint   `json:"quantity"`
 }
 
 type moneyRecord struct {
@@ -73,8 +73,8 @@ type moneyRecord struct {
 }
 
 type menuItemRecord struct {
-	ID          uint        `json:"id"`
-	LocationID  uint        `json:"location_id"`
+	ID          uint64      `json:"id"`
+	LocationID  uint64      `json:"location_id"`
 	Name        string      `json:"name"`
 	Description string      `json:"description"`
 	Price       moneyRecord `json:"price"`
@@ -84,7 +84,7 @@ type menuItemRecord struct {
 }
 
 type vendorRecord struct {
-	ID        uint   `json:"id"`
+	ID        uint64 `json:"id"`
 	Code      string `json:"code"`
 	Address   string `json:"address"`
 	City      string `json:"city"`
@@ -95,7 +95,7 @@ type vendorRecord struct {
 }
 
 type orderItemRecord struct {
-	ItemID uint        `json:"item_id"`
+	ItemID uint64      `json:"item_id"`
 	Name   string      `json:"name"`
 	Price  moneyRecord `json:"price"`
 	Qty    uint        `json:"qty"`
@@ -114,11 +114,11 @@ type billRecord struct {
 }
 
 type orderRecord struct {
-	ID            uint              `json:"id"`
+	ID            uint64            `json:"id"`
 	Status        string            `json:"status"`
 	PaymentStatus string            `json:"payment_status"`
 	PaymentMode   string            `json:"payment_mode"`
-	LocationID    uint              `json:"location_id"`
+	LocationID    uint64            `json:"location_id"`
 	Items         []orderItemRecord `json:"items"`
 	Bill          billRecord        `json:"bill"`
 	CreatedAt     string            `json:"created_at"`
@@ -391,7 +391,7 @@ func (d *Dispatcher) placeOrder(ctx context.Context, currentActor actor.Actor, i
 		return toolFailure(err)
 	}
 
-	itemIDs := make([]uint, 0, len(input.Items))
+	itemIDs := make([]uint64, 0, len(input.Items))
 	for _, item := range input.Items {
 		if item.ItemID == 0 || item.Quantity == 0 {
 			return toolFailure(errors.New("each item must include a valid item_id and quantity"))

@@ -15,7 +15,7 @@ import (
 )
 
 type CartService interface {
-	GetRedisKey(tenantID, userID uint, locationID uint) string
+	GetRedisKey(tenantID, userID uint64, locationID uint64) string
 	GetAdjustedCart(ctx context.Context, key string) (*dto.Cart, []dto.Item)
 	GetCart(ctx context.Context, key string) *dto.CartResponse
 	SetItemQuantity(ctx context.Context, key string, action *dto.UpdateItemQuantity) (*dto.CartResponse, error)
@@ -40,12 +40,12 @@ func InitCartService(repository *repository.Repository, storeService store.Store
 	}, nil
 }
 
-func (cs *cartServiceImpl) GetRedisKey(tenantID, userID, locationID uint) string {
+func (cs *cartServiceImpl) GetRedisKey(tenantID, userID, locationID uint64) string {
 	return fmt.Sprintf("cart:tenant:%d:user:%d:location:%d", tenantID, userID, locationID)
 }
 
-func (cs *cartServiceImpl) getTenantIDUserIDLocationIDFromKey(key string) (uint, uint, uint) {
-	var tenantID, userID, locationID uint
+func (cs *cartServiceImpl) getTenantIDUserIDLocationIDFromKey(key string) (uint64, uint64, uint64) {
+	var tenantID, userID, locationID uint64
 
 	_, err := fmt.Sscanf(
 		key,
@@ -88,7 +88,7 @@ func (cs *cartServiceImpl) getAdjustedCart(ctx context.Context, cart *dto.Cart) 
 		return cart, []dto.Item{}
 	}
 
-	validItemMap := make(map[uint]struct{}, len(items))
+	validItemMap := make(map[uint64]struct{}, len(items))
 	for _, item := range items {
 		validItemMap[item.ID] = struct{}{}
 	}

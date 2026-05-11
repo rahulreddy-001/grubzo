@@ -1,8 +1,8 @@
 package entity
 
 type TenantLocation struct {
-	ID        uint   `gorm:"primaryKey;autoIncrement"`
-	TenantID  uint   `gorm:"not null;index"`
+	ID        uint64 `gorm:"primaryKey;autoIncrement"`
+	TenantID  uint64 `gorm:"not null;index"`
 	Code      string `gorm:"not null;unique"`
 	Address   string `gorm:"not null"`
 	City      string `gorm:"not null"`

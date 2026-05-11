@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -51,7 +52,11 @@ func AsType[T any](v interface{}) (T, error) {
 		if err != nil {
 			return out, err
 		}
-		if err := json.Unmarshal(jsonBytes, &out); err != nil {
+
+		decoder := json.NewDecoder(bytes.NewReader(jsonBytes))
+		decoder.UseNumber()
+
+		if err := decoder.Decode(&out); err != nil {
 			return out, err
 		}
 		return out, nil
