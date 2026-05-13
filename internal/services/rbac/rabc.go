@@ -15,7 +15,7 @@ import (
 
 type RBAC struct {
 	roles      map[uint64]role.Roles
-	rolesMutex sync.RWMutex
+	rolesMutex *sync.RWMutex
 	repo       *repository.Repository
 	db         *gorm.DB
 }

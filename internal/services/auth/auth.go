@@ -3,8 +3,6 @@ package auth
 //go:generate go run ../../../cmd/injecttrace -file auth.go -receiver authServiceImpl -service AuthService
 import (
 	"context"
-	"go.opentelemetry.io/otel"
-	"go.uber.org/zap"
 	"grubzo/internal/config"
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
@@ -13,6 +11,9 @@ import (
 	"grubzo/internal/services/rbac"
 	"grubzo/internal/services/user"
 	"grubzo/internal/utils"
+
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 )
 
 type AuthService interface {
