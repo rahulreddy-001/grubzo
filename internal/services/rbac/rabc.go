@@ -22,8 +22,9 @@ type RBAC struct {
 
 func New(repo *repository.Repository) (*RBAC, error) {
 	r := &RBAC{
-		roles: make(map[uint64]role.Roles),
-		repo:  repo,
+		roles:      make(map[uint64]role.Roles),
+		rolesMutex: &sync.RWMutex{},
+		repo:       repo,
 	}
 	if err := r.reload(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to init rbac: %w", err)

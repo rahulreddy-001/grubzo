@@ -9,8 +9,11 @@ import (
 	"grubzo/internal/router/ext"
 	"grubzo/internal/router/middlewares"
 	"grubzo/internal/router/session"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	ratelimiter "github.com/rahulreddy-001/ratelimiter/v1"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -20,22 +23,26 @@ type Handlers struct {
 	SessionStore session.Store
 	Tools        *tools.Dispatcher
 	Agent        *agent.Service
+	RDB          *redis.Client
 }
 
-func NewHandlers(logger *zap.Logger, repository *repository.Repository, sessionStore session.Store, components *mcpcore.Components) *Handlers {
+func NewHandlers(logger *zap.Logger, repository *repository.Repository, rdb *redis.Client, sessionStore session.Store, components *mcpcore.Components) *Handlers {
 	return &Handlers{
 		Logger:       logger,
 		Repository:   repository,
 		SessionStore: sessionStore,
 		Tools:        components.Dispatcher,
 		Agent:        components.AgentService,
+		RDB:          rdb,
 	}
 }
 
 func (h *Handlers) Setup(engine *gin.Engine) {
 	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore)
+	ratelimitGenerator := middlewares.RateLimiterMiddlewareGenerator()
+	twoReqPerSecSlidingWindowLogForTenantAndUser := ratelimitGenerator(ratelimiter.NewSlidingWindowLog(h.RDB, 2, time.Second), middlewares.RLK_TENANT, middlewares.RLK_USER)
 
-	api := engine.Group("/api", protected)
+	api := engine.Group("/api", protected, twoReqPerSecSlidingWindowLogForTenantAndUser)
 	api.POST("/chat", h.Chat)
 	api.GET("/chat/sessions", h.ListChatSessions)
 	api.GET("/chat/sessions/:id/messages", h.ListChatMessages)

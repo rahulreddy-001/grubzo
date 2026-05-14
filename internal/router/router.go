@@ -115,6 +115,7 @@ func newRouter(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *r
 	mcpHandlers := mcprouter.NewHandlers(
 		logger.Named("grubzo_mcp_router"),
 		repository,
+		rdb,
 		sessionStore,
 		mcpComponents,
 	)

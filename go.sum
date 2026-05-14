@@ -93,6 +93,8 @@ github.com/go-playground/universal-translator v0.18.1 h1:Bcnm0ZwsGyWbCzImXv+pAJn
 github.com/go-playground/universal-translator v0.18.1/go.mod h1:xekY+UJKNuX9WP91TpwSH2VMlDf28Uj24BCp08ZFTUY=
 github.com/go-playground/validator/v10 v10.27.0 h1:w8+XrWVMhGkxOaaowyKH35gFydVHOvC0/uWoy2Fzwn4=
 github.com/go-playground/validator/v10 v10.27.0/go.mod h1:I5QpIEbmr8On7W0TktmJAumgzX4CA1XNl4ZmDuVHKKo=
+github.com/go-redis/redis v6.15.9+incompatible h1:K0pv1D7EQUjfyoMql+r/jZqCLizCGKFlFgcHWWmHQjg=
+github.com/go-redis/redis v6.15.9+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
 github.com/go-sql-driver/mysql v1.7.0 h1:ueSltNNllEqE3qcWBTD0iQd3IpL/6U+mJxLkazJ7YPc=
 github.com/go-sql-driver/mysql v1.7.0/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9S1MCJN5yJMI=
 github.com/goccy/go-json v0.10.5 h1:Fq85nIqj+gXn/S5ahsiTlK3TmC85qgirsdTP/+DeaC4=
@@ -189,6 +191,18 @@ github.com/prometheus/common v0.66.1 h1:h5E0h5/Y8niHc5DlaLlWLArTQI7tMrsfQjHV+d9Z
 github.com/prometheus/common v0.66.1/go.mod h1:gcaUsgf3KfRSwHY4dIMXLPV0K/Wg1oZ8+SbZk/HH/dA=
 github.com/prometheus/procfs v0.16.1 h1:hZ15bTNuirocR6u0JZ6BAHHmwS1p8B4P6MRqxtzMyRg=
 github.com/prometheus/procfs v0.16.1/go.mod h1:teAbpZRB1iIAJYREa1LsoWUXykVXA1KlTmWl8x/U+Is=
+github.com/rahulreddy-001/ratelimiter v0.1.0 h1:uaz2vngVFK5vi+ghvN3pEKLZQXcWlq8MI9dCYoIEZ/I=
+github.com/rahulreddy-001/ratelimiter v0.1.0/go.mod h1:ALMf1SsDf4IkWXclyzUE0IGSK7v243fCJK3eNkwLP6E=
+github.com/rahulreddy-001/ratelimiter v0.1.1 h1:hwJSBb6rwpUx7gKBBc9zW5SNiupZBRH7PvTYKHey3Xk=
+github.com/rahulreddy-001/ratelimiter v0.1.1/go.mod h1:ALMf1SsDf4IkWXclyzUE0IGSK7v243fCJK3eNkwLP6E=
+github.com/rahulreddy-001/ratelimiter v0.1.2 h1:B11yT57WRmsGXcQd527jfAOXT/mg6AUVyN/wxoPgvs8=
+github.com/rahulreddy-001/ratelimiter v0.1.2/go.mod h1:ALMf1SsDf4IkWXclyzUE0IGSK7v243fCJK3eNkwLP6E=
+github.com/rahulreddy-001/ratelimiter v0.1.4 h1:e55le4YC2rDLzEIN7AwKYWdEPTDS5W5MoHAL8ewYjsE=
+github.com/rahulreddy-001/ratelimiter v0.1.4/go.mod h1:ALMf1SsDf4IkWXclyzUE0IGSK7v243fCJK3eNkwLP6E=
+github.com/rahulreddy-001/ratelimiter v0.1.5 h1:YmJA7S1nah671/0ilv0Rw8knbAXXOFRK++suEePMels=
+github.com/rahulreddy-001/ratelimiter v0.1.5/go.mod h1:oXArTLGDnI+ApYI7WqD/8TIpltZCWdeVWggErofX26w=
+github.com/rahulreddy-001/ratelimiter v0.1.6 h1:XsTllGRU5I5JluCnBHWaMvFpPlb3UnD+n2+78Oe+RKo=
+github.com/rahulreddy-001/ratelimiter v0.1.6/go.mod h1:oXArTLGDnI+ApYI7WqD/8TIpltZCWdeVWggErofX26w=
 github.com/razorpay/razorpay-go v1.4.0 h1:Vodv1hdatNQdjoIahfPCYVsnUNQD51fZqyTmbLjJUjw=
 github.com/razorpay/razorpay-go v1.4.0/go.mod h1:VcljkUylUJAUEvFfGVv/d5ht1to1dUgF4H1+3nv7i+Q=
 github.com/redis/go-redis/extra/rediscmd/v9 v9.18.0 h1:QY4nmPHLFAJjtT5O4OMUEOxP8WVaRNOFpcbmxT2NLZU=
@@ -199,6 +213,8 @@ github.com/redis/go-redis/v9 v9.17.0 h1:K6E+ZlYN95KSMmZeEQPbU/c++wfmEvfFB17yEAq/
 github.com/redis/go-redis/v9 v9.17.0/go.mod h1:u410H11HMLoB+TP67dz8rL9s6QW2j76l0//kSOd3370=
 github.com/redis/go-redis/v9 v9.18.0 h1:pMkxYPkEbMPwRdenAzUNyFNrDgHx9U+DrBabWNfSRQs=
 github.com/redis/go-redis/v9 v9.18.0/go.mod h1:k3ufPphLU5YXwNTUcCRXGxUoF1fqxnhFQmscfkCoDA0=
+github.com/redis/go-redis/v9 v9.19.0 h1:XPVaaPSnG6RhYf7p+rmSa9zZfeVAnWsH5h3lxthOm/k=
+github.com/redis/go-redis/v9 v9.19.0/go.mod h1:v/M13XI1PVCDcm01VtPFOADfZtHf8YW3baQf57KlIkA=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
