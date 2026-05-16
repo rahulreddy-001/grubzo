@@ -19,9 +19,9 @@ run-react:
 	@echo "Frontend started (logs in tmp/frontend.log)"
 
 run: run-react
-	@go run cmd/api/main.go serve 
+	@go run cmd/api/main.go serve
 
-migrate: 
+migrate:
 	@go run cmd/api/main.go migrate
 
 build:
@@ -64,7 +64,7 @@ install-lint:
 	}
 	@curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $$(go env GOPATH)/bin $(GOLANGCI_LINT_INSTALL_VERSION)
 	@$(GOLANGCI_LINT) version
-	
+
 watch:run-react docker-up
 	@if command -v air > /dev/null; then \
 		air; \
@@ -78,3 +78,7 @@ watch:run-react docker-up
 			exit 1; \
 		fi \
 	fi
+
+containers:
+	docker build --target frontend_builder -t grubzo-frontend .
+	docker build --target backend_builder -t grubzo-backend .

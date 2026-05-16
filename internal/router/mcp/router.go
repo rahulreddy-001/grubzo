@@ -40,7 +40,7 @@ func NewHandlers(logger *zap.Logger, repository *repository.Repository, rdb *red
 func (h *Handlers) Setup(engine *gin.Engine) {
 	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore)
 	ratelimitGenerator := middlewares.RateLimiterMiddlewareGenerator()
-	twoReqPerSecSlidingWindowLogForTenantAndUser := ratelimitGenerator(ratelimiter.NewSlidingWindowLog(h.RDB, 2, time.Second), middlewares.RLK_TENANT, middlewares.RLK_USER)
+	twoReqPerSecSlidingWindowLogForTenantAndUser := ratelimitGenerator(ratelimiter.NewSlidingWindowLog(h.RDB, 10, time.Second), middlewares.RLK_TENANT, middlewares.RLK_USER)
 
 	api := engine.Group("/api", protected, twoReqPerSecSlidingWindowLogForTenantAndUser)
 	api.POST("/chat", h.Chat)
@@ -48,7 +48,7 @@ func (h *Handlers) Setup(engine *gin.Engine) {
 	api.GET("/chat/sessions/:id/messages", h.ListChatMessages)
 	api.DELETE("/chat/sessions/:id", h.DeleteChatSession)
 
-	mcp := engine.Group("/mcp", protected)
+	mcp := engine.Group("/mcp", protected, twoReqPerSecSlidingWindowLogForTenantAndUser)
 	mcp.GET("", h.Describe)
 	mcp.POST("", h.HandleJSONRPC)
 	mcp.GET("/tools", h.ListTools)
