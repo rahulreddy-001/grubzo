@@ -131,12 +131,18 @@ func (rs *redisSession) GetUserSession() (UserSession, error) {
 }
 
 type redisStore struct {
-	db *redis.Client
+	db           *redis.Client
+	cookieDomain string
 }
 
-func NewRedisSessionStore(db *redis.Client) Store {
+func NewRedisSessionStore(db *redis.Client, cookieDomain ...string) Store {
+	domain := ""
+	if len(cookieDomain) > 0 {
+		domain = normalizeCookieDomain(cookieDomain[0])
+	}
 	return &redisStore{
-		db: db,
+		db:           db,
+		cookieDomain: domain,
 	}
 }
 
@@ -182,7 +188,7 @@ func (rs *redisStore) RevokeSession(c *gin.Context) error {
 	if err := rs.db.JSONDel(c.Request.Context(), token, ".").Err(); err != nil {
 		return err
 	}
-	c.SetCookie(CookieName, "", -1, "/", "", false, true)
+	c.SetCookie(CookieName, "", -1, "/", rs.cookieDomain, false, true)
 	return nil
 }
 
@@ -230,7 +236,7 @@ func (rs *redisStore) RenewSession(c *gin.Context, userID, tenantID uint64) (Ses
 		newSession.Token(),
 		sessionMaxAge+sessionKeepAge,
 		"/",
-		"",
+		rs.cookieDomain,
 		false,
 		true,
 	)

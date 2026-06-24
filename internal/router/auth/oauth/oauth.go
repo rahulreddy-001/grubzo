@@ -44,6 +44,7 @@ type OAuthUser struct {
 
 type Auth struct {
 	providers    map[string]Provider
+	domain       string
 	router       *gin.RouterGroup
 	sessionStore session.Store
 	repo         *repository.Repository
@@ -71,6 +72,10 @@ func (a *Auth) WithSessionStore(store session.Store) *Auth {
 }
 func (a *Auth) WithRepository(repo *repository.Repository) *Auth {
 	a.repo = repo
+	return a
+}
+func (a *Auth) WithDomain(domain string) *Auth {
+	a.domain = domain
 	return a
 }
 func (a *Auth) WithLogger(logger *zap.Logger) *Auth {
@@ -187,5 +192,8 @@ func (a *Auth) RedirectToLoginPage(ctx *gin.Context) {
 }
 
 func (a *Auth) RedirectToLoginSuccessPage(ctx *gin.Context) {
-	ctx.Redirect(http.StatusTemporaryRedirect, "/")
+	// tenentID := ext.Ctx(ctx).TenantID()
+	// subDomain, err := a.repo.GetTenantSubDomain()
+	subDomain := "www"
+	ctx.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s.%s", subDomain, a.domain))
 }

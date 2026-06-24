@@ -6,8 +6,9 @@ import (
 
 type Config struct {
 	App struct {
-		Name string `json:"name"`
-		Port int    `json:"port"`
+		Name   string `json:"name"`
+		Port   int    `json:"port"`
+		Domain string `json:"domain"`
 	} `json:"app"`
 
 	Database struct {

@@ -67,9 +67,9 @@ func getReactReverseProxy() gin.HandlerFunc {
 }
 
 func newRouter(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repository.Repository, ss *services.Services, config *config.Config) *Router {
-	sessionStore := session.NewMemorySessionStore()
+	sessionStore := session.NewMemorySessionStore(config.App.Domain)
 	if config.SessionStorage == "redis" {
-		sessionStore = session.NewRedisSessionStore(rdb)
+		sessionStore = session.NewRedisSessionStore(rdb, config.App.Domain)
 	}
 	isDevMode := config.DevMode
 

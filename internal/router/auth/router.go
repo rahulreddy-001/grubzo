@@ -46,6 +46,6 @@ func (h Handlers) Setup(r *gin.RouterGroup) {
 				h.Config.OAuthCreds[`github`].ClientSecret,
 				h.Config.OAuthCreds[`github`].CallBackURL,
 			),
-		).UseRouter(oauthGroup).WithSessionStore(h.SessionStore).WithRepository(h.Repository).WithLogger(h.Logger).Init()
+		).UseRouter(oauthGroup).WithSessionStore(h.SessionStore).WithRepository(h.Repository).WithDomain(h.Config.App.Domain).WithLogger(h.Logger).Init()
 	}
 }

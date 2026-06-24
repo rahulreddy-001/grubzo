@@ -2,6 +2,8 @@ package session
 
 import (
 	"errors"
+	"net"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -58,4 +60,13 @@ type Store interface {
 
 	GetSessionByToken(token string) (Session, error)
 	GetSessionsByUserID(userID, tenantID uint64) ([]Session, error)
+}
+
+func normalizeCookieDomain(domain string) string {
+	domain = strings.TrimSpace(domain)
+	domain = strings.TrimPrefix(domain, ".")
+	if domain == "" || domain == "localhost" || net.ParseIP(domain) != nil {
+		return ""
+	}
+	return domain
 }

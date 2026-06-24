@@ -48,7 +48,7 @@ func (h *Handlers) Setup(engine *gin.Engine) {
 	api.GET("/chat/sessions/:id/messages", h.ListChatMessages)
 	api.DELETE("/chat/sessions/:id", h.DeleteChatSession)
 
-	mcp := engine.Group("/mcp", protected, twoReqPerSecSlidingWindowLogForTenantAndUser)
+	mcp := engine.Group("/mcp")
 	mcp.GET("", h.Describe)
 	mcp.POST("", h.HandleJSONRPC)
 	mcp.GET("/tools", h.ListTools)

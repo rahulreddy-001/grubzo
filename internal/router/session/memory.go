@@ -76,13 +76,19 @@ func (s *memorySession) GetUserSession() (UserSession, error) {
 }
 
 type memoryStore struct {
-	sessions map[string]*memorySession
+	sessions     map[string]*memorySession
+	cookieDomain string
 	sync.RWMutex
 }
 
-func NewMemorySessionStore() Store {
+func NewMemorySessionStore(cookieDomain ...string) Store {
+	domain := ""
+	if len(cookieDomain) > 0 {
+		domain = normalizeCookieDomain(cookieDomain[0])
+	}
 	return &memoryStore{
-		sessions: map[string]*memorySession{},
+		sessions:     map[string]*memorySession{},
+		cookieDomain: domain,
 	}
 }
 
@@ -153,7 +159,7 @@ func (ms *memoryStore) RevokeSession(c *gin.Context) error {
 	delete(ms.sessions, token)
 	ms.Unlock()
 
-	c.SetCookie(CookieName, "", -1, "/", "", false, true)
+	c.SetCookie(CookieName, "", -1, "/", ms.cookieDomain, false, true)
 	return nil
 }
 
@@ -175,7 +181,7 @@ func (ms *memoryStore) RenewSession(c *gin.Context, userID, tenantID uint64) (Se
 		s.Token(),
 		sessionMaxAge+sessionKeepAge,
 		"/",
-		"",
+		ms.cookieDomain,
 		false,
 		true,
 	)
