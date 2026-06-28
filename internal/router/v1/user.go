@@ -2,7 +2,10 @@ package v1
 
 import (
 	"grubzo/internal/models/dto"
+	"grubzo/internal/models/entity"
+	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
+	"grubzo/internal/utils/tenantutils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,9 +23,14 @@ func (h Handlers) CreateUser(c *gin.Context) {
 		c.SendResponse(result)
 
 	*/
-	tenantID := ext.Ctx(c).TenantID()
+	tenant, err := h.tenantFromRequest(c)
+	if err != nil {
+		ext.Ctx(c).RespondWithError(err)
+		return
+	}
+
 	createUserDTO := &dto.CreateUser{
-		TenantID: tenantID,
+		TenantID: tenant.ID,
 	}
 	if err := c.ShouldBindBodyWithJSON(createUserDTO); err != nil {
 		ext.Ctx(c).BadRequestBody()
@@ -34,6 +42,14 @@ func (h Handlers) CreateUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, response)
+}
+
+func (h Handlers) tenantFromRequest(c *gin.Context) (*entity.Tenant, error) {
+	subDomain, ok := tenantutils.SubDomainFromHost(c.Request.Host, h.Config.App.Domain, h.Config.Environment())
+	if !ok {
+		return nil, ext.Error("tenant subdomain is required")
+	}
+	return h.Repository.GetTenant(c.Request.Context(), query.NewTenantQuery().WithSubDomain(subDomain))
 }
 
 func (h Handlers) UpdateUser(c *gin.Context) {

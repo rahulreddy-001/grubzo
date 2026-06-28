@@ -8,6 +8,7 @@ import (
 	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
+	"strings"
 
 	"go.opentelemetry.io/otel"
 	"gorm.io/gorm"
@@ -15,7 +16,7 @@ import (
 
 type TenantRepository interface {
 	CreateTenant(ctx context.Context, dto *dto.CreateTenant) (*entity.Tenant, error)
-	UpdateTenant(ctx context.Context, dto *dto.UpdateTenant) (*entity.Tenant, error)
+	UpdateTenant(ctx context.Context, tenantID uint64, dto *dto.UpdateTenant) (*entity.Tenant, error)
 	GetTenant(ctx context.Context, query *query.TenantQuery) (*entity.Tenant, error)
 	GetTenants(ctx context.Context, query *query.TenantQuery) ([]*entity.Tenant, error)
 	SaveTenant(ctx context.Context, tenant *entity.Tenant) error
@@ -24,7 +25,7 @@ type TenantRepository interface {
 func tenantValidator(tenant *entity.Tenant, db *gorm.DB) error {
 	// Check for unique name & code
 	var existing []entity.Tenant
-	model := db.Model(&entity.Tenant{}).Where("code = ? OR name = ?", tenant.Code, tenant.Name)
+	model := db.Model(&entity.Tenant{}).Where("code = ? OR name = ? OR sub_domain = ?", tenant.Code, tenant.Name, tenant.SubDomain)
 	if tenant.ID != 0 {
 		model = model.Where("id != ?", tenant.ID)
 	}
@@ -38,6 +39,9 @@ func tenantValidator(tenant *entity.Tenant, db *gorm.DB) error {
 		if e.Name == tenant.Name {
 			return ext.Error("tenant name must be unique")
 		}
+		if e.SubDomain == tenant.SubDomain {
+			return ext.Error("tenant subdomain must be unique")
+		}
 	}
 	return nil
 }
@@ -47,9 +51,9 @@ func (r *Repository) CreateTenant(ctx context.Context, dto *dto.CreateTenant) (*
 	defer span.End()
 
 	tenant := &entity.Tenant{
-		ID:   *dto.ID,
-		Name: dto.Name,
-		Code: dto.Code,
+		Name:      dto.Name,
+		Code:      strings.ToUpper(strings.TrimSpace(dto.Code)),
+		SubDomain: strings.ToLower(strings.TrimSpace(dto.SubDomain)),
 	}
 	db := r.dbWithContext(ctx)
 	if err := tenantValidator(tenant, db); err != nil {
@@ -79,6 +83,9 @@ func (r *Repository) GetTenant(ctx context.Context, q *query.TenantQuery) (*enti
 	if q.Code != nil {
 		sess = sess.Where("code = ?", *q.Code)
 	}
+	if q.SubDomain != nil {
+		sess = sess.Where("sub_domain = ?", *q.SubDomain)
+	}
 
 	if err := sess.First(tenant).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -107,6 +114,9 @@ func (r *Repository) GetTenants(ctx context.Context, q *query.TenantQuery) ([]*e
 	if q.Code != nil {
 		sess = sess.Where("code = ?", *q.Code)
 	}
+	if q.SubDomain != nil {
+		sess = sess.Where("sub_domain = ?", *q.SubDomain)
+	}
 
 	if err := sess.Find(&tenants).Error; err != nil {
 		return nil, err
@@ -114,7 +124,7 @@ func (r *Repository) GetTenants(ctx context.Context, q *query.TenantQuery) ([]*e
 	return tenants, nil
 }
 
-func (r *Repository) UpdateTenant(ctx context.Context, dto *dto.UpdateTenant) (*entity.Tenant, error) {
+func (r *Repository) UpdateTenant(ctx context.Context, tenantID uint64, dto *dto.UpdateTenant) (*entity.Tenant, error) {
 	ctx, span := otel.Tracer("Repository").Start(ctx, "Repository.UpdateTenant")
 	defer span.End()
 
@@ -122,21 +132,18 @@ func (r *Repository) UpdateTenant(ctx context.Context, dto *dto.UpdateTenant) (*
 	if dto.Name != nil {
 		updates["name"] = *dto.Name
 	}
-	if dto.Code != nil {
-		updates["code"] = *dto.Code
-	}
 
 	if len(updates) == 0 {
-		return r.GetTenant(ctx, query.NewTenantQuery().WithID(dto.ID).WithPreloads())
+		return r.GetTenant(ctx, query.NewTenantQuery().WithID(tenantID).WithPreloads())
 	}
 
 	if err := r.dbWithContext(ctx).Session(&gorm.Session{}).Model(&entity.Tenant{}).
-		Where("id = ?", dto.ID).
+		Where("id = ?", tenantID).
 		Updates(updates).Error; err != nil {
 		return nil, err
 	}
 
-	return r.GetTenant(ctx, query.NewTenantQuery().WithID(dto.ID).WithPreloads())
+	return r.GetTenant(ctx, query.NewTenantQuery().WithID(tenantID).WithPreloads())
 }
 
 func (r *Repository) SaveTenant(ctx context.Context, tenant *entity.Tenant) error {

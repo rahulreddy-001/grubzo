@@ -25,7 +25,7 @@ type Handlers struct {
 }
 
 func (h Handlers) Setup(r *gin.RouterGroup) {
-	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore)
+	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore, h.Config.App.Domain, h.Config.Environment())
 	api := r.Group("/v1")
 	{
 		api.GET("/me", protected, h.Me)
@@ -46,6 +46,6 @@ func (h Handlers) Setup(r *gin.RouterGroup) {
 				h.Config.OAuthCreds[`github`].ClientSecret,
 				h.Config.OAuthCreds[`github`].CallBackURL,
 			),
-		).UseRouter(oauthGroup).WithSessionStore(h.SessionStore).WithRepository(h.Repository).WithDomain(h.Config.App.Domain).WithLogger(h.Logger).Init()
+		).UseRouter(oauthGroup).WithSessionStore(h.SessionStore).WithRepository(h.Repository).WithDomain(h.Config.App.Domain).WithEnv(h.Config.Environment()).WithLogger(h.Logger).Init()
 	}
 }

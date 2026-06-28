@@ -12,6 +12,20 @@ interface CInputProps {
   label?: string;
   error?: string;
   name?: string;
+  type?:
+    | "date"
+    | "datetime-local"
+    | "email"
+    | "hidden"
+    | "month"
+    | "number"
+    | "password"
+    | "search"
+    | "tel"
+    | "text"
+    | "time"
+    | "url"
+    | "week";
 }
 
 const CInput: React.FC<CInputProps> = ({
@@ -25,6 +39,7 @@ const CInput: React.FC<CInputProps> = ({
   label,
   error,
   name,
+  type = "text",
 }) => {
   return (
     <Flex direction="column" gap="1" width={fullWidth ? "100%" : "auto"}>
@@ -36,6 +51,7 @@ const CInput: React.FC<CInputProps> = ({
 
       <TextField.Root
         name={name}
+        type={type}
         size="2"
         radius="medium"
         disabled={disabled}

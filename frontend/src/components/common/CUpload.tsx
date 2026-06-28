@@ -20,6 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { FileInfo } from "../../types/common";
 import CommonService from "../../services/common/common.service";
+import { apiUrl } from "../../services/api";
 import { Box, Flex, Text, Card, IconButton } from "@radix-ui/themes";
 
 function SortableItem({ id, children }: any) {
@@ -234,7 +235,7 @@ const CUpload: React.FC<CUploadProps> = ({
                     >
                       {isImage(file) ? (
                         <img
-                          src={file.URL}
+                          src={apiUrl(file.URL)}
                           style={{
                             width: "100%",
                             height: "100%",

@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../../../services/store";
 
 import ItemsService from "../../../services/item/item.service";
+import { apiUrl } from "../../../services/api";
 
 import CTable from "../../../components/common/CTable";
 import CButton from "../../../components/common/CButton";
@@ -81,7 +82,7 @@ const ItemsPanel: React.FC = () => {
                 <Avatar
                   size="4"
                   fallback={<Hamburger size={14} />}
-                  src={item.Files?.[0]?.URL}
+                  src={apiUrl(item.Files?.[0]?.URL ?? "")}
                 />
 
                 <Box>

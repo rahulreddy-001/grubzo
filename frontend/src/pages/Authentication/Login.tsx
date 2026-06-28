@@ -13,6 +13,7 @@ import GitHubIcon from "@mui/icons-material/GitHub";
 import { UserTypes } from "../../types/constants.d";
 import authService from "../../services/auth/auth.service.ts";
 import { useErrorHandler } from "../../hooks/useErrorHandler.tsx";
+import { apiUrl } from "../../services/api.ts";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -62,7 +63,9 @@ const Login: React.FC = () => {
   };
 
   const handleOAuth = (provider: string) => {
-    window.location.pathname = `auth/v1/oauth/login/${provider.toLowerCase()}`;
+    window.location.href = apiUrl(
+      `/auth/v1/oauth/login/${provider.toLowerCase()}`
+    );
   };
 
   return (

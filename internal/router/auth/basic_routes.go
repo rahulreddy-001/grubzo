@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/router/ext"
 	"grubzo/internal/router/session"
+	"grubzo/internal/utils/tenantutils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,31 +13,37 @@ import (
 )
 
 func (h Handlers) Login(c *gin.Context) {
-	tenantID := uint64(2)
+
+	tenant, err := h.tenantFromRequest(c)
+	if err != nil {
+		ext.Ctx(c).RespondWithError(err)
+		return
+	}
 	sess, err := h.SessionStore.GetSession(c)
 	if err == nil && sess.LoggedIn() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "already logged in"})
-		return
+		if sess.TenantID() == tenant.ID {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "already logged in"})
+			return
+		}
+		_ = h.SessionStore.RevokeSession(c)
 	}
 	var req struct {
 		Email    string `json:"Email" binding:"required"`
 		Password string `json:"Password" binding:"required"`
-		TenantID uint64 `json:"TenantID" binding:"required"`
 		Type     string `json:"Type" binding:"required,oneof=user employee"`
 	}
-	req.TenantID = tenantID
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
 	if req.Type == "user" {
-		userID, err := h.SS.AuthService.BasicUserLogin(c.Request.Context(), req.Email, req.Password, req.TenantID)
+		userID, err := h.SS.AuthService.BasicUserLogin(c.Request.Context(), req.Email, req.Password, tenant.ID)
 		if err != nil {
 			ext.Ctx(c).RespondWithError(err)
 			return
 		}
-		userSession, err := h.SessionStore.RenewSession(c, userID, req.TenantID)
+		userSession, err := h.SessionStore.RenewSession(c, userID, tenant.ID)
 
 		if err != nil {
 			ext.Ctx(c).RespondWithError(err)
@@ -43,30 +51,30 @@ func (h Handlers) Login(c *gin.Context) {
 		}
 		trueRef := true
 		locationEntity, _ := h.Repository.FindTenantLocation(c, &query.TenantLocationQuery{
-			TenantID:  req.TenantID,
+			TenantID:  tenant.ID,
 			IsPrimary: &trueRef,
 		})
 		userSession.Set("user", &session.UserSession{
 			Type:     "user",
 			UserID:   userID,
-			TenantID: req.TenantID,
+			TenantID: tenant.ID,
 			Email:    req.Email,
 			Location: locationEntity.ID,
 		})
 		c.JSON(200, gin.H{"message": "login successful", "session_token": userSession.Token()})
 		return
 	} else {
-		userID, err := h.SS.AuthService.BasicEmployeeLogin(c.Request.Context(), req.Email, req.Password, req.TenantID)
+		userID, err := h.SS.AuthService.BasicEmployeeLogin(c.Request.Context(), req.Email, req.Password, tenant.ID)
 		if err != nil {
 			ext.Ctx(c).RespondWithError(err)
 			return
 		}
-		userSession, err := h.SessionStore.RenewSession(c, userID, req.TenantID)
+		userSession, err := h.SessionStore.RenewSession(c, userID, tenant.ID)
 		if err != nil {
 			ext.Ctx(c).RespondWithError(err)
 			return
 		}
-		userEntity, err := h.Repository.FindTenantUser(c.Request.Context(), query.NewTenantUserQuery(req.TenantID).WithID(userID))
+		userEntity, err := h.Repository.FindTenantUser(c.Request.Context(), query.NewTenantUserQuery(tenant.ID).WithID(userID))
 		if err != nil {
 			ext.Ctx(c).RespondWithError(err)
 			return
@@ -83,6 +91,14 @@ func (h Handlers) Login(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "login successful", "session_token": userSession.Token()})
 		return
 	}
+}
+
+func (h Handlers) tenantFromRequest(c *gin.Context) (*entity.Tenant, error) {
+	subDomain, ok := tenantutils.SubDomainFromHost(c.Request.Host, h.Config.App.Domain, h.Config.Environment())
+	if !ok {
+		return nil, ext.Error("tenant subdomain is required")
+	}
+	return h.Repository.GetTenant(c.Request.Context(), query.NewTenantQuery().WithSubDomain(subDomain))
 }
 
 func (h Handlers) Logout(c *gin.Context) {

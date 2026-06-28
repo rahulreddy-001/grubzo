@@ -7,12 +7,10 @@ import (
 	"grubzo/internal/router/auth"
 	mcprouter "grubzo/internal/router/mcp"
 	"grubzo/internal/router/middlewares"
+	"grubzo/internal/router/platform"
 	"grubzo/internal/router/session"
 	v1 "grubzo/internal/router/v1"
 	"grubzo/internal/services"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -28,6 +26,7 @@ type Router struct {
 	auth   *auth.Handlers
 	v1     *v1.Handlers
 	mcp    *mcprouter.Handlers
+	plat   *platform.Handlers
 }
 
 func Setup(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repository.Repository, ss *services.Services, config *config.Config) *gin.Engine {
@@ -38,7 +37,7 @@ func Setup(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repos
 	})
 	engine.router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
-	engine.router.NoRoute(getReactReverseProxy())
+	engine.plat.Setup(engine.router)
 
 	auth := engine.router.Group("/auth")
 	engine.auth.Setup(auth)
@@ -51,33 +50,19 @@ func Setup(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repos
 	return engine.router
 }
 
-func getReactReverseProxy() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		target, err := url.Parse("http://localhost:8083")
-		if err != nil {
-			c.String(http.StatusInternalServerError, "Invalid target URL")
-			return
-		}
-		proxy := httputil.NewSingleHostReverseProxy(target)
-		c.Request.Host = target.Host
-		c.Request.URL.Host = target.Host
-		c.Request.URL.Scheme = target.Scheme
-		proxy.ServeHTTP(c.Writer, c.Request)
-	}
-}
-
 func newRouter(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repository.Repository, ss *services.Services, config *config.Config) *Router {
 	sessionStore := session.NewMemorySessionStore(config.App.Domain)
 	if config.SessionStorage == "redis" {
 		sessionStore = session.NewRedisSessionStore(rdb, config.App.Domain)
 	}
-	isDevMode := config.DevMode
+	isDevMode := config.IsDev()
 
 	r := gin.New()
 	if !isDevMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	r.Use(middlewares.RecoverPanic(logger.Named("painc_log")))
+	r.Use(middlewares.TenantCORS(config.App.Domain, config.Environment(), isDevMode))
 	r.Use(middlewares.AccessLogging(logger.Named("access_log"), isDevMode))
 	r.Use(otelgin.Middleware("grubzo_gin", otelgin.WithGinFilter(func(c *gin.Context) bool {
 		return c.FullPath() != ""
@@ -97,6 +82,7 @@ func newRouter(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *r
 		Repository:   repository,
 		SessionStore: sessionStore,
 		SS:           ss,
+		Config:       config,
 	}
 
 	mcpComponents, err := mcp.Build(mcp.Dependencies{
@@ -118,12 +104,15 @@ func newRouter(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *r
 		rdb,
 		sessionStore,
 		mcpComponents,
+		config,
 	)
+	platformHandlers := platform.NewHandlers(logger.Named("platform"), repository, config)
 	router := &Router{
 		router: r,
 		auth:   authHandler,
 		v1:     v1Handler,
 		mcp:    mcpHandlers,
+		plat:   platformHandlers,
 	}
 	return router
 }

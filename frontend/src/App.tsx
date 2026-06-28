@@ -4,10 +4,12 @@ import { Routes, Route, Outlet, Navigate, useLocation } from "react-router";
 import Header from "./components/Header";
 import Login from "./pages/Authentication/Login";
 import Signup from "./pages/Authentication/Signup";
-import { useAuth } from "./context/AuthProvider";
+import { AuthProvider, useAuth } from "./context/AuthProvider";
 import NotFound from "./pages/NotFound";
 import EmployeeHome from "./pages/Employee";
 import UserHome from "./pages/Customer";
+import PlatformPage from "./pages/Platform";
+import { isPlatformHost } from "./services/api";
 
 function ProtectedRoute() {
   const { isAuthenticated, loading } = useAuth();
@@ -52,7 +54,7 @@ function MainLayout() {
   );
 }
 
-function App() {
+function TenantApp() {
   const { loading } = useAuth();
   if (loading) return null;
 
@@ -73,6 +75,18 @@ function App() {
       <Route path="/404" element={<NotFound />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+  );
+}
+
+function App() {
+  if (isPlatformHost()) {
+    return <PlatformPage />;
+  }
+
+  return (
+    <AuthProvider>
+      <TenantApp />
+    </AuthProvider>
   );
 }
 

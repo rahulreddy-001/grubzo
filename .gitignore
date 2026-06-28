@@ -36,4 +36,5 @@ grubzo
 
 
 config.json
+config.docker.json
 data/

@@ -11,6 +11,7 @@ export default defineConfig({
     }),
   ],
   server: {
+    allowedHosts: [".grubzo.food"],
     port: 8083,
     strictPort: true,
   },

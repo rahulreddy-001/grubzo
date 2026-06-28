@@ -3,6 +3,7 @@ import { Box, Text, Badge, Flex, Tooltip } from "@radix-ui/themes";
 import CTable from "../../../components/common/CTable";
 import { type Column } from "../../../components/common/CTable";
 import { Info } from "lucide-react";
+import { apiFetch } from "../../../services/api";
 
 type OrderItem = {
   ItemID: number;
@@ -43,7 +44,7 @@ function Orders() {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/v1/order/user_orders");
+      const res = await apiFetch("/api/v1/order/user_orders");
       const data: OrdersResponse = await res.json();
       const list = data.Orders || [];
       setOrders(list);

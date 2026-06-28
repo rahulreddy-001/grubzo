@@ -15,7 +15,7 @@ import (
 type TenantService interface {
 	// Tenant
 	CreateTenant(ctx context.Context, dto *dto.CreateTenant) (*dto.CreateTenantResponse, error)
-	UpdateTenant(ctx context.Context, dto *dto.UpdateTenant) (*dto.UpdateTenantResponse, error)
+	UpdateTenant(ctx context.Context, tenantID uint64, dto *dto.UpdateTenant) (*dto.UpdateTenantResponse, error)
 	GetTenant(ctx context.Context, tenantID uint64) (*dto.GetTenantResponse, error)
 	GetAllTenants(ctx context.Context) (*dto.GetAllTenantsResponse, error)
 
@@ -56,8 +56,10 @@ func (ts *tenantServiceImpl) CreateTenant(ctx context.Context, args *dto.CreateT
 		return nil, err
 	}
 	tenantInfo := dto.TenantInfo{
-		ID:   tenant.ID,
-		Name: tenant.Name,
+		ID:        tenant.ID,
+		Name:      tenant.Name,
+		Code:      tenant.Code,
+		SubDomain: tenant.SubDomain,
 	}
 	response := &dto.CreateTenantResponse{
 		Message: "Tenant created succssfully",
@@ -66,17 +68,19 @@ func (ts *tenantServiceImpl) CreateTenant(ctx context.Context, args *dto.CreateT
 	return response, nil
 }
 
-func (ts *tenantServiceImpl) UpdateTenant(ctx context.Context, args *dto.UpdateTenant) (*dto.UpdateTenantResponse, error) {
+func (ts *tenantServiceImpl) UpdateTenant(ctx context.Context, tenantID uint64, args *dto.UpdateTenant) (*dto.UpdateTenantResponse, error) {
 	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.UpdateTenant")
 	defer span.End()
 
-	tenant, err := ts.repository.UpdateTenant(ctx, args)
+	tenant, err := ts.repository.UpdateTenant(ctx, tenantID, args)
 	if err != nil {
 		return nil, err
 	}
 	tenantInfo := dto.TenantInfo{
-		ID:   tenant.ID,
-		Name: tenant.Name,
+		ID:        tenant.ID,
+		Name:      tenant.Name,
+		Code:      tenant.Code,
+		SubDomain: tenant.SubDomain,
 	}
 	response := &dto.UpdateTenantResponse{
 		Message: "Tenant updated succssfully",
@@ -94,8 +98,10 @@ func (ts *tenantServiceImpl) GetTenant(ctx context.Context, tenantID uint64) (*d
 		return nil, err
 	}
 	tenantInfo := dto.TenantInfo{
-		ID:   tenant.ID,
-		Name: tenant.Name,
+		ID:        tenant.ID,
+		Name:      tenant.Name,
+		Code:      tenant.Code,
+		SubDomain: tenant.SubDomain,
 	}
 	response := &dto.GetTenantResponse{
 		Message: "Tenant fetched succssfully",
@@ -115,8 +121,10 @@ func (ts *tenantServiceImpl) GetAllTenants(ctx context.Context) (*dto.GetAllTena
 	tenantsInfo := []dto.TenantInfo{}
 	for _, tenant := range tenants {
 		tenantsInfo = append(tenantsInfo, dto.TenantInfo{
-			ID:   tenant.ID,
-			Name: tenant.Name,
+			ID:        tenant.ID,
+			Name:      tenant.Name,
+			Code:      tenant.Code,
+			SubDomain: tenant.SubDomain,
 		})
 	}
 	return &dto.GetAllTenantsResponse{

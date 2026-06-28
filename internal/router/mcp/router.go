@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"grubzo/internal/config"
 	mcpcore "grubzo/internal/mcp"
 	"grubzo/internal/mcp/actor"
 	"grubzo/internal/mcp/agent"
@@ -24,9 +25,10 @@ type Handlers struct {
 	Tools        *tools.Dispatcher
 	Agent        *agent.Service
 	RDB          *redis.Client
+	Config       *config.Config
 }
 
-func NewHandlers(logger *zap.Logger, repository *repository.Repository, rdb *redis.Client, sessionStore session.Store, components *mcpcore.Components) *Handlers {
+func NewHandlers(logger *zap.Logger, repository *repository.Repository, rdb *redis.Client, sessionStore session.Store, components *mcpcore.Components, config *config.Config) *Handlers {
 	return &Handlers{
 		Logger:       logger,
 		Repository:   repository,
@@ -34,11 +36,12 @@ func NewHandlers(logger *zap.Logger, repository *repository.Repository, rdb *red
 		Tools:        components.Dispatcher,
 		Agent:        components.AgentService,
 		RDB:          rdb,
+		Config:       config,
 	}
 }
 
 func (h *Handlers) Setup(engine *gin.Engine) {
-	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore)
+	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore, h.Config.App.Domain, h.Config.Environment())
 	ratelimitGenerator := middlewares.RateLimiterMiddlewareGenerator()
 	twoReqPerSecSlidingWindowLogForTenantAndUser := ratelimitGenerator(ratelimiter.NewSlidingWindowLog(h.RDB, 10, time.Second), middlewares.RLK_TENANT, middlewares.RLK_USER)
 

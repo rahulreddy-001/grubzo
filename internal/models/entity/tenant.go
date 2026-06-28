@@ -8,6 +8,7 @@ type Tenant struct {
 	ID        uint64    `gorm:"primaryKey;autoIncrement"`
 	Name      string    `gorm:"not null;default:''"`
 	Code      string    `gorm:"not null;unique"`
+	SubDomain string    `gorm:"not null;unique"`
 	CreatedAt time.Time `gorm:"precision:6"`
 	UpdatedAt time.Time `gorm:"precision:6"`
 

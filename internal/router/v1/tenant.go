@@ -23,12 +23,13 @@ func (h Handlers) CreateTenant(c *gin.Context) {
 }
 
 func (h Handlers) UpdateTenant(c *gin.Context) {
+	tenantID := ext.Ctx(c).TenantID()
 	createTenantDTO := &dto.UpdateTenant{}
 	if err := c.ShouldBindJSON(&createTenantDTO); err != nil {
 		ext.Ctx(c).BadRequestBody()
 		return
 	}
-	response, err := h.SS.TenantService.UpdateTenant(c.Request.Context(), createTenantDTO)
+	response, err := h.SS.TenantService.UpdateTenant(c.Request.Context(), tenantID, createTenantDTO)
 	if err != nil {
 		ext.Ctx(c).RespondWithError(err)
 		return

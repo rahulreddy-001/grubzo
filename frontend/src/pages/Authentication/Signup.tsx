@@ -12,6 +12,7 @@ import GoogleIcon from "@mui/icons-material/Google";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import authService from "../../services/auth/auth.service";
 import { useErrorHandler } from "../../hooks/useErrorHandler";
+import { apiUrl } from "../../services/api";
 
 const Signup: React.FC = () => {
   const { showError } = useErrorHandler();
@@ -58,7 +59,9 @@ const Signup: React.FC = () => {
   };
 
   const handleOAuth = (provider: string) => {
-    window.location.pathname = `auth/v1/oauth/login/${provider.toLowerCase()}`;
+    window.location.href = apiUrl(
+      `/auth/v1/oauth/login/${provider.toLowerCase()}`
+    );
   };
 
   return (

@@ -5,6 +5,7 @@ import type { RootState } from "../../../services/store";
 import type { Item } from "../../../types/item";
 import cartService from "../../../services/cart/cart.service";
 import type { UpdateItemQuantityPayload } from "../../../types/cart.d";
+import { apiUrl } from "../../../services/api";
 import { Minus, Plus, Search } from "lucide-react";
 
 function Items() {
@@ -134,7 +135,7 @@ function Items() {
 
                   <Box style={{ width: 140, position: "relative" }}>
                     <img
-                      src={item.Files?.[0]?.URL}
+                      src={apiUrl(item.Files?.[0]?.URL ?? "")}
                       style={{
                         width: "100%",
                         height: 110,

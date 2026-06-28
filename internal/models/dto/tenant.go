@@ -1,15 +1,13 @@
 package dto
 
 type CreateTenant struct {
-	ID   *uint64 `json:"ID"`
-	Name string  `json:"Name" binding:"required"`
-	Code string  `json:"Code" binding:"required"`
+	Name      string `json:"Name" binding:"required"`
+	Code      string `json:"Code" binding:"required"`
+	SubDomain string `json:"SubDomain" binding:"required"`
 }
 
 type UpdateTenant struct {
-	ID   uint64  `json:"ID" binding:"required"`
 	Name *string `json:"Name"`
-	Code *string `json:"Code"`
 }
 
 type CreateTenantResponse commonTenantResponse
@@ -25,6 +23,8 @@ type commonTenantResponse struct {
 	Tenant  TenantInfo `json:"Tenant"`
 }
 type TenantInfo struct {
-	ID   uint64 `json:"ID"`
-	Name string `json:"Name"`
+	ID        uint64 `json:"ID"`
+	Name      string `json:"Name"`
+	Code      string `json:"Code"`
+	SubDomain string `json:"SubDomain"`
 }

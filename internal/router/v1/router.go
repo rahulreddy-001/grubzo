@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"grubzo/internal/config"
 	"grubzo/internal/repository"
 	"grubzo/internal/router/middlewares"
 	"grubzo/internal/router/session"
@@ -18,10 +19,11 @@ type Handlers struct {
 	Repository   *repository.Repository
 	SessionStore session.Store
 	SS           *services.Services
+	Config       *config.Config
 }
 
 func (h Handlers) Setup(r *gin.RouterGroup) {
-	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore)
+	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore, h.Config.App.Domain, h.Config.Environment())
 	generateMiddleware := middlewares.AccessControlMiddlewareGenerator(h.SS.RBAC, h.SessionStore)
 	itemsTabAccess := generateMiddleware(permission.Items)
 	employeeTabAccess := generateMiddleware(permission.Employee)
@@ -83,14 +85,14 @@ func (h Handlers) Setup(r *gin.RouterGroup) {
 
 		cart := api.Group("cart", protected)
 		{
-			cart.GET("/", h.GetCart)
+			cart.GET("", h.GetCart)
 			cart.PUT("/item_quantity", h.SetItemQuantity)
-			cart.DELETE("/", h.ClearCart)
+			cart.DELETE("", h.ClearCart)
 		}
 
 		wallet := api.Group("wallet", protected)
 		{
-			wallet.GET("/", h.GetWalletBalance)
+			wallet.GET("", h.GetWalletBalance)
 			wallet.POST("/recharge_order", h.CreateWalletRechargeOrder)
 			wallet.POST("/verify_recharge", h.VerifyWalletRechargePayment)
 		}

@@ -4,8 +4,8 @@ import "time"
 
 type WalletBalance struct {
 	ID       uint64 `gorm:"primaryKey;autoIncrement"`
-	TenantID uint64 `gorm:"not null;index:idx_tx_wallet"`
-	UserID   uint64 `gorm:"not null;index:idx_tx_wallet"`
+	TenantID uint64 `gorm:"not null;index:idx_wallet_balance_tenant_user"`
+	UserID   uint64 `gorm:"not null;index:idx_wallet_balance_tenant_user"`
 	Balance  int64  `gorm:"not null"`
 
 	UpdatedAt time.Time `gorm:"precision:6"`
@@ -14,8 +14,8 @@ type WalletBalance struct {
 type WalletTransaction struct {
 	ID uint64 `gorm:"primaryKey;autoIncrement"`
 
-	TenantID      uint64 `gorm:"not null;index:idx_tx_wallet"`
-	UserID        uint64 `gorm:"not null;index:idx_tx_wallet"`
+	TenantID      uint64 `gorm:"not null;index:idx_wallet_tx_tenant_user"`
+	UserID        uint64 `gorm:"not null;index:idx_wallet_tx_tenant_user"`
 	Amount        int64  `gorm:"not null"`
 	Type          string `gorm:"type:varchar(16);not null"` // credit, debit
 	BalanceAfter  int64  `gorm:"not null"`

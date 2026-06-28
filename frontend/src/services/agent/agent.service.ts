@@ -1,4 +1,5 @@
 import axios from "axios";
+import { apiFetch } from "../api";
 import type {
   AgentChatRequest,
   AgentSessionSummary,
@@ -67,13 +68,12 @@ const AgentService = {
     body: AgentChatRequest,
     onEvent: (event: AgentStreamEvent) => void
   ): Promise<void> {
-    const response = await fetch(CHAT_URL, {
+    const response = await apiFetch(CHAT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "text/event-stream",
       },
-      credentials: "include",
       body: JSON.stringify(body),
     });
 

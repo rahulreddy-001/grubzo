@@ -3,59 +3,54 @@ package cmd
 import (
 	"context"
 	"errors"
-	"grubzo/internal/utils"
-	"time"
+	"fmt"
 
 	"github.com/blendle/zapdriver"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-func getLogger() (logger *zap.Logger, cleanup func(context.Context) error) {
-	if c.DevMode {
+func getLogger() (*zap.Logger, func(context.Context) error) {
+	if c.IsDev() {
 		return getCLILogger()
 	}
-	// cfg := zap.Config{
-	// 	Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
-	// 	Encoding:         "json",
-	// 	EncoderConfig:    zapdriver.NewProductionEncoderConfig(),
-	// 	OutputPaths:      []string{"stdout"},
-	// 	ErrorOutputPaths: []string{"stderr"},
-	// }
-	// logger, _ = cfg.Build(zapdriver.WrapCore(zapdriver.ServiceName(fmt.Sprintf("grubzo.%s.%s", Version, Revision))))
 
-	lokiWriter := utils.NewLokiWriter(
-		c.LokiHost,
-		map[string]string{
-			"job":     "GrubzoServer",
-			"service": "grubzo",
-			"env":     "prod",
-		},
-		2*time.Second,
+	cfg := zap.Config{
+		Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
+		Encoding:         "json",
+		EncoderConfig:    zapdriver.NewProductionEncoderConfig(),
+		OutputPaths:      []string{"stdout"},
+		ErrorOutputPaths: []string{"stderr"},
+	}
+
+	logger, err := cfg.Build(
+		zapdriver.WrapCore(
+			zapdriver.ServiceName(
+				fmt.Sprintf("grubzo.%s.%s", Version, Revision),
+			),
+		),
 	)
-	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(zapdriver.NewProductionEncoderConfig()),
-		zapcore.AddSync(lokiWriter),
-		zap.InfoLevel,
-	)
-	logger = zap.New(core)
-	cleanup = func(ctx context.Context) error {
+	if err != nil {
+		panic(err)
+	}
+
+	cleanup := func(ctx context.Context) error {
 		return errors.Join(
 			logger.Sync(),
-			lokiWriter.Close(ctx),
 		)
 	}
+
 	return logger, cleanup
 }
 
 func getCLILogger() (logger *zap.Logger, cleanup func(context.Context) error) {
 	level := zap.NewAtomicLevel()
-	if c.DevMode {
+	if c.IsDev() {
 		level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	}
 	cfg := zap.Config{
 		Level:       level,
-		Development: c.DevMode,
+		Development: c.IsDev(),
 		Encoding:    "console",
 		EncoderConfig: zapcore.EncoderConfig{
 			TimeKey:        "T",

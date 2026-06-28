@@ -8,6 +8,7 @@ import CButton from "../../../components/common/CButton";
 import CModel from "../../../components/common/CModel";
 import CInput from "../../../components/common/CInput";
 import { useErrorHandler } from "../../../hooks/useErrorHandler";
+import { apiFetch } from "../../../services/api";
 
 const formatMoney = (p: number) => `₹${(p / 100).toFixed(2)}`;
 
@@ -55,7 +56,7 @@ function Wallet() {
 
   const loadWallet = async () => {
     try {
-      const res = await fetch("/api/v1/wallet/");
+      const res = await apiFetch("/api/v1/wallet");
       const data: WalletResponseDTO = await res.json();
 
       data.Wallet.PendingRecharges = data.Wallet.PendingRecharges ?? [];
@@ -87,7 +88,7 @@ function Wallet() {
 
       handler: async (response: any) => {
         try {
-          await fetch("/api/v1/wallet/verify_recharge", {
+          await apiFetch("/api/v1/wallet/verify_recharge", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -117,7 +118,7 @@ function Wallet() {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/v1/wallet/recharge_order", {
+      const res = await apiFetch("/api/v1/wallet/recharge_order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ Amount: value }),

@@ -9,6 +9,7 @@ import type {
   Location,
 } from "../../types/common";
 import store from "../store";
+import { apiUrl } from "../api";
 
 import {
   fetchRBACInfo,
@@ -98,7 +99,8 @@ const CommonService = {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
 
-      xhr.open("POST", "/api/v1/files/upload");
+      xhr.open("POST", apiUrl("/api/v1/files/upload"));
+      xhr.withCredentials = true;
 
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {

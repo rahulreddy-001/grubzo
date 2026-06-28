@@ -11,7 +11,14 @@ type Config struct {
 		Domain string `json:"domain"`
 	} `json:"app"`
 
+	Platform struct {
+		AdminUser     string `json:"adminUser"`
+		AdminPassword string `json:"adminPassword"`
+	} `json:"platform"`
+
 	Database struct {
+		Type string `json:"type"`
+
 		Redis struct {
 			Host     string `json:"host"`
 			Port     int    `json:"port"`
@@ -29,6 +36,13 @@ type Config struct {
 			MaxIdle  int    `json:"maxIdle"`
 			LifeTime int    `json:"lifeTime"`
 		} `json:"sql"`
+
+		SQLite struct {
+			Path     string `json:"path"`
+			MaxOpen  int    `json:"maxOpen"`
+			MaxIdle  int    `json:"maxIdle"`
+			LifeTime int    `json:"lifeTime"`
+		} `json:"sqlite"`
 	} `json:"database"`
 
 	Storage struct {
@@ -76,7 +90,7 @@ type Config struct {
 	TempoHost       string `json:"tempohost"`
 	JWT256BitSecret string `json:"jwt256bitsecret"`
 	SessionStorage  string `json:"sessionStorage"`
-	DevMode         bool   `json:"devMode"`
+	Env             string `json:"env"`
 	ShutdownTimeout int    `json:"shutdownTimeout"`
 	Pprof           bool   `json:"pprof"`
 }
@@ -87,4 +101,15 @@ func LoadConfig() (*Config, error) {
 	} else {
 		return cfg, nil
 	}
+}
+
+func (c *Config) Environment() string {
+	if c.Env == "" {
+		return "dev"
+	}
+	return c.Env
+}
+
+func (c *Config) IsDev() bool {
+	return c.Environment() == "dev"
 }

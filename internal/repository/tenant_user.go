@@ -46,7 +46,7 @@ func (r *Repository) validateTenantUser(usr *entity.TenantUser, db *gorm.DB) err
 
 	// check roles provided exists
 	sess = db.Session(&gorm.Session{}).Model(entity.UserRole{})
-	err := sess.Where("tenant_id = ? AND name=ANY(?)", usr.TenantID, usr.Roles).Count(&count).Error
+	err := sess.Where("tenant_id = ? AND name IN ?", usr.TenantID, []string(usr.Roles)).Count(&count).Error
 	if err != nil {
 		return err
 	}

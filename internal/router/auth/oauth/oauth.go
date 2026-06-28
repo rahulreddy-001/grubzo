@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"grubzo/internal/models/dto"
+	"grubzo/internal/models/entity"
 	"grubzo/internal/models/query"
 	"grubzo/internal/repository"
 	"grubzo/internal/router/ext"
 	"grubzo/internal/router/session"
 	"grubzo/internal/utils/random"
+	"grubzo/internal/utils/tenantutils"
 	"net/http"
 	"net/url"
 	"strings"
@@ -45,6 +47,7 @@ type OAuthUser struct {
 type Auth struct {
 	providers    map[string]Provider
 	domain       string
+	env          string
 	router       *gin.RouterGroup
 	sessionStore session.Store
 	repo         *repository.Repository
@@ -78,17 +81,25 @@ func (a *Auth) WithDomain(domain string) *Auth {
 	a.domain = domain
 	return a
 }
+func (a *Auth) WithEnv(env string) *Auth {
+	a.env = env
+	return a
+}
 func (a *Auth) WithLogger(logger *zap.Logger) *Auth {
 	a.logger = logger.Named("oauth")
 	return a
 }
 
 func (a *Auth) Init() *Auth {
-	tenantID := uint64(2)
 	for _, p := range a.providers {
 		provider := p
 		a.router.GET(fmt.Sprintf("/login/%s", provider.GetType()), func(ctx *gin.Context) {
-			state := random.SecureAlphaNumeric(50)
+			subDomain, ok := tenantutils.SubDomainFromHost(ctx.Request.Host, a.domain, a.env)
+			if !ok {
+				ext.Ctx(ctx).RespondWithError(ext.Error("tenant subdomain is required"))
+				return
+			}
+			state := fmt.Sprintf("%s.%s", random.SecureAlphaNumeric(50), subDomain)
 			ctx.SetCookie("oauth_state", state, 300, "/", "", false, true)
 			ctx.Redirect(http.StatusPermanentRedirect, provider.GetConfig().AuthCodeURL(state))
 		})
@@ -110,11 +121,16 @@ func (a *Auth) Init() *Auth {
 				ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
 				return
 			}
-			userEntity, err := a.repo.FindUser(c.Request.Context(), query.NewUserQuery(tenantID).WithEmail(user.Email))
+			tenant, err := a.tenantFromOAuthState(c)
+			if err != nil {
+				ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
+				return
+			}
+			userEntity, err := a.repo.FindUser(c.Request.Context(), query.NewUserQuery(tenant.ID).WithEmail(user.Email))
 			if err != nil {
 				if err.Error() == repository.UserNotFound {
 					userEntity, err = a.repo.CreateUser(c.Request.Context(), &dto.CreateUser{
-						TenantID: tenantID,
+						TenantID: tenant.ID,
 						UserID:   user.ID,
 						Email:    user.Email,
 						Name:     user.Name,
@@ -192,8 +208,18 @@ func (a *Auth) RedirectToLoginPage(ctx *gin.Context) {
 }
 
 func (a *Auth) RedirectToLoginSuccessPage(ctx *gin.Context) {
-	// tenentID := ext.Ctx(ctx).TenantID()
-	// subDomain, err := a.repo.GetTenantSubDomain()
 	subDomain := "www"
-	ctx.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s.%s", subDomain, a.domain))
+	if tenant, err := a.tenantFromOAuthState(ctx); err == nil {
+		subDomain = tenant.SubDomain
+	}
+	ctx.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s", tenantutils.HostForSubDomain(subDomain, a.domain, a.env)))
+}
+
+func (a *Auth) tenantFromOAuthState(ctx *gin.Context) (*entity.Tenant, error) {
+	parts := strings.Split(ctx.Query("state"), ".")
+	if len(parts) < 2 {
+		return nil, errors.New("missing tenant state")
+	}
+	subDomain := parts[len(parts)-1]
+	return a.repo.GetTenant(ctx.Request.Context(), query.NewTenantQuery().WithSubDomain(subDomain))
 }
