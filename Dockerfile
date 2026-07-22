@@ -47,3 +47,6 @@ CMD ["./grubzo", "serve"]
 
 # docker build -t rohana001/grubzo-frontend:v0.1.1 --target frontend .
 # docker build -t rohana001/grubzo-backend:v0.1.1 --target backend .
+
+# docker push rohana001/grubzo-frontend:v0.1.1
+# docker push rohana001/grubzo-backend:v0.1.1

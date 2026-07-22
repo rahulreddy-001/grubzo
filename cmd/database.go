@@ -42,11 +42,13 @@ func buildPostgresDSN(c *config.Config) string {
 	}
 
 	q := u.Query()
-	q.Set("sslmode", "disable")
+	q.Set("sslmode", "require")
+	if !c.IsDev() {
+		q.Set("sslmode", "disable")
+	}
 	q.Set("TimeZone", "UTC")
 
 	u.RawQuery = q.Encode()
-
 	return u.String()
 }
 
