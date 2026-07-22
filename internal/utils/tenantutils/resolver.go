@@ -12,12 +12,15 @@ import (
 
 Tenant subdomain is provisioned dynamically (e.g. "demo").
 
-FE / BE URLs per environment:
+Tenant URLs per environment:
 
-  dev:   demo.dev.grubzo.food     /  demo.dev-api.grubzo.food
-  qa:    demo.qa.grubzo.food      /  demo.qa-api.grubzo.food
-  stage: demo.stage.grubzo.food   /  demo.stage-api.grubzo.food
-  prod:  demo.grubzo.food         /  demo.api.grubzo.food
+  dev:   demo.dev.grubzo.food
+  qa:    demo.qa.grubzo.food
+  stage: demo.stage.grubzo.food
+  prod:  demo.grubzo.food
+
+Backend traffic is routed on the same host by path prefixes such as
+/api, /platform, and /auth.
 */
 
 // envMiddleSegments maps each non-prod env to the FE segment that sits
@@ -29,17 +32,24 @@ var envMiddleSegments = map[string]string{
 	"stage": ".stage",
 }
 
-// envAPIMiddleSegments maps each non-prod env to the BE segment.
-// e.g. dev -> ".dev-api", so demo.dev-api.grubzo.food -> strip ".dev-api" -> "demo"
-var envAPIMiddleSegments = map[string]string{
-	"dev":   ".dev-api",
-	"qa":    ".qa-api",
-	"stage": ".stage-api",
-}
-
 var platformSubDomains = map[string]struct{}{
 	"admin":    {},
 	"platform": {},
+}
+
+func normalizeEnvironment(env string) (string, bool) {
+	switch strings.ToLower(strings.TrimSpace(env)) {
+	case "", "dev", "development":
+		return "dev", true
+	case "qa":
+		return "qa", true
+	case "stage", "staging":
+		return "stage", true
+	case "prod", "production":
+		return "prod", true
+	default:
+		return "", false
+	}
 }
 
 // SubDomainFromHost extracts the tenant subdomain from a host header.
@@ -56,10 +66,10 @@ func SubDomainFromHost(host, appDomain, env string) (string, bool) {
 }
 
 // PlatformFromHost extracts the platform subdomain from a host header.
-// Supported platform hosts follow the same FE / BE environment rules as tenants:
+// Supported platform hosts follow the same environment rules as tenants:
 //
-//	dev:  admin.dev.grubzo.food / admin.dev-api.grubzo.food
-//	prod: admin.grubzo.food     / admin.api.grubzo.food
+//	dev:  admin.dev.grubzo.food
+//	prod: admin.grubzo.food
 func PlatformFromHost(host, appDomain, env string) (string, bool) {
 	sub, ok := labelFromHost(host, appDomain, env)
 	if !ok {
@@ -76,10 +86,36 @@ func IsPlatformHost(host, appDomain, env string) bool {
 	return ok
 }
 
+// IsHostAllowedForEnv returns true when a request host is either outside the
+// managed app domain (for localhost/IP based development) or matches the
+// configured environment exactly.
+func IsHostAllowedForEnv(host, appDomain, env string) bool {
+	host = strings.ToLower(strings.TrimSpace(host))
+	appDomain = strings.ToLower(strings.Trim(strings.TrimSpace(appDomain), "."))
+
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+
+	if host == "" || appDomain == "" || host == "localhost" || net.ParseIP(host) != nil {
+		return true
+	}
+
+	if host != appDomain && !strings.HasSuffix(host, "."+appDomain) {
+		return true
+	}
+
+	_, ok := labelFromHost(host, appDomain, env)
+	return ok
+}
+
 func labelFromHost(host, appDomain, env string) (string, bool) {
 	host = strings.ToLower(strings.TrimSpace(host))
 	appDomain = strings.ToLower(strings.Trim(strings.TrimSpace(appDomain), "."))
-	env = strings.ToLower(strings.TrimSpace(env))
+	env, ok := normalizeEnvironment(env)
+	if !ok {
+		return "", false
+	}
 
 	// Strip port if present.
 	if h, _, err := net.SplitHostPort(host); err == nil {
@@ -102,21 +138,15 @@ func labelFromHost(host, appDomain, env string) (string, bool) {
 		return "", false
 	}
 
-	// For non-prod envs, strip either the FE segment (".dev") or the
-	// matching BE segment (".dev-api").
+	// For non-prod envs, strip the environment segment (".dev", ".qa", ".stage").
 	if seg, ok := envMiddleSegments[env]; ok {
-		apiSeg := envAPIMiddleSegments[env]
-		switch {
-		case strings.HasSuffix(sub, apiSeg):
-			sub = strings.TrimSuffix(sub, apiSeg)
-		case strings.HasSuffix(sub, seg):
+		if strings.HasSuffix(sub, seg) {
 			sub = strings.TrimSuffix(sub, seg)
-		default:
+		} else {
 			return "", false
 		}
-	} else if strings.HasSuffix(sub, ".api") {
-		// prod BE host: demo.api.grubzo.food -> demo
-		sub = strings.TrimSuffix(sub, ".api")
+	} else if env != "prod" {
+		return "", false
 	}
 
 	// After stripping, the remaining part must be a single label (no dots).

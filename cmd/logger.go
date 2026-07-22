@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/blendle/zapdriver"
 	"go.uber.org/zap"
@@ -25,9 +24,7 @@ func getLogger() (*zap.Logger, func(context.Context) error) {
 
 	logger, err := cfg.Build(
 		zapdriver.WrapCore(
-			zapdriver.ServiceName(
-				fmt.Sprintf("grubzo.%s.%s", Version, Revision),
-			),
+			zapdriver.ServiceName("grubzo"),
 		),
 	)
 	if err != nil {

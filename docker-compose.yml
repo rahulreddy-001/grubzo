@@ -60,17 +60,6 @@ services:
       - ./monitoring/tempo.yaml:/etc/tempo/tempo.yaml
     command: ["-config.file=/etc/tempo/tempo.yaml"]
 
-  loki:
-    image: grafana/loki:latest
-    container_name: loki_container
-    restart: unless-stopped
-    ports:
-      - "3200:3100"
-    volumes:
-      - ./data/loki:/loki
-      - ./monitoring/loki.yaml:/etc/loki/local-config.yaml
-    command: ["-config.file=/etc/loki/local-config.yaml"]
-
   prometheus:
     image: prom/prometheus
     container_name: prometheus_container

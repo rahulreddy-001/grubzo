@@ -37,6 +37,7 @@ func serveCommand() *cobra.Command {
 				defer cancel()
 				_ = closeLogger(ctx)
 			}()
+			logger = logger.With(zap.String("instance", c.Instance))
 
 			logger.Info(fmt.Sprintf("grubzo %s (revision %s)", Version, Revision))
 

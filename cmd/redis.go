@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"grubzo/internal/config"
 
@@ -16,23 +17,31 @@ func getRedisClient(cfg *config.Config) (*redis.Client, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		return redis.NewClient(&redis.Options{
 			Addr: mr.Addr(),
 		}), nil
 	}
 
-	rdb := redis.NewClient(&redis.Options{
+	opts := &redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", cfg.Database.Redis.Host, cfg.Database.Redis.Port),
 		Password: cfg.Database.Redis.Password,
 		DB:       cfg.Database.Redis.DB,
-	})
+	}
+
+	if cfg.Database.Redis.TLSEnabled {
+		opts.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			ServerName: cfg.Database.Redis.Host,
+		}
+	}
+
+	rdb := redis.NewClient(opts)
+
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
 		return nil, err
 	}
 	if err := redisotel.InstrumentTracing(rdb); err != nil {
 		return nil, err
 	}
-
 	return rdb, nil
 }

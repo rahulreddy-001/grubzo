@@ -31,20 +31,18 @@ type Router struct {
 
 func Setup(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repository.Repository, ss *services.Services, config *config.Config) *gin.Engine {
 	engine := newRouter(logger.Named("router"), db, rdb, repository, ss, config)
+	api := engine.router.Group("/api")
 
-	engine.router.GET("/health", func(c *gin.Context) {
+	api.GET("/health", func(c *gin.Context) {
 		c.String(200, "OK")
 	})
-	engine.router.GET("/metrics", gin.WrapH(promhttp.Handler()))
-
-	engine.plat.Setup(engine.router)
+	api.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	auth := engine.router.Group("/auth")
 	engine.auth.Setup(auth)
 
-	api := engine.router.Group("/api")
+	engine.plat.Setup(engine.router)
 	engine.v1.Setup(api)
-
 	engine.mcp.Setup(engine.router)
 
 	return engine.router
@@ -57,12 +55,13 @@ func newRouter(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *r
 	}
 	isDevMode := config.IsDev()
 
-	r := gin.New()
 	if !isDevMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
+	r := gin.New()
 	r.Use(middlewares.RecoverPanic(logger.Named("painc_log")))
 	r.Use(middlewares.TenantCORS(config.App.Domain, config.Environment(), isDevMode))
+	r.Use(middlewares.TenantHostGuard(config.App.Domain, config.Environment()))
 	r.Use(middlewares.AccessLogging(logger.Named("access_log"), isDevMode))
 	r.Use(otelgin.Middleware("grubzo_gin", otelgin.WithGinFilter(func(c *gin.Context) bool {
 		return c.FullPath() != ""

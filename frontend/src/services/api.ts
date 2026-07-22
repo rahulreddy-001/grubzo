@@ -7,12 +7,6 @@ const ENV_MIDDLE_SEGMENTS: Record<string, string> = {
   stage: "stage",
 };
 
-const ENV_API_MIDDLE_SEGMENTS: Record<string, string> = {
-  dev: "dev-api",
-  qa: "qa-api",
-  stage: "stage-api",
-};
-
 const DEFAULT_APP_DOMAIN = "grubzo.food";
 const PLATFORM_SUBDOMAINS = new Set(["admin"]);
 
@@ -48,22 +42,11 @@ function labelFromHost(
     return null;
   }
 
-  for (const [env, apiSegment] of Object.entries(ENV_API_MIDDLE_SEGMENTS)) {
-    if (label.endsWith(`.${apiSegment}`)) {
-      label = label.slice(0, -apiSegment.length - 1);
-      return label && !label.includes(".") ? { label, env } : null;
-    }
-  }
-
   for (const [env, segment] of Object.entries(ENV_MIDDLE_SEGMENTS)) {
     if (label.endsWith(`.${segment}`)) {
       label = label.slice(0, -segment.length - 1);
       return label && !label.includes(".") ? { label, env } : null;
     }
-  }
-
-  if (label.endsWith(".api")) {
-    label = label.slice(0, -".api".length);
   }
 
   return label && !label.includes(".") ? { label } : null;
@@ -87,19 +70,7 @@ export function resolveApiBaseUrl(): string {
     return "";
   }
 
-  const appDomain = trimDots(
-    import.meta.env.VITE_APP_DOMAIN || DEFAULT_APP_DOMAIN
-  );
-  const { hostname, protocol } = window.location;
-  const parsed = labelFromHost(hostname, appDomain);
-  if (!parsed) {
-    return "";
-  }
-
-  const apiMiddleSegment = parsed.env
-    ? ENV_API_MIDDLE_SEGMENTS[parsed.env]
-    : "api";
-  return `${protocol}//${parsed.label}.${apiMiddleSegment}.${appDomain}`;
+  return "";
 }
 
 export const apiBaseUrl = resolveApiBaseUrl();
