@@ -25,17 +25,28 @@ type S3FileStorage struct {
 }
 
 func NewS3FileStorage(bucket, region, endpoint, apiKey, apiSecret string, forcePathStyle bool) (*S3FileStorage, error) {
-	cfg, err := config.LoadDefaultConfig(context.Background(),
+	opts := []func(*config.LoadOptions) error{
 		config.WithRegion(region),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(apiKey, apiSecret, "")),
-	)
+	}
+
+	// Only use static creds if explicitly provided.
+	// In-cluster with Pod Identity/IRSA, leave both empty and the default.
+	// chain will pick up creds automatically.
+	if apiKey != "" && apiSecret != "" {
+		opts = append(opts, config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(apiKey, apiSecret, ""),
+		))
+	}
+
+	cfg, err := config.LoadDefaultConfig(context.Background(), opts...)
 	if err != nil {
 		return nil, err
 	}
-
 	client := s3.NewFromConfig(cfg, func(opt *s3.Options) {
 		opt.UsePathStyle = forcePathStyle
-		opt.BaseEndpoint = aws.String(endpoint)
+		if endpoint != "" {
+			opt.BaseEndpoint = aws.String(endpoint)
+		}
 	})
 
 	m := &S3FileStorage{
@@ -43,7 +54,6 @@ func NewS3FileStorage(bucket, region, endpoint, apiKey, apiSecret string, forceP
 		client:  client,
 		mutexes: utils.NewKeyMutex(256),
 	}
-
 	return m, nil
 }
 

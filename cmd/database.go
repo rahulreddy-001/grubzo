@@ -43,7 +43,7 @@ func buildPostgresDSN(c *config.Config) string {
 
 	q := u.Query()
 	q.Set("sslmode", "require")
-	if !c.IsDev() {
+	if c.IsDev() {
 		q.Set("sslmode", "disable")
 	}
 	q.Set("TimeZone", "UTC")
