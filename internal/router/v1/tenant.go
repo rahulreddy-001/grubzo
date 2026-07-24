@@ -61,3 +61,13 @@ func (h Handlers) GetAllTenants(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response)
 }
+
+func (h Handlers) GetTenants(c *gin.Context) {
+	response, err := h.SS.TenantService.GetTenants(c.Request.Context())
+	if err != nil {
+		ext.Ctx(c).RespondWithError(err)
+		return
+	}
+	c.Status(http.StatusOK)
+	c.Writer.WriteString(string(response))
+}

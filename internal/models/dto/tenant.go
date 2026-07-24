@@ -17,6 +17,7 @@ type GetAllTenantsResponse struct {
 	Message string       `json:"Message"`
 	Tenants []TenantInfo `json:"Tenants"`
 }
+type GetSubDomainsResponse string
 
 type commonTenantResponse struct {
 	Message string     `json:"Message"`

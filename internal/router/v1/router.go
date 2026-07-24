@@ -50,6 +50,7 @@ func (h Handlers) Setup(r *gin.RouterGroup) {
 			tenant.GET("/:tenant_id", h.GetTenantByID)
 			tenant.GET("/all", h.GetAllTenants)
 		}
+		api.GET("/tenants", h.GetTenants)
 
 		location := api.Group("/location", protected)
 		{

@@ -7,6 +7,7 @@ import (
 	"grubzo/internal/models/dto"
 	"grubzo/internal/models/query"
 	"grubzo/internal/repository"
+	"strings"
 
 	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
@@ -18,6 +19,7 @@ type TenantService interface {
 	UpdateTenant(ctx context.Context, tenantID uint64, dto *dto.UpdateTenant) (*dto.UpdateTenantResponse, error)
 	GetTenant(ctx context.Context, tenantID uint64) (*dto.GetTenantResponse, error)
 	GetAllTenants(ctx context.Context) (*dto.GetAllTenantsResponse, error)
+	GetTenants(ctx context.Context) (dto.GetSubDomainsResponse, error)
 
 	// TenantLocation
 	CreateTenantLocation(ctx context.Context, dto *dto.CreateTenantLocation) (*dto.CreateTenantLocationResponse, error)
@@ -131,4 +133,21 @@ func (ts *tenantServiceImpl) GetAllTenants(ctx context.Context) (*dto.GetAllTena
 		Message: "Tenants fetched successfully",
 		Tenants: tenantsInfo,
 	}, nil
+}
+
+func (ts *tenantServiceImpl) GetTenants(ctx context.Context) (dto.GetSubDomainsResponse, error) {
+	ctx, span := otel.Tracer("TenantService").Start(ctx, "TenantService.GetAllTenants")
+	defer span.End()
+
+	tenants, err := ts.repository.GetTenants(ctx, query.NewTenantQuery())
+	if err != nil {
+		return "", err
+	}
+	subDomains := []string{}
+	for _, tenant := range tenants {
+		subDomains = append(subDomains, tenant.SubDomain)
+	}
+	list := strings.Join(subDomains, ",")
+	return dto.GetSubDomainsResponse(list), nil
+
 }
