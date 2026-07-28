@@ -40,13 +40,6 @@ type Config struct {
 			MaxIdle  int    `json:"maxIdle"`
 			LifeTime int    `json:"lifeTime"`
 		} `json:"sql"`
-
-		SQLite struct {
-			Path     string `json:"path"`
-			MaxOpen  int    `json:"maxOpen"`
-			MaxIdle  int    `json:"maxIdle"`
-			LifeTime int    `json:"lifeTime"`
-		} `json:"sqlite"`
 	} `json:"database"`
 
 	Storage struct {
@@ -164,11 +157,6 @@ func LoadConfig() (*Config, error) {
 	cfg.Database.SQL.MaxOpen = getEnvInt("DATABASE_SQL_MAX_OPEN", 10)
 	cfg.Database.SQL.MaxIdle = getEnvInt("DATABASE_SQL_MAX_IDLE", 5)
 	cfg.Database.SQL.LifeTime = getEnvInt("DATABASE_SQL_LIFETIME", 3600)
-
-	cfg.Database.SQLite.Path = getEnv("DATABASE_SQLITE_PATH", "./grubzo.db")
-	cfg.Database.SQLite.MaxOpen = getEnvInt("DATABASE_SQLITE_MAX_OPEN", 1)
-	cfg.Database.SQLite.MaxIdle = getEnvInt("DATABASE_SQLITE_MAX_IDLE", 1)
-	cfg.Database.SQLite.LifeTime = getEnvInt("DATABASE_SQLITE_LIFETIME", 3600)
 
 	// Storage
 	cfg.Storage.Type = getEnv("STORAGE_TYPE", "local")
