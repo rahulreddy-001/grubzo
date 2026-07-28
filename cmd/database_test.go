@@ -49,7 +49,11 @@ func TestSQLiteDatabaseFactoryOpensLocalDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("db.DB() error = %v", err)
 	}
-	defer sqlDB.Close()
+	defer func() {
+		if err := sqlDB.Close(); err != nil {
+			t.Errorf("sqlDB.Close() error = %v", err)
+		}
+	}()
 
 	if _, err := migration.Migrate(db); err != nil {
 		t.Fatalf("migration.Migrate() error = %v", err)

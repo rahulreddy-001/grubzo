@@ -41,7 +41,7 @@ func NewHandlers(logger *zap.Logger, repository *repository.Repository, rdb *red
 }
 
 func (h *Handlers) Setup(engine *gin.Engine) {
-	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore, h.Config.App.Domain, h.Config.Environment())
+	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore, h.Config.App.Domain, h.Config.Environment(), h.Config.Instance)
 	ratelimitGenerator := middlewares.RateLimiterMiddlewareGenerator()
 	twoReqPerSecSlidingWindowLogForTenantAndUser := ratelimitGenerator(ratelimiter.NewSlidingWindowLog(h.RDB, 10, time.Second), middlewares.RLK_TENANT, middlewares.RLK_USER)
 

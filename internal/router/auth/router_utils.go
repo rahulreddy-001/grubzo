@@ -4,15 +4,9 @@ import (
 	"grubzo/internal/router/ext"
 	"grubzo/internal/services/rbac/permission"
 	"grubzo/internal/services/rbac/role"
-	"slices"
 
 	"github.com/gin-gonic/gin"
 )
-
-func (h Handlers) isAdmin(c *gin.Context) bool {
-	userSession, _ := ext.Ctx(c).GetUserSession()
-	return slices.Contains(userSession.Roles, role.Admin)
-}
 
 func (h Handlers) isUser(c *gin.Context) bool {
 	userSession, _ := ext.Ctx(c).GetUserSession()

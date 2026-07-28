@@ -1,23 +1,3 @@
-FROM node:22-alpine AS frontend_builder
-
-WORKDIR /app
-
-COPY frontend/package*.json ./
-RUN npm ci
-
-COPY frontend/ ./
-
-RUN npm run build
-
-FROM nginx:alpine AS frontend
-
-COPY --from=frontend_builder /app/dist/ /usr/share/nginx/html/
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
-
 FROM golang:1.25-alpine AS backend_builder
 
 WORKDIR /app
@@ -44,9 +24,3 @@ VOLUME ["/app"]
 EXPOSE 80
 
 CMD ["./grubzo", "serve"]
-
-# docker build -t rohana001/grubzo-frontend:v0.1.1 --target frontend .
-# docker build -t rohana001/grubzo-backend:v0.1.1 --target backend .
-
-# docker push rohana001/grubzo-frontend:v0.1.1
-# docker push rohana001/grubzo-backend:v0.1.1

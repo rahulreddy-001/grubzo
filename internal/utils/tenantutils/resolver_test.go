@@ -22,7 +22,7 @@ func TestSubDomainFromHostAcceptsEnvironmentHosts(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSub, gotFound := SubDomainFromHost(tt.host, "grubzo.food", tt.env)
+			gotSub, gotFound := SubDomainFromHost(tt.host, "grubzo.food", tt.env, "mario")
 			if gotFound != tt.wantFound {
 				t.Fatalf("found = %v, want %v", gotFound, tt.wantFound)
 			}
@@ -56,7 +56,7 @@ func TestSubDomainFromHostRejectsWrongEnvironmentCombinations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got, ok := SubDomainFromHost(tt.host, "grubzo.food", tt.env); ok {
+			if got, ok := SubDomainFromHost(tt.host, "grubzo.food", tt.env, "mario"); ok {
 				t.Fatalf("subdomain = %q, want not found", got)
 			}
 		})
@@ -105,18 +105,19 @@ func TestPlatformFromHostAcceptsEnvironmentHosts(t *testing.T) {
 		wantSub   string
 		wantFound bool
 	}{
-		{name: "dev admin", host: "admin.dev.grubzo.food", env: "dev", wantSub: "admin", wantFound: true},
-		{name: "prod admin", host: "admin.grubzo.food", env: "prod", wantSub: "admin", wantFound: true},
-		{name: "prod platform", host: "platform.grubzo.food", env: "prod", wantSub: "platform", wantFound: true},
+		{name: "dev instance", host: "mario.dev.grubzo.food", env: "dev", wantSub: "mario", wantFound: true},
+		{name: "prod instance", host: "mario.grubzo.food", env: "prod", wantSub: "mario", wantFound: true},
+		{name: "old admin host", host: "admin.grubzo.food", env: "prod", wantFound: false},
+		{name: "old platform host", host: "platform.grubzo.food", env: "prod", wantFound: false},
 		{name: "tenant host", host: "demo.grubzo.food", env: "prod", wantFound: false},
 		{name: "old dev api host", host: "admin.dev-api.grubzo.food", env: "dev", wantFound: false},
 		{name: "old prod api host", host: "admin.api.grubzo.food", env: "prod", wantFound: false},
-		{name: "wrong env", host: "admin.qa.grubzo.food", env: "dev", wantFound: false},
+		{name: "wrong env", host: "mario.qa.grubzo.food", env: "dev", wantFound: false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSub, gotFound := PlatformFromHost(tt.host, "grubzo.food", tt.env)
+			gotSub, gotFound := PlatformFromHost(tt.host, "grubzo.food", tt.env, "mario")
 			if gotFound != tt.wantFound {
 				t.Fatalf("found = %v, want %v", gotFound, tt.wantFound)
 			}
@@ -127,14 +128,18 @@ func TestPlatformFromHostAcceptsEnvironmentHosts(t *testing.T) {
 	}
 }
 
-func TestSubDomainFromHostRejectsPlatformHosts(t *testing.T) {
+func TestSubDomainFromHostRejectsInstanceHost(t *testing.T) {
 	for _, host := range []string{
-		"admin.grubzo.food",
-		"platform.dev.grubzo.food",
+		"mario.grubzo.food",
+		"mario.dev.grubzo.food",
 	} {
 		t.Run(host, func(t *testing.T) {
-			if got, ok := SubDomainFromHost(host, "grubzo.food", "dev"); ok {
-				t.Fatalf("platform host returned tenant subdomain %q", got)
+			env := "prod"
+			if host == "mario.dev.grubzo.food" {
+				env = "dev"
+			}
+			if got, ok := SubDomainFromHost(host, "grubzo.food", env, "mario"); ok {
+				t.Fatalf("instance host returned tenant subdomain %q", got)
 			}
 		})
 	}

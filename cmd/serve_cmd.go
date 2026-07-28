@@ -47,7 +47,11 @@ func serveCommand() *cobra.Command {
 				logger.Fatal("failed to initilize tracer", zap.Error(err))
 			}
 			logger.Info("tracer initilized successfully")
-			defer shutdown(context.Background())
+			defer func() {
+				if err := shutdown(context.Background()); err != nil {
+					logger.Warn("failed to shutdown tracer", zap.Error(err))
+				}
+			}()
 
 			//Redis
 			logger.Info("connecting redis...")
@@ -68,7 +72,11 @@ func serveCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))
 			}
-			defer db.Close()
+			defer func() {
+				if err := db.Close(); err != nil {
+					logger.Warn("failed to close database", zap.Error(err))
+				}
+			}()
 			logger.Info("database connection established")
 
 			// FileStorage

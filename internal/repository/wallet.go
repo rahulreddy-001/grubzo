@@ -41,7 +41,6 @@ func (r *Repository) RecordWalletTransaction(ctx context.Context, data *dto.Wall
 
 	var txnID uint64
 	err := r.dbWithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var currentBalance int64 = 0
 		var wallet entity.WalletBalance
 		err := tx.
 			Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).
@@ -64,15 +63,13 @@ func (r *Repository) RecordWalletTransaction(ctx context.Context, data *dto.Wall
 				}
 			}
 		}
-		currentBalance = wallet.Balance
-
 		switch data.Type {
 		case "credit":
-			data.BalanceAfter = currentBalance + data.Amount
+			data.BalanceAfter = wallet.Balance + data.Amount
 		case "debit":
-			data.BalanceAfter = currentBalance - data.Amount
+			data.BalanceAfter = wallet.Balance - data.Amount
 		default:
-			data.BalanceAfter = currentBalance
+			data.BalanceAfter = wallet.Balance
 		}
 		wallet.Balance = data.BalanceAfter
 

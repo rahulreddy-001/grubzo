@@ -23,7 +23,7 @@ type Handlers struct {
 }
 
 func (h Handlers) Setup(r *gin.RouterGroup) {
-	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore, h.Config.App.Domain, h.Config.Environment())
+	protected := middlewares.UserAuthenticate(h.Repository, h.SessionStore, h.Config.App.Domain, h.Config.Environment(), h.Config.Instance)
 	generateMiddleware := middlewares.AccessControlMiddlewareGenerator(h.SS.RBAC, h.SessionStore)
 	itemsTabAccess := generateMiddleware(permission.Items)
 	employeeTabAccess := generateMiddleware(permission.Employee)

@@ -11,6 +11,7 @@ import (
 	"grubzo/internal/router/session"
 	v1 "grubzo/internal/router/v1"
 	"grubzo/internal/services"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -37,6 +38,9 @@ func Setup(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *repos
 		c.String(200, "OK")
 	})
 	api.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	api.GET("/instance", func(ctx *gin.Context) {
+		ctx.String(http.StatusOK, config.Instance)
+	})
 
 	auth := engine.router.Group("/auth")
 	engine.auth.Setup(auth)
@@ -60,7 +64,7 @@ func newRouter(logger *zap.Logger, db *gorm.DB, rdb *redis.Client, repository *r
 	}
 	r := gin.New()
 	r.Use(middlewares.RecoverPanic(logger.Named("painc_log")))
-	r.Use(middlewares.TenantCORS(config.App.Domain, config.Environment(), isDevMode))
+	r.Use(middlewares.TenantCORS(config.App.Domain, config.Environment(), config.Instance, isDevMode))
 	r.Use(middlewares.TenantHostGuard(config.App.Domain, config.Environment()))
 	r.Use(middlewares.AccessLogging(logger.Named("access_log"), isDevMode))
 	r.Use(otelgin.Middleware("grubzo_gin", otelgin.WithGinFilter(func(c *gin.Context) bool {

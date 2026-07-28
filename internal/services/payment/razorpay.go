@@ -41,7 +41,7 @@ func (rs *razorpayServiceImpl) client() *razorpay.Client {
 }
 
 func (rs *razorpayServiceImpl) CreateOrder(ctx context.Context, amount int64, orderID string) (map[string]interface{}, error) {
-	ctx, span := otel.Tracer("RazorpayService").Start(ctx, "RazorpayService.CreateOrder")
+	_, span := otel.Tracer("RazorpayService").Start(ctx, "RazorpayService.CreateOrder")
 	defer span.End()
 
 	data := map[string]any{
@@ -53,7 +53,7 @@ func (rs *razorpayServiceImpl) CreateOrder(ctx context.Context, amount int64, or
 }
 
 func (rs *razorpayServiceImpl) VerifyPayment(ctx context.Context, orderID, paymentID, signature string) error {
-	ctx, span := otel.Tracer("RazorpayService").Start(ctx, "RazorpayService.VerifyPayment")
+	_, span := otel.Tracer("RazorpayService").Start(ctx, "RazorpayService.VerifyPayment")
 	defer span.End()
 
 	mac := hmac.New(sha256.New, []byte(rs.config.PaymentGatewayKeys.Razorpay.KeySecret))

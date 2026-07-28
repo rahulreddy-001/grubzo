@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func TenantCORS(appDomain, env string, allowLocalhost bool) gin.HandlerFunc {
+func TenantCORS(appDomain, env, instance string, allowLocalhost bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
 		if origin == "" {
@@ -19,7 +19,7 @@ func TenantCORS(appDomain, env string, allowLocalhost bool) gin.HandlerFunc {
 			return
 		}
 
-		if isAllowedOrigin(origin, c.Request.Host, appDomain, env, allowLocalhost) {
+		if isAllowedOrigin(origin, c.Request.Host, appDomain, env, instance, allowLocalhost) {
 			headers := c.Writer.Header()
 			headers.Set("Access-Control-Allow-Origin", origin)
 			headers.Set("Access-Control-Allow-Credentials", "true")
@@ -38,7 +38,7 @@ func TenantCORS(appDomain, env string, allowLocalhost bool) gin.HandlerFunc {
 	}
 }
 
-func isAllowedOrigin(origin, requestHost, appDomain, env string, allowLocalhost bool) bool {
+func isAllowedOrigin(origin, requestHost, appDomain, env, instance string, allowLocalhost bool) bool {
 	originURL, err := url.Parse(origin)
 	if err != nil {
 		return false
@@ -53,16 +53,16 @@ func isAllowedOrigin(origin, requestHost, appDomain, env string, allowLocalhost 
 		return true
 	}
 
-	if tenantutils.IsPlatformHost(originURL.Host, appDomain, env) {
+	if tenantutils.IsPlatformHost(originURL.Host, appDomain, env, instance) {
 		return true
 	}
 
-	originSubDomain, ok := tenantutils.SubDomainFromHost(originURL.Host, appDomain, env)
+	originSubDomain, ok := tenantutils.SubDomainFromHost(originURL.Host, appDomain, env, instance)
 	if !ok {
 		return false
 	}
 
-	requestSubDomain, ok := tenantutils.SubDomainFromHost(requestHost, appDomain, env)
+	requestSubDomain, ok := tenantutils.SubDomainFromHost(requestHost, appDomain, env, instance)
 	if !ok {
 		return true
 	}

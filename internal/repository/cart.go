@@ -43,7 +43,13 @@ func (repo *Repository) GetCart(ctx context.Context, key string) *dto.Cart {
 	}
 
 	var cart dto.Cart
-	json.Unmarshal([]byte(res.(string)), &cart)
+	if err := json.Unmarshal([]byte(res.(string)), &cart); err != nil {
+		repo.logger.Error("failed to decode cart from redis", zap.Error(err))
+		return &dto.Cart{
+			Key:   key,
+			Items: []dto.Item{},
+		}
+	}
 
 	return &cart
 }

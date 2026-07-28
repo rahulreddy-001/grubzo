@@ -225,7 +225,7 @@ func (rs *redisStore) GetSessionsByUserID(userID, tenantID uint64) ([]Session, e
 }
 
 func (rs *redisStore) RenewSession(c *gin.Context, userID, tenantID uint64) (Session, error) {
-	rs.RevokeSession(c)
+	_ = rs.RevokeSession(c)
 	newSession, err := rs.issueSession(c.Request.Context(), userID, tenantID, nil)
 	if err != nil {
 		return nil, err

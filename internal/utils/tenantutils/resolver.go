@@ -32,11 +32,6 @@ var envMiddleSegments = map[string]string{
 	"stage": ".stage",
 }
 
-var platformSubDomains = map[string]struct{}{
-	"admin":    {},
-	"platform": {},
-}
-
 func normalizeEnvironment(env string) (string, bool) {
 	switch strings.ToLower(strings.TrimSpace(env)) {
 	case "", "dev", "development":
@@ -52,14 +47,18 @@ func normalizeEnvironment(env string) (string, bool) {
 	}
 }
 
+func normalizeInstance(instance string) string {
+	return strings.ToLower(strings.Trim(strings.TrimSpace(instance), "."))
+}
+
 // SubDomainFromHost extracts the tenant subdomain from a host header.
 // Returns ("", false) for invalid, bare-domain, IP, or localhost hosts.
-func SubDomainFromHost(host, appDomain, env string) (string, bool) {
+func SubDomainFromHost(host, appDomain, env, instance string) (string, bool) {
 	sub, ok := labelFromHost(host, appDomain, env)
 	if !ok {
 		return "", false
 	}
-	if _, isPlatform := platformSubDomains[sub]; isPlatform {
+	if instance = normalizeInstance(instance); instance != "" && sub == instance {
 		return "", false
 	}
 	return sub, true
@@ -68,21 +67,21 @@ func SubDomainFromHost(host, appDomain, env string) (string, bool) {
 // PlatformFromHost extracts the platform subdomain from a host header.
 // Supported platform hosts follow the same environment rules as tenants:
 //
-//	dev:  admin.dev.grubzo.food
-//	prod: admin.grubzo.food
-func PlatformFromHost(host, appDomain, env string) (string, bool) {
+//	dev:  <instance>.dev.grubzo.food
+//	prod: <instance>.grubzo.food
+func PlatformFromHost(host, appDomain, env, instance string) (string, bool) {
 	sub, ok := labelFromHost(host, appDomain, env)
 	if !ok {
 		return "", false
 	}
-	if _, isPlatform := platformSubDomains[sub]; !isPlatform {
+	if instance = normalizeInstance(instance); instance == "" || sub != instance {
 		return "", false
 	}
 	return sub, true
 }
 
-func IsPlatformHost(host, appDomain, env string) bool {
-	_, ok := PlatformFromHost(host, appDomain, env)
+func IsPlatformHost(host, appDomain, env, instance string) bool {
+	_, ok := PlatformFromHost(host, appDomain, env, instance)
 	return ok
 }
 

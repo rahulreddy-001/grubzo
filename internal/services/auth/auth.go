@@ -97,7 +97,9 @@ func (a *authServiceImpl) GetMeInfo(ctx context.Context, userType string, userID
 		a.logger.Error("error fetching tenant locations", zap.Error(err))
 	}
 	locationInfo := dto.TenantLocation{}
-	utils.Map(&locationInfo, location)
+	if err := utils.Map(&locationInfo, location); err != nil {
+		return nil, err
+	}
 	me.Location = locationInfo
 
 	if userType == "user" {

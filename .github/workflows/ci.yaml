@@ -1,0 +1,105 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - release/*
+  pull_request:
+    branches:
+      - release/*
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Verify formatting
+        run: |
+          if [ "$(gofmt -l . | wc -l)" -gt 0 ]; then
+            echo "The following files are not formatted:"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+
+      - name: Run golangci-lint
+        run: golangci-lint run
+
+      - name: Run tests
+        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
+
+      - name: Generate coverage summary
+        if: always() && hashFiles('coverage.out') != ''
+        run: go tool cover -func=coverage.out | tee coverage-summary.txt
+
+      - name: Mark missed coverage
+        if: github.event_name == 'pull_request' && hashFiles('coverage.out') != ''
+        run: |
+          module_path="$(go list -m)"
+
+          awk -v module_path="$module_path" '
+            NR == 1 { next }
+            {
+              split($1, location, ":")
+              file = location[1]
+              sub("^" module_path "/", "", file)
+              split(location[2], span, ",")
+              split(span[1], start, ".")
+              split(span[2], end, ".")
+              statements = $2
+              count = $3
+
+              if (count == 0) {
+                printf "::warning file=%s,line=%s,endLine=%s,title=Missed test coverage::%s statement(s) are not covered by tests\n", file, start[1], end[1], statements
+              }
+            }
+          ' coverage.out
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-coverage
+          path: |
+            coverage.out
+            coverage-summary.txt
+          if-no-files-found: warn
+
+      - name: Check minimum coverage
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub("%","",$3); print $3}')
+          THRESHOLD=80
+
+          awk -v cov="$COVERAGE" -v th="$THRESHOLD" '
+            BEGIN {
+              if (cov < th) {
+                printf "::warning title=Low Test Coverage::Coverage is %.2f%%, which is below the required %.0f%% threshold.\n", cov, th
+              } else {
+                printf ">> Coverage is %.2f%% (threshold: %.0f%%)\n", cov, th
+              }
+            }
+          '

@@ -45,7 +45,7 @@ func (h Handlers) CreateUser(c *gin.Context) {
 }
 
 func (h Handlers) tenantFromRequest(c *gin.Context) (*entity.Tenant, error) {
-	subDomain, ok := tenantutils.SubDomainFromHost(c.Request.Host, h.Config.App.Domain, h.Config.Environment())
+	subDomain, ok := tenantutils.SubDomainFromHost(c.Request.Host, h.Config.App.Domain, h.Config.Environment(), h.Config.Instance)
 	if !ok {
 		return nil, ext.Error("tenant subdomain is required")
 	}

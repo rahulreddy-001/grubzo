@@ -10,14 +10,12 @@ import (
 	"sync"
 
 	"go.opentelemetry.io/otel"
-	"gorm.io/gorm"
 )
 
 type RBAC struct {
 	roles      map[uint64]role.Roles
 	rolesMutex *sync.RWMutex
 	repo       *repository.Repository
-	db         *gorm.DB
 }
 
 func New(repo *repository.Repository) (*RBAC, error) {

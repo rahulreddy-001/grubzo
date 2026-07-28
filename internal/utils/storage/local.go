@@ -42,7 +42,9 @@ func (fs *LocalFileStorage) SaveByKey(_ context.Context, src io.Reader, key, _, 
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	_, err = io.Copy(file, src)
 	return err

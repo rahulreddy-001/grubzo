@@ -63,11 +63,7 @@ func (p *anthropicProvider) Generate(ctx context.Context, request Request) (*Res
 		Messages:    anthropicMessagesFromHistory(request.Messages),
 	}
 	for _, tool := range request.Tools {
-		payload.Tools = append(payload.Tools, anthropicTool{
-			Name:        tool.Name,
-			Description: tool.Description,
-			InputSchema: tool.InputSchema,
-		})
+		payload.Tools = append(payload.Tools, anthropicTool(tool))
 	}
 	if payload.MaxTokens <= 0 {
 		payload.MaxTokens = 1024

@@ -54,13 +54,16 @@ func (h Handlers) Login(c *gin.Context) {
 			TenantID:  tenant.ID,
 			IsPrimary: &trueRef,
 		})
-		userSession.Set("user", &session.UserSession{
+		if err := userSession.Set("user", &session.UserSession{
 			Type:     "user",
 			UserID:   userID,
 			TenantID: tenant.ID,
 			Email:    req.Email,
 			Location: locationEntity.ID,
-		})
+		}); err != nil {
+			ext.Ctx(c).RespondWithError(err)
+			return
+		}
 		c.JSON(200, gin.H{"message": "login successful", "session_token": userSession.Token()})
 		return
 	} else {
@@ -79,14 +82,17 @@ func (h Handlers) Login(c *gin.Context) {
 			ext.Ctx(c).RespondWithError(err)
 			return
 		}
-		userSession.Set("user", &session.UserSession{
+		if err := userSession.Set("user", &session.UserSession{
 			Type:     "employee",
 			UserID:   userEntity.ID,
 			TenantID: userEntity.TenantID,
 			Email:    userEntity.Email,
 			Roles:    userEntity.Roles,
 			Location: userEntity.LocationID,
-		})
+		}); err != nil {
+			ext.Ctx(c).RespondWithError(err)
+			return
+		}
 		h.Logger.Debug("UserSessionWhileLogIn", zap.Any("userSession", userEntity.LocationID))
 		c.JSON(200, gin.H{"message": "login successful", "session_token": userSession.Token()})
 		return
@@ -94,7 +100,7 @@ func (h Handlers) Login(c *gin.Context) {
 }
 
 func (h Handlers) tenantFromRequest(c *gin.Context) (*entity.Tenant, error) {
-	subDomain, ok := tenantutils.SubDomainFromHost(c.Request.Host, h.Config.App.Domain, h.Config.Environment())
+	subDomain, ok := tenantutils.SubDomainFromHost(c.Request.Host, h.Config.App.Domain, h.Config.Environment(), h.Config.Instance)
 	if !ok {
 		return nil, ext.Error("tenant subdomain is required")
 	}
@@ -102,6 +108,6 @@ func (h Handlers) tenantFromRequest(c *gin.Context) (*entity.Tenant, error) {
 }
 
 func (h Handlers) Logout(c *gin.Context) {
-	h.SessionStore.RevokeSession(c)
+	_ = h.SessionStore.RevokeSession(c)
 	c.JSON(http.StatusOK, gin.H{"Message": "Logged out successfully."})
 }

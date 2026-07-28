@@ -64,7 +64,9 @@ func (h Handlers) GetFileByID(c *gin.Context) {
 		ext.Ctx(c).RespondWithError(err)
 		return
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	c.Header("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", fileMeta.GetFileName()))
 	c.Header("Content-Type", fileMeta.GetMIMEType())

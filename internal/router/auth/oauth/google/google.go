@@ -56,7 +56,9 @@ func (p *Provider) FetchUser(ctx context.Context, token string) (*oauth.OAuthUse
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user info: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("%s responded with %d", p.Name, resp.StatusCode)
@@ -95,7 +97,9 @@ func (p *Provider) ValidateToken(ctx context.Context, token string) error {
 	if err != nil {
 		return fmt.Errorf("failed to validate token: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("invalid token: %s", resp.Status)

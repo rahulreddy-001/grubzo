@@ -96,7 +96,7 @@ type Config struct {
 	Env             string `json:"env"`
 	ShutdownTimeout int    `json:"shutdownTimeout"`
 	Pprof           bool   `json:"pprof"`
-	Instance        string `json:instance`
+	Instance        string `json:"instance"`
 }
 
 func getEnv(key, def string) string {

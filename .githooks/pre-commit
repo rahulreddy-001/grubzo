@@ -4,3 +4,6 @@ set -euo pipefail
 
 echo "Running lint before commit..."
 make lint
+
+echo "Running tests before commit..."
+make test

@@ -58,7 +58,9 @@ func (p *Provider) FetchUser(ctx context.Context, token string) (*oauth.OAuthUse
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user profile: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GitHub responded with %d", resp.StatusCode)
@@ -96,7 +98,9 @@ func (p *Provider) getEmail(ctx context.Context, token string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch emails: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("GitHub email endpoint responded with %d", resp.StatusCode)
@@ -131,7 +135,9 @@ func (p *Provider) ValidateToken(ctx context.Context, token string) error {
 	if err != nil {
 		return fmt.Errorf("failed to validate token: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("invalid token: GitHub responded with %d", resp.StatusCode)

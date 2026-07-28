@@ -11,7 +11,7 @@ import (
 	"go.opentelemetry.io/otel"
 )
 
-func UserAuthenticate(repo *repository.Repository, ss session.Store, appDomain, env string) gin.HandlerFunc {
+func UserAuthenticate(repo *repository.Repository, ss session.Store, appDomain, env, instance string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, span := otel.Tracer("RouterMiddleware").Start(c.Request.Context(), "RouterMiddleware.UserAuthenticate")
 		defer span.End()
@@ -20,14 +20,14 @@ func UserAuthenticate(repo *repository.Repository, ss session.Store, appDomain, 
 		c.Request = c.Request.WithContext(ctx)
 		sess, err := ss.GetSession(c)
 		if err != nil || sess == nil || !sess.LoggedIn() {
-			ss.RevokeSession(c)
+			_ = ss.RevokeSession(c)
 			ext.Ctx(c).Unauthorized()
 			return
 		}
-		if subDomain, ok := tenantutils.SubDomainFromHost(c.Request.Host, appDomain, env); ok {
+		if subDomain, ok := tenantutils.SubDomainFromHost(c.Request.Host, appDomain, env, instance); ok {
 			tenant, err := repo.GetTenant(ctx, query.NewTenantQuery().WithSubDomain(subDomain))
 			if err != nil || tenant.ID != sess.TenantID() {
-				ss.RevokeSession(c)
+				_ = ss.RevokeSession(c)
 				ext.Ctx(c).Unauthorized()
 				return
 			}

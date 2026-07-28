@@ -69,5 +69,8 @@ func (h Handlers) GetTenants(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusOK)
-	c.Writer.WriteString(string(response))
+	if _, err := c.Writer.WriteString(string(response)); err != nil {
+		ext.Ctx(c).RespondWithError(err)
+		return
+	}
 }

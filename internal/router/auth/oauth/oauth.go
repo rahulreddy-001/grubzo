@@ -48,6 +48,7 @@ type Auth struct {
 	providers    map[string]Provider
 	domain       string
 	env          string
+	instance     string
 	router       *gin.RouterGroup
 	sessionStore session.Store
 	repo         *repository.Repository
@@ -85,6 +86,10 @@ func (a *Auth) WithEnv(env string) *Auth {
 	a.env = env
 	return a
 }
+func (a *Auth) WithInstance(instance string) *Auth {
+	a.instance = instance
+	return a
+}
 func (a *Auth) WithLogger(logger *zap.Logger) *Auth {
 	a.logger = logger.Named("oauth")
 	return a
@@ -94,7 +99,7 @@ func (a *Auth) Init() *Auth {
 	for _, p := range a.providers {
 		provider := p
 		a.router.GET(fmt.Sprintf("/login/%s", provider.GetType()), func(ctx *gin.Context) {
-			subDomain, ok := tenantutils.SubDomainFromHost(ctx.Request.Host, a.domain, a.env)
+			subDomain, ok := tenantutils.SubDomainFromHost(ctx.Request.Host, a.domain, a.env, a.instance)
 			if !ok {
 				ext.Ctx(ctx).RespondWithError(ext.Error("tenant subdomain is required"))
 				return
@@ -154,13 +159,16 @@ func (a *Auth) Init() *Auth {
 				TenantID:  userEntity.TenantID,
 				IsPrimary: &trueRef,
 			})
-			userSession.Set("user", &session.UserSession{
+			if err := userSession.Set("user", &session.UserSession{
 				TenantID: userEntity.TenantID,
 				UserID:   userEntity.ID,
 				Email:    userEntity.Email,
 				Type:     "user",
 				Location: locationEntity.ID,
-			})
+			}); err != nil {
+				ext.Ctx(c).RespondWithError(fmt.Errorf("login failed: %w", err))
+				return
+			}
 			a.RedirectToLoginSuccessPage(c)
 		})
 	}
@@ -203,7 +211,7 @@ func (a *Auth) Exchange(provider Provider, ctx *gin.Context) (*oauth2.Token, err
 }
 
 func (a *Auth) RedirectToLoginPage(ctx *gin.Context) {
-	a.sessionStore.RevokeSession(ctx)
+	_ = a.sessionStore.RevokeSession(ctx)
 	ctx.Redirect(http.StatusTemporaryRedirect, "/login")
 }
 

@@ -14,7 +14,9 @@ func LoadJSONFromFile[T any](filePath string) (*T, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	var value T
 
