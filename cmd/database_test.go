@@ -1,12 +1,6 @@
 package cmd
 
-import (
-	"path/filepath"
-	"testing"
-
-	"grubzo/internal/config"
-	"grubzo/internal/migration"
-)
+import "testing"
 
 func TestDatabaseFactoryFor(t *testing.T) {
 	tests := []struct {
@@ -17,8 +11,7 @@ func TestDatabaseFactoryFor(t *testing.T) {
 		{name: "default postgres", dbType: "", ok: true},
 		{name: "postgres", dbType: "postgres", ok: true},
 		{name: "postgresql", dbType: "postgresql", ok: true},
-		{name: "sqlite", dbType: "sqlite", ok: true},
-		{name: "local", dbType: "local", ok: true},
+		{name: "local file database", dbType: "local", ok: false},
 		{name: "unknown", dbType: "oracle", ok: false},
 	}
 
@@ -32,30 +25,5 @@ func TestDatabaseFactoryFor(t *testing.T) {
 				t.Fatal("expected error, got nil")
 			}
 		})
-	}
-}
-
-func TestSQLiteDatabaseFactoryOpensLocalDB(t *testing.T) {
-	cfg := &config.Config{}
-	cfg.Database.Type = "sqlite"
-	cfg.Database.SQLite.Path = filepath.Join(t.TempDir(), "nested", "grubzo.db")
-
-	db, err := getDatabase(cfg)
-	if err != nil {
-		t.Fatalf("getDatabase() error = %v", err)
-	}
-
-	sqlDB, err := db.DB()
-	if err != nil {
-		t.Fatalf("db.DB() error = %v", err)
-	}
-	defer func() {
-		if err := sqlDB.Close(); err != nil {
-			t.Errorf("sqlDB.Close() error = %v", err)
-		}
-	}()
-
-	if _, err := migration.Migrate(db); err != nil {
-		t.Fatalf("migration.Migrate() error = %v", err)
 	}
 }
